@@ -7,6 +7,7 @@ import PostSkeleton from '../../components/Loader/PostSkeleton';
 import { getUploadUrl } from '../../utils/mediaHelper';
 import Spinner from '../../components/Loader/Spinner';
 import Modal from '../../components/Modal/Modal';
+import ImageCropperModal from '../../components/Modal/ImageCropperModal';
 
 const Home = () => {
   const { currentUser } = useAuth();
@@ -19,6 +20,8 @@ const Home = () => {
   const [publishLoading, setPublishLoading] = useState(false);
   const [urlModalOpen, setUrlModalOpen] = useState(false);
   const [urlInput, setUrlInput] = useState('');
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState('');
 
   const fileInputRef = useRef(null);
 
@@ -38,14 +41,29 @@ const Home = () => {
         alert('Please select a valid image file');
         return;
       }
-      setChosenFile(file);
-      setChosenUrl(''); // Reset alternative URL
-
       const reader = new FileReader();
       reader.onload = (ev) => {
-        setImagePreview(ev.target.result);
+        setCropperSrc(ev.target.result);
+        setCropperOpen(true);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropComplete = (croppedFile, previewUrl) => {
+    setChosenFile(croppedFile);
+    setChosenUrl('');
+    setImagePreview(previewUrl);
+    setCropperOpen(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCropCancel = () => {
+    setCropperOpen(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -226,6 +244,15 @@ const Home = () => {
           <button className="btn btn-primary" onClick={handleUrlModalSave}>Add Image</button>
         </div>
       </Modal>
+
+      <ImageCropperModal
+        isOpen={cropperOpen}
+        imageSrc={cropperSrc}
+        aspectRatio={1.6}
+        onCrop={handleCropComplete}
+        onClose={handleCropCancel}
+        title="Crop Post Image"
+      />
     </Layout>
   );
 };

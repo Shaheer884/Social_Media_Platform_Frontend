@@ -9,6 +9,7 @@ import PostCard from '../../components/PostCard/PostCard';
 import Spinner from '../../components/Loader/Spinner';
 import Modal from '../../components/Modal/Modal';
 import { getUploadUrl } from '../../utils/mediaHelper';
+import ImageCropperModal from '../../components/Modal/ImageCropperModal';
 
 const Profile = () => {
   const { username } = useParams();
@@ -40,6 +41,10 @@ const Profile = () => {
   const [avatarPreview, setAvatarPreview] = useState('');
   const [coverPreview, setCoverPreview] = useState('');
   const [editSaving, setEditSaving] = useState(false);
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [cropperSrc, setCropperSrc] = useState('');
+  const [cropperAspect, setCropperAspect] = useState(1);
+  const [cropperTarget, setCropperTarget] = useState('avatar');
   const [followLoading, setFollowLoading] = useState(false);
 
   const avatarInputRef = useRef(null);
@@ -151,23 +156,53 @@ const Profile = () => {
     }
   };
 
-  // Live previews for edit file inputs
+  // Live previews for edit file inputs and cropping
+  const openCropperForFile = (file, target, aspect) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropperSrc(reader.result);
+      setCropperTarget(target);
+      setCropperAspect(aspect);
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAvatarFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setChosenAvatarFile(file);
-      setAvatarPreview(URL.createObjectURL(file));
-      setEditAvatarUrl('');
+      openCropperForFile(file, 'avatar', 1);
     }
   };
 
   const handleCoverFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setChosenCoverFile(file);
-      setCoverPreview(URL.createObjectURL(file));
-      setEditCoverUrl('');
+      openCropperForFile(file, 'cover', 3.3); // Aspect ratio of ~3.3:1 matches cover aspect ratio in CSS
     }
+  };
+
+  const handleCropComplete = (croppedFile, previewUrl) => {
+    if (cropperTarget === 'avatar') {
+      setChosenAvatarFile(croppedFile);
+      setAvatarPreview(previewUrl);
+    } else if (cropperTarget === 'cover') {
+      setChosenCoverFile(croppedFile);
+      setCoverPreview(previewUrl);
+    }
+    setCropperOpen(false);
+    if (avatarInputRef.current) avatarInputRef.current.value = '';
+    if (coverInputRef.current) coverInputRef.current.value = '';
+  };
+
+  const handleCropCancel = () => {
+    setCropperOpen(false);
+    if (avatarInputRef.current) avatarInputRef.current.value = '';
+    if (coverInputRef.current) coverInputRef.current.value = '';
   };
 
   // URL inputs live previews
@@ -503,6 +538,15 @@ const Profile = () => {
           </div>
         </form>
       </Modal>
+
+      <ImageCropperModal
+        isOpen={cropperOpen}
+        imageSrc={cropperSrc}
+        aspectRatio={cropperAspect}
+        onCrop={handleCropComplete}
+        onClose={handleCropCancel}
+        title={cropperTarget === 'avatar' ? "Crop Profile Picture" : "Crop Cover Photo"}
+      />
     </Layout>
   );
 };
