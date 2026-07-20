@@ -8,11 +8,14 @@ const ImageCropperModal = ({ isOpen, imageSrc, aspectRatio = 1, onCrop, onClose,
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
   const [naturalSize, setNaturalSize] = useState({ width: 0, height: 0 });
-  const [loading, setLoading] = useState(true);
+  const [loadedSrc, setLoadedSrc] = useState('');
   const [containerSize, setContainerSize] = useState({ width: 400, height: 300 });
 
   const containerRef = useRef(null);
   const imgRef = useRef(null);
+
+  // loading is true when imageSrc changes and until loadedSrc catches up
+  const loading = !imageSrc || imageSrc !== loadedSrc;
 
   // Measure container size dynamically for responsiveness
   useEffect(() => {
@@ -62,14 +65,16 @@ const ImageCropperModal = ({ isOpen, imageSrc, aspectRatio = 1, onCrop, onClose,
     if (isOpen) {
       setZoom(1);
       setOffset({ x: 0, y: 0 });
-      setLoading(true);
+    } else {
+      setLoadedSrc('');
     }
   }, [isOpen, imageSrc]);
 
-  if (!isOpen) return null;
-
   const handleImageLoad = (e) => {
-    const { naturalWidth, naturalHeight } = e.target;
+    const target = e.target || imgRef.current;
+    if (!target) return;
+
+    const { naturalWidth, naturalHeight } = target;
     setNaturalSize({ width: naturalWidth, height: naturalHeight });
     
     // Scale image to cover the crop box
@@ -79,8 +84,17 @@ const ImageCropperModal = ({ isOpen, imageSrc, aspectRatio = 1, onCrop, onClose,
       width: naturalWidth * scale,
       height: naturalHeight * scale
     });
-    setLoading(false);
+    setLoadedSrc(imageSrc);
   };
+
+  // Directly check and trigger handleImageLoad if image is already cached/complete
+  useEffect(() => {
+    if (isOpen && imgRef.current && imgRef.current.complete && loadedSrc !== imageSrc) {
+      handleImageLoad({ target: imgRef.current });
+    }
+  }, [isOpen, imageSrc, loadedSrc]);
+
+  if (!isOpen) return null;
 
   const handleStartDrag = (clientX, clientY) => {
     setIsDragging(true);
