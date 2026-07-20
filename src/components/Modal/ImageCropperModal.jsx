@@ -164,11 +164,6 @@ const ImageCropperModal = ({ isOpen, imageSrc, aspectRatio = 1, onCrop, onClose,
   };
 
   const handleCropSubmit = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = cropWidth;
-    canvas.height = cropHeight;
-    const ctx = canvas.getContext('2d');
-
     const cx = containerWidth / 2;
     const cy = containerHeight / 2;
     
@@ -189,6 +184,16 @@ const ImageCropperModal = ({ isOpen, imageSrc, aspectRatio = 1, onCrop, onClose,
     const sWidth = cropWidth / ratio;
     const sHeight = cropHeight / ratio;
 
+    const canvas = document.createElement('canvas');
+    // Set canvas dimensions to the natural cropped size to preserve 100% original quality
+    canvas.width = sWidth;
+    canvas.height = sHeight;
+    const ctx = canvas.getContext('2d');
+
+    // Ensure smooth image scaling on canvas
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
     ctx.drawImage(
       imgRef.current,
       sx,
@@ -197,17 +202,28 @@ const ImageCropperModal = ({ isOpen, imageSrc, aspectRatio = 1, onCrop, onClose,
       sHeight,
       0,
       0,
-      cropWidth,
-      cropHeight
+      sWidth,
+      sHeight
     );
+
+    // Extract mime type from base64 data URL
+    let mimeType = 'image/jpeg';
+    if (imageSrc && imageSrc.startsWith('data:')) {
+      const match = imageSrc.match(/data:([^;]+);/);
+      if (match) {
+        mimeType = match[1];
+      }
+    }
+    const extension = mimeType.split('/')[1] || 'jpg';
 
     canvas.toBlob((blob) => {
       if (blob) {
-        // Create a File object
-        const file = new File([blob], 'cropped_image.png', { type: 'image/png' });
-        onCrop(file, canvas.toDataURL('image/png'));
+        // Create a File object using the correct mimeType and high quality for JPEG
+        const file = new File([blob], `cropped_image.${extension}`, { type: mimeType });
+        const previewUrl = URL.createObjectURL(blob);
+        onCrop(file, previewUrl);
       }
-    }, 'image/png');
+    }, mimeType, mimeType === 'image/jpeg' ? 0.95 : undefined);
   };
 
   return (
