@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Spinner from '../../components/Loader/Spinner';
+import authBg from '../../assets/connecthub_auth_bg.png';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -65,7 +66,7 @@ const Register = () => {
         <div className="auth-split-wrapper">
           <div className="auth-visual-side">
             <div className="auth-visual-overlay"></div>
-            <img src="/src/assets/connecthub_auth_bg.png" className="auth-visual-image" alt="ConnectHub Visual" />
+            <img src={authBg} className="auth-visual-image" alt="ConnectHub Visual" />
             <div className="auth-visual-text">
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
                 <img src="/favicon.png" alt="ConnectHub Logo" style={{ width: '80px', height: '80px', borderRadius: '20px', boxShadow: 'var(--shadow-lg)', objectFit: 'cover' }} />
