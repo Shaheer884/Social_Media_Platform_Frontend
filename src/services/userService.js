@@ -7,6 +7,9 @@ const userService = {
   updateProfile(userId, profileData) {
     return api.put(`/users/${userId}`, profileData);
   },
+  deleteAccount(userId) {
+    return api.delete(`/users/${userId}`);
+  },
   getFollowers(userId) {
     return api.get(`/users/${userId}/followers`);
   },

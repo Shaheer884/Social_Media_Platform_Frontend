@@ -14,7 +14,7 @@ const Profile = () => {
   const { username } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { currentUser, updateLocalUser } = useAuth();
+  const { currentUser, updateLocalUser, logout } = useAuth();
   const { toggleLike } = usePosts();
 
   const profileIdOrUsername = username || searchParams.get('id') || currentUser?._id;
@@ -240,6 +240,28 @@ const Profile = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to completely delete your account? This action is permanent and will completely remove your posts, comments, likes, notifications, and all profile data."
+    );
+    if (!confirmDelete) return;
+
+    try {
+      setEditSaving(true);
+      const res = await userService.deleteAccount(currentUser._id);
+      if (res.success) {
+        alert("Your account has been successfully deleted.");
+        setEditModalOpen(false);
+        logout();
+        navigate('/login');
+      }
+    } catch (err) {
+      alert(err.message || "Error deleting account");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -458,14 +480,18 @@ const Profile = () => {
               <textarea id="edit-bio" className="form-input form-textarea" placeholder="Tell us about yourself..." maxLength="160" value={editBio} onChange={(e) => setEditBio(e.target.value)}></textarea>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="edit-avatar-url">Alternative Avatar Image URL</label>
-              <input type="url" id="edit-avatar-url" className="form-input" placeholder="https://example.com/avatar.jpg" value={editAvatarUrl} onChange={handleAvatarUrlChange} />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="edit-cover-url">Alternative Cover Image URL</label>
-              <input type="url" id="edit-cover-url" className="form-input" placeholder="https://example.com/cover.jpg" value={editCoverUrl} onChange={handleCoverUrlChange} />
+            <div className="delete-account-section" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+              <h4 style={{ color: 'var(--danger)', marginBottom: '8px' }}>Danger Zone</h4>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
+                Once you delete your account, there is no going back. All your posts, comments, likes, and settings will be permanently removed.
+              </p>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={handleDeleteAccount}
+              >
+                Delete Account
+              </button>
             </div>
           </div>
 
