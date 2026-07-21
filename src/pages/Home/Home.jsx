@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import { useAuth } from '../../context/AuthContext';
 import { usePosts } from '../../context/PostsContext';
+import { useDialog } from '../../context/CustomDialogContext';
 import PostCard from '../../components/PostCard/PostCard';
 import PostSkeleton from '../../components/Loader/PostSkeleton';
 import { getUploadUrl } from '../../utils/mediaHelper';
@@ -14,6 +15,7 @@ import userService from '../../services/userService';
 const Home = () => {
   const { currentUser } = useAuth();
   const { posts, loading, page, totalPages, fetchFeed, publishPost } = usePosts();
+  const { showAlert } = useDialog();
   const navigate = useNavigate();
 
   const [postText, setPostText] = useState('');
@@ -95,7 +97,7 @@ const Home = () => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file');
+        showAlert('Please select a valid image file', 'Invalid File');
         return;
       }
       const reader = new FileReader();
@@ -174,7 +176,7 @@ const Home = () => {
         clearSelectedMedia();
       }
     } catch (err) {
-      alert(err.message || 'Error publishing post');
+      showAlert(err.message || 'Error publishing post', 'Error');
     } finally {
       setPublishLoading(false);
     }

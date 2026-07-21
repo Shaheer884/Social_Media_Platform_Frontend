@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import { useAuth } from '../../context/AuthContext';
 import { usePosts } from '../../context/PostsContext';
+import { useDialog } from '../../context/CustomDialogContext';
 import userService from '../../services/userService';
 import postService from '../../services/postService';
 import PostCard from '../../components/PostCard/PostCard';
@@ -17,6 +18,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { currentUser, updateLocalUser, logout } = useAuth();
   const { toggleLike } = usePosts();
+  const { showAlert, showConfirm } = useDialog();
 
   const profileIdOrUsername = username || searchParams.get('id') || currentUser?._id;
 
@@ -114,7 +116,7 @@ const Profile = () => {
       }
       await fetchProfile();
     } catch (err) {
-      alert('Error updating follow status');
+      showAlert('Error updating follow status', 'Error');
     } finally {
       setFollowLoading(false);
     }
@@ -159,7 +161,7 @@ const Profile = () => {
   // Live previews for edit file inputs and cropping
   const openCropperForFile = (file, target, aspect) => {
     if (!file.type.startsWith('image/')) {
-      alert('Please select a valid image file');
+      showAlert('Please select a valid image file', 'Invalid File');
       return;
     }
     const reader = new FileReader();
@@ -269,15 +271,16 @@ const Profile = () => {
         }
       }
     } catch (err) {
-      alert(err.message || 'Error updating profile');
+      showAlert(err.message || 'Error updating profile', 'Error');
     } finally {
       setEditSaving(false);
     }
   };
 
   const handleDeleteAccount = async () => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to completely delete your account? This action is permanent and will completely remove your posts, comments, likes, notifications, and all profile data."
+    const confirmDelete = await showConfirm(
+      "Are you sure you want to completely delete your account? This action is permanent and will completely remove your posts, comments, likes, notifications, and all profile data.",
+      "Delete Account"
     );
     if (!confirmDelete) return;
 
@@ -285,13 +288,13 @@ const Profile = () => {
       setEditSaving(true);
       const res = await userService.deleteAccount(currentUser._id);
       if (res.success) {
-        alert("Your account has been successfully deleted.");
+        await showAlert("Your account has been successfully deleted.", "Account Deleted");
         setEditModalOpen(false);
         logout();
         navigate('/login');
       }
     } catch (err) {
-      alert(err.message || "Error deleting account");
+      showAlert(err.message || "Error deleting account", "Error");
     } finally {
       setEditSaving(false);
     }

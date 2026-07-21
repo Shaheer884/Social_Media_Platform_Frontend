@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { CustomDialogProvider } from './context/CustomDialogContext';
 import { PostsProvider } from './context/PostsContext';
 import { NotificationsProvider, useNotifications } from './context/NotificationsContext';
 import Spinner from './components/Loader/Spinner';
@@ -138,13 +139,15 @@ const AppContent = () => {
 const App = () => {
   return (
     <AuthProvider>
-      <PostsProvider>
-        <NotificationsProvider>
-          <Router>
-            <AppContent />
-          </Router>
-        </NotificationsProvider>
-      </PostsProvider>
+      <CustomDialogProvider>
+        <PostsProvider>
+          <NotificationsProvider>
+            <Router>
+              <AppContent />
+            </Router>
+          </NotificationsProvider>
+        </PostsProvider>
+      </CustomDialogProvider>
     </AuthProvider>
   );
 };

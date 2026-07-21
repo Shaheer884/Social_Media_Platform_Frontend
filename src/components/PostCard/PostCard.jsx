@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePosts } from '../../context/PostsContext';
+import { useDialog } from '../../context/CustomDialogContext';
 import { timeAgo } from '../../utils/formatters';
 import commentService from '../../services/commentService';
 import CommentCard from '../CommentCard/CommentCard';
@@ -12,6 +13,7 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { removePost, toggleLike, updatePostCommentCount } = usePosts();
+  const { showAlert, showConfirm } = useDialog();
 
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(isDetailPage); // Auto-open on detail page
@@ -61,14 +63,15 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
 
   const handlePostDelete = async (e) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this post?')) {
+    const confirmed = await showConfirm('Are you sure you want to delete this post?', 'Delete Post');
+    if (confirmed) {
       try {
         await removePost(post._id);
         if (isDetailPage) {
           navigate('/');
         }
       } catch (err) {
-        alert(err.message || 'Error deleting post');
+        showAlert(err.message || 'Error deleting post', 'Error');
       }
     }
   };
@@ -86,19 +89,20 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
           updatePostCommentCount(post._id, 1);
         }
       } catch (err) {
-        alert('Could not post comment');
+        showAlert('Could not post comment', 'Error');
       }
     }
   };
 
   const handleCommentDelete = async (commentId) => {
-    if (window.confirm('Delete comment?')) {
+    const confirmed = await showConfirm('Delete comment?', 'Delete Comment');
+    if (confirmed) {
       try {
         await commentService.deleteComment(commentId);
         setComments((prev) => prev.filter((c) => c._id !== commentId));
         updatePostCommentCount(post._id, -1);
       } catch (err) {
-        alert('Could not delete comment');
+        showAlert('Could not delete comment', 'Error');
       }
     }
   };
