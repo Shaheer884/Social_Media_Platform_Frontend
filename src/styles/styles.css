@@ -1572,7 +1572,27 @@ button, input, textarea {
   }
 
   .search-bar {
-    display: none; /* Hide search bar in header on mobile */
+    display: block;
+    flex: 1;
+    margin: 0 12px;
+    max-width: none;
+  }
+
+  .search-bar input {
+    padding: 6px 12px 6px 32px;
+    font-size: 0.85rem;
+  }
+
+  .search-bar svg {
+    left: 10px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-text {
+    display: none;
   }
 }
 
