@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import { useAuth } from '../../context/AuthContext';
 import { usePosts } from '../../context/PostsContext';
@@ -8,10 +9,12 @@ import { getUploadUrl } from '../../utils/mediaHelper';
 import Spinner from '../../components/Loader/Spinner';
 import Modal from '../../components/Modal/Modal';
 import ImageCropperModal from '../../components/Modal/ImageCropperModal';
+import userService from '../../services/userService';
 
 const Home = () => {
   const { currentUser } = useAuth();
   const { posts, loading, page, totalPages, fetchFeed, publishPost } = usePosts();
+  const navigate = useNavigate();
 
   const [postText, setPostText] = useState('');
   const [chosenFile, setChosenFile] = useState(null);
@@ -22,6 +25,8 @@ const Home = () => {
   const [urlInput, setUrlInput] = useState('');
   const [cropperOpen, setCropperOpen] = useState(false);
   const [cropperSrc, setCropperSrc] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   const fileInputRef = useRef(null);
 
@@ -29,6 +34,58 @@ const Home = () => {
   useEffect(() => {
     fetchFeed(1, false);
   }, [fetchFeed]);
+
+  // Fetch suggestions when the feed is empty
+  useEffect(() => {
+    if (posts.length === 0 && !loading) {
+      const loadSuggestions = async () => {
+        setSuggestionsLoading(true);
+        try {
+          const res = await userService.getSuggestions();
+          if (res.success) {
+            setSuggestions(res.data);
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setSuggestionsLoading(false);
+        }
+      };
+      loadSuggestions();
+    }
+  }, [posts.length, loading]);
+
+  const handleFollowClick = async (e, userId) => {
+    e.stopPropagation();
+    try {
+      setSuggestions((prev) =>
+        prev.map((u) => (u._id === userId ? { ...u, relationshipStatus: 'following' } : u))
+      );
+      await userService.followUser(userId);
+      await fetchFeed(1, false);
+      
+      setTimeout(async () => {
+        try {
+          const res = await userService.getSuggestions();
+          if (res.success) {
+            setSuggestions(res.data);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }, 1500);
+    } catch (err) {
+      console.error(err);
+      try {
+        const res = await userService.getSuggestions();
+        if (res.success) {
+          setSuggestions(res.data);
+        }
+      } catch (e2) {
+        console.error(e2);
+      }
+    }
+  };
 
   const handleTextChange = (e) => {
     setPostText(e.target.value);
@@ -209,7 +266,47 @@ const Home = () => {
           <div className="card empty-state-container">
             <div className="empty-state-icon">👋</div>
             <h3 className="empty-state-title">Welcome to ConnectHub!</h3>
-            <p className="empty-state-desc">Your feed is looking empty. Follow suggestions on the right or write your first post to get started!</p>
+            <p className="empty-state-desc" style={{ marginBottom: '16px' }}>
+              Your feed is looking empty. Follow recommended creators below or write your first post to get started!
+            </p>
+            
+            <div className="empty-state-suggestions">
+              <h4 className="empty-state-suggestions-title">People you may know</h4>
+              {suggestionsLoading ? (
+                <div className="empty-state-suggestions-loading">
+                  <Spinner size="20px" />
+                </div>
+              ) : suggestions.length === 0 ? (
+                <p className="empty-state-suggestions-empty">No suggestions available at the moment.</p>
+              ) : (
+                <div className="empty-state-suggestions-list">
+                  {suggestions.slice(0, 5).map((u) => (
+                    <div key={u._id} className="suggested-user-item">
+                      <div className="suggested-user-info" onClick={() => navigate(`/profile/${u.username}`)}>
+                        <img
+                          src={getUploadUrl(u.profilePicture || '/uploads/default-avatar.png')}
+                          className="suggested-user-avatar"
+                          alt={u.fullName}
+                        />
+                        <div style={{ lineHeight: '1.2', textAlign: 'left' }}>
+                          <div className="suggested-user-name">{u.fullName}</div>
+                          <div className="suggested-user-username">@{u.username}</div>
+                        </div>
+                      </div>
+                      {u.relationshipStatus === 'following' || u.relationshipStatus === 'friends' ? (
+                        <button className="follow-btn-sm following" disabled>
+                          Following
+                        </button>
+                      ) : (
+                        <button className="follow-btn-sm" onClick={(e) => handleFollowClick(e, u._id)}>
+                          Follow
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           posts.map((post) => <PostCard key={post._id} post={post} />)
