@@ -52,6 +52,11 @@
   padding: 0;
 }
 
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   font-family: 'Inter', sans-serif;
   background-color: var(--bg-color);
@@ -1593,6 +1598,111 @@ button, input, textarea {
 @media (max-width: 480px) {
   .logo-text {
     display: none;
+  }
+
+  /* Auth page mobile responsiveness improvements */
+  .auth-page {
+    padding: 12px;
+  }
+
+  .auth-split-wrapper {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .auth-form-side {
+    padding: 24px 16px;
+  }
+
+  .auth-form-side .auth-card {
+    max-width: 100%;
+  }
+
+  .auth-logo-container {
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .auth-logo {
+    font-size: 1.8rem !important;
+  }
+
+  .auth-subtitle {
+    font-size: 0.8rem;
+  }
+
+  /* Navbar mobile adjustments */
+  .navbar {
+    padding: 0 8px;
+  }
+
+  .search-bar {
+    margin: 0 6px;
+  }
+
+  .nav-actions {
+    gap: 8px;
+  }
+
+  .notifications-dropdown {
+    width: calc(100vw - 16px);
+    max-width: 300px;
+    right: -10px;
+  }
+
+  /* Post creator mobile enhancements */
+  .creator-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .creator-buttons {
+    justify-content: space-between;
+  }
+
+  /* Post styling mobile adjustments */
+  .post-footer-actions {
+    gap: 12px;
+    justify-content: space-between;
+  }
+
+  .post-action-btn span {
+    font-size: 0.8rem;
+  }
+
+  /* Profile page mobile responsiveness */
+  .profile-cover-photo-wrapper {
+    height: 120px;
+  }
+
+  .profile-avatar-wrapper {
+    width: 75px;
+    height: 75px;
+    bottom: -30px;
+    left: 16px;
+  }
+
+  .profile-actions-wrapper {
+    padding: 8px 16px;
+  }
+
+  .profile-details-section {
+    padding: 0 16px 16px;
+  }
+
+  .profile-fullname {
+    font-size: 1.3rem;
+  }
+
+  .profile-stats-row {
+    gap: 16px;
+    justify-content: space-between;
+  }
+
+  .profile-stat-box {
+    text-align: center;
+    flex: 1;
   }
 }
 
