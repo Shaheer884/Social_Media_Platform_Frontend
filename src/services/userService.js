@@ -22,6 +22,9 @@ const userService = {
   unfollowUser(userId) {
     return api.delete(`/users/${userId}/follow`);
   },
+  removeFollower(userId) {
+    return api.delete(`/users/${userId}/follower`);
+  },
   getSuggestions() {
     return api.get('/users/explore/suggestions');
   },

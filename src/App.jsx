@@ -20,6 +20,7 @@ const Search = lazy(() => import('./pages/Search/Search'));
 const NotificationsPage = lazy(() => import('./pages/Notifications/NotificationsPage'));
 const Messages = lazy(() => import('./pages/Messages/Messages'));
 const Saved = lazy(() => import('./pages/Saved/Saved'));
+const Friends = lazy(() => import('./pages/Friends/Friends'));
 const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
 
 // Protected Routes wrapper
@@ -127,6 +128,7 @@ const AppContent = () => {
           <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
           <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
           <Route path="/saved" element={<ProtectedRoute><Saved /></ProtectedRoute>} />
+          <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
 
           {/* Catch-all Fallback */}
           <Route path="*" element={<NotFound />} />
