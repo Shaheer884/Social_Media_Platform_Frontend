@@ -5,15 +5,15 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
+    const savedUser = sessionStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
-  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [token, setToken] = useState(() => sessionStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
+    const savedToken = sessionStorage.getItem('token');
+    const savedUser = sessionStorage.getItem('user');
     if (savedToken && savedUser) {
       setToken(savedToken);
       setCurrentUser(JSON.parse(savedUser));
@@ -25,8 +25,8 @@ export const AuthProvider = ({ children }) => {
     const res = await authService.login(credentials);
     if (res.success) {
       const { token: userToken, ...userData } = res.data;
-      localStorage.setItem('token', userToken);
-      localStorage.setItem('user', JSON.stringify(userData));
+      sessionStorage.setItem('token', userToken);
+      sessionStorage.setItem('user', JSON.stringify(userData));
       setToken(userToken);
       setCurrentUser(userData);
     }
@@ -37,8 +37,8 @@ export const AuthProvider = ({ children }) => {
     const res = await authService.register(userData);
     if (res.success) {
       const { token: userToken, ...registeredData } = res.data;
-      localStorage.setItem('token', userToken);
-      localStorage.setItem('user', JSON.stringify(registeredData));
+      sessionStorage.setItem('token', userToken);
+      sessionStorage.setItem('user', JSON.stringify(registeredData));
       setToken(userToken);
       setCurrentUser(registeredData);
     }
@@ -46,8 +46,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     setToken(null);
     setCurrentUser(null);
   };
@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
         profilePicture: updatedData.profilePicture,
         coverPhoto: updatedData.coverPhoto
       };
-      localStorage.setItem('user', JSON.stringify(updated));
+      sessionStorage.setItem('user', JSON.stringify(updated));
       return updated;
     });
   };
