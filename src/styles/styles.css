@@ -99,6 +99,11 @@ button, input, textarea {
   gap: 24px;
 }
 
+.feed-column {
+  min-width: 0;
+  max-width: 100%;
+}
+
 /* Sticky Header / Navbar */
 .main-header {
   position: fixed;
@@ -1820,6 +1825,8 @@ button, input, textarea {
   display: flex;
   gap: 12px;
   overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
   padding: 8px 4px 12px;
   margin-bottom: 20px;
   scrollbar-width: thin; /* Firefox */
