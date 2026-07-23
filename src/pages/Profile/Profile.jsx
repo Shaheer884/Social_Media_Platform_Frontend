@@ -36,6 +36,7 @@ const Profile = () => {
   const [editFullName, setEditFullName] = useState('');
   const [editLocation, setEditLocation] = useState('');
   const [editBio, setEditBio] = useState('');
+  const [editBirthday, setEditBirthday] = useState('');
   const [editAvatarUrl, setEditAvatarUrl] = useState('');
   const [editCoverUrl, setEditCoverUrl] = useState('');
   const [chosenAvatarFile, setChosenAvatarFile] = useState(null);
@@ -64,6 +65,7 @@ const Profile = () => {
         setEditFullName(res.data.fullName);
         setEditLocation(res.data.location || '');
         setEditBio(res.data.bio || '');
+        setEditBirthday(res.data.birthday ? res.data.birthday.split('T')[0] : '');
         setAvatarPreview(getUploadUrl(res.data.profilePicture || '/uploads/default-avatar.png'));
         setCoverPreview(getUploadUrl(res.data.coverPhoto || '/uploads/default-cover.png'));
       }
@@ -243,6 +245,7 @@ const Profile = () => {
         formData.append('fullName', editFullName.trim());
         formData.append('location', editLocation.trim());
         formData.append('bio', editBio.trim());
+        formData.append('birthday', editBirthday);
         if (chosenAvatarFile) formData.append('profilePicture', chosenAvatarFile);
         if (chosenCoverFile) formData.append('coverPhoto', chosenCoverFile);
         if (editAvatarUrl && !chosenAvatarFile) formData.append('profilePictureUrl', editAvatarUrl);
@@ -254,6 +257,7 @@ const Profile = () => {
           fullName: editFullName.trim(),
           location: editLocation.trim(),
           bio: editBio.trim(),
+          birthday: editBirthday,
           profilePictureUrl: editAvatarUrl.trim(),
           coverPhotoUrl: editCoverUrl.trim()
         });
@@ -379,6 +383,18 @@ const Profile = () => {
                   <circle cx="12" cy="10" r="3" />
                 </svg>
                 <span>{u.location}</span>
+              </div>
+            )}
+            {u.birthday && (
+              <div className="profile-meta-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="20 12 20 22 4 22 4 12" />
+                  <rect x="2" y="7" width="20" height="5" />
+                  <line x1="12" y1="22" x2="12" y2="7" />
+                  <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+                  <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+                </svg>
+                <span>Born {new Date(u.birthday).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
               </div>
             )}
             <div className="profile-meta-item">
@@ -516,6 +532,11 @@ const Profile = () => {
             <div className="form-group">
               <label className="form-label" htmlFor="edit-bio">Bio</label>
               <textarea id="edit-bio" className="form-input form-textarea" placeholder="Tell us about yourself..." maxLength="160" value={editBio} onChange={(e) => setEditBio(e.target.value)}></textarea>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="edit-birthday">Birthday</label>
+              <input type="date" id="edit-birthday" className="form-input" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} />
             </div>
 
             <div className="delete-account-section" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
