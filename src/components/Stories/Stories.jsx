@@ -45,6 +45,7 @@ const Stories = () => {
 
   const fileInputRef = useRef(null);
   const progressTimerRef = useRef(null);
+  const storiesRef = useRef(null);
 
   const loadStories = async () => {
     try {
@@ -62,6 +63,21 @@ const Stories = () => {
   useEffect(() => {
     loadStories();
   }, []);
+
+  useEffect(() => {
+    const el = storiesRef.current;
+    if (el) {
+      const handleWheel = (e) => {
+        if (e.deltaY === 0) return;
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      };
+      el.addEventListener('wheel', handleWheel, { passive: false });
+      return () => {
+        el.removeEventListener('wheel', handleWheel);
+      };
+    }
+  }, [loading]);
 
   // Autoplay Logic
   useEffect(() => {
@@ -294,7 +310,7 @@ const Stories = () => {
 
   return (
     <div>
-      <div className="stories-container">
+      <div className="stories-container" ref={storiesRef}>
         {/* Card 1: Create Story */}
         <div className="story-card create-story-card" onClick={() => setCreateModalOpen(true)}>
           <div className="create-story-top">

@@ -1820,13 +1820,28 @@ button, input, textarea {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding: 8px 4px 16px;
+  padding: 8px 4px 12px;
   margin-bottom: 20px;
-  scrollbar-width: none; /* Firefox */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--purple) transparent;
 }
 
 .stories-container::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  height: 6px;
+  display: block; /* Chrome, Safari, Opera */
+}
+
+.stories-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.stories-container::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3); /* Purple with transparency */
+  border-radius: 10px;
+}
+
+.stories-container::-webkit-scrollbar-thumb:hover {
+  background: var(--purple);
 }
 
 .story-card {
