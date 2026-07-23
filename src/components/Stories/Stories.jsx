@@ -293,9 +293,49 @@ const Stories = () => {
     }
   };
 
+  const handleLikeStory = async () => {
+    if (!activeStory) return;
+    
+    const originalGroups = [...storyGroups];
+    const isCurrentlyLiked = activeStory.likes && activeStory.likes.includes(currentUser?._id);
+    
+    // Optimistic Update
+    const updatedGroups = storyGroups.map((group, gIdx) => {
+      if (gIdx !== selectedGroupIndex) return group;
+      const updatedStories = group.stories.map((story, sIdx) => {
+        if (sIdx !== selectedStoryIndex) return story;
+        
+        let newLikes = story.likes || [];
+        if (isCurrentlyLiked) {
+          newLikes = newLikes.filter((id) => id !== currentUser?._id);
+        } else {
+          newLikes = [...newLikes, currentUser?._id];
+        }
+        return { ...story, likes: newLikes };
+      });
+      return { ...group, stories: updatedStories };
+    });
+    
+    setStoryGroups(updatedGroups);
+    
+    try {
+      if (isCurrentlyLiked) {
+        await storyService.unlikeStory(activeStory._id);
+      } else {
+        await storyService.likeStory(activeStory._id);
+      }
+    } catch (err) {
+      console.error('Failed to update story like:', err);
+      // Rollback on error
+      setStoryGroups(originalGroups);
+    }
+  };
+
   const activeGroup = storyGroups[selectedGroupIndex];
   const activeStory = activeGroup ? activeGroup.stories[selectedStoryIndex] : null;
   const isOwnActiveStory = activeStory && activeStory.user._id === currentUser?._id;
+  const isLiked = activeStory && activeStory.likes && activeStory.likes.includes(currentUser?._id);
+  const likeCount = activeStory && activeStory.likes ? activeStory.likes.length : 0;
 
   if (loading) {
     return (
@@ -582,6 +622,30 @@ const Stories = () => {
                   {activeStory.text}
                 </div>
               )}
+
+              {/* Heart/Like Button Overlay */}
+              <div className="story-view-like-container">
+                <button
+                  className={`story-like-btn ${isLiked ? 'liked' : ''}`}
+                  onClick={handleLikeStory}
+                  type="button"
+                  title={isLiked ? 'Unlike' : 'Like'}
+                >
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill={isLiked ? '#ef4444' : 'none'}
+                    stroke={isLiked ? '#ef4444' : '#ffffff'}
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                </button>
+                {likeCount > 0 && <span className="story-like-count">{likeCount}</span>}
+              </div>
             </div>
           </div>
         </Modal>

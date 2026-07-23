@@ -17,6 +17,12 @@ const storyService = {
   },
   deleteStory(id) {
     return api.delete(`/stories/${id}`);
+  },
+  likeStory(id) {
+    return api.post(`/stories/${id}/like`);
+  },
+  unlikeStory(id) {
+    return api.delete(`/stories/${id}/like`);
   }
 };
 

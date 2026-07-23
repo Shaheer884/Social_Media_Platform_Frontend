@@ -39,6 +39,7 @@ const NotificationsPage = () => {
             let actionText = '';
             if (n.type === 'like') actionText = 'liked your post';
             else if (n.type === 'comment') actionText = 'commented on your post';
+            else if (n.type === 'story-like') actionText = 'liked your story';
             else if (n.type === 'follow') {
               actionText = n.sender?.relationshipStatus === 'friends'
                 ? 'is now your friend!'
