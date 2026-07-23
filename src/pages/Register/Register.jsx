@@ -44,6 +44,16 @@ const Register = () => {
       return;
     }
 
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[\W_]/.test(password);
+
+    if (!hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
+      setError('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -144,6 +154,9 @@ const Register = () => {
                     required
                     minLength={6}
                   />
+                  <small style={{ display: 'block', marginTop: '4px', fontSize: '0.75rem', color: '#888' }}>
+                    Password must contain at least 6 characters, including 1 uppercase, 1 lowercase, 1 number, and 1 special character.
+                  </small>
                 </div>
 
                 <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} disabled={loading}>
