@@ -11,6 +11,7 @@ import Spinner from '../../components/Loader/Spinner';
 import Modal from '../../components/Modal/Modal';
 import ImageCropperModal from '../../components/Modal/ImageCropperModal';
 import userService from '../../services/userService';
+import Stories from '../../components/Stories/Stories';
 
 const Home = () => {
   const { currentUser } = useAuth();
@@ -192,6 +193,7 @@ const Home = () => {
 
   return (
     <Layout>
+      <Stories />
       {/* Create Post Creator Card */}
       <div className="card">
         <div className="creator-container">
