@@ -23,6 +23,9 @@ const storyService = {
   },
   unlikeStory(id) {
     return api.delete(`/stories/${id}/like`);
+  },
+  commentStory(id, text) {
+    return api.post(`/stories/${id}/comment`, { text });
   }
 };
 

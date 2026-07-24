@@ -13,6 +13,8 @@ const NotificationsPage = () => {
     await markRead(n._id);
     if (n.post) {
       navigate(`/post/${n.post._id || n.post}`);
+    } else if (n.story) {
+      navigate(`/`);
     } else if (n.sender) {
       navigate(`/profile/${n.sender.username}`);
     }
@@ -40,6 +42,7 @@ const NotificationsPage = () => {
             if (n.type === 'like') actionText = 'liked your post';
             else if (n.type === 'comment') actionText = 'commented on your post';
             else if (n.type === 'story-like') actionText = 'liked your story';
+            else if (n.type === 'story-comment') actionText = 'commented on your story';
             else if (n.type === 'follow') {
               actionText = n.sender?.relationshipStatus === 'friends'
                 ? 'is now your friend!'

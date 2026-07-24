@@ -2379,3 +2379,74 @@ textarea {
     transform: scale(1);
   }
 }
+
+/* Story Comments Overlay UI */
+.story-view-comment-container {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 120px; /* Leave space for the like button on the right */
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.story-comments-list {
+  max-height: 120px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* hide scrollbar */
+  scrollbar-width: none;
+}
+
+.story-comments-list::-webkit-scrollbar {
+  display: none;
+}
+
+.story-comment-bubble {
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #f8fafc;
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: 12px;
+  align-self: flex-start;
+  max-width: 100%;
+  word-break: break-word;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.story-comment-user {
+  font-weight: 700;
+  color: #d8b4fe; /* Light violet color */
+  margin-right: 6px;
+}
+
+.story-comment-input {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 20px;
+  padding: 10px 16px;
+  color: white;
+  font-size: 0.85rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  width: 100%;
+  outline: none;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.story-comment-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.story-comment-input:focus {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.45);
+}

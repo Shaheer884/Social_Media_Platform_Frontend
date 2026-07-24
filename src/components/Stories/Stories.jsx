@@ -43,6 +43,10 @@ const Stories = () => {
   const [editGradient, setEditGradient] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
+  // Commenting States
+  const [commentInputFocused, setCommentInputFocused] = useState(false);
+  const [storyCommentText, setStoryCommentText] = useState('');
+
   const fileInputRef = useRef(null);
   const progressTimerRef = useRef(null);
   const storiesRef = useRef(null);
@@ -81,7 +85,7 @@ const Stories = () => {
 
   // Autoplay Logic
   useEffect(() => {
-    if (!viewerOpen || editModeOpen) {
+    if (!viewerOpen || editModeOpen || commentInputFocused) {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
       return;
     }
@@ -106,7 +110,7 @@ const Stories = () => {
     return () => {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
     };
-  }, [viewerOpen, selectedGroupIndex, selectedStoryIndex, editModeOpen]);
+  }, [viewerOpen, selectedGroupIndex, selectedStoryIndex, editModeOpen, commentInputFocused]);
 
   const handleNextStory = () => {
     const currentGroup = storyGroups[selectedGroupIndex];
@@ -330,6 +334,38 @@ const Stories = () => {
       setStoryGroups(originalGroups);
     }
   };
+
+  const handleCommentSubmit = async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = storyCommentText.trim();
+      if (!val || !activeStory) return;
+
+      try {
+        setStoryCommentText('');
+        const res = await storyService.commentStory(activeStory._id, val);
+        if (res.success) {
+          const updatedGroups = storyGroups.map((group, gIdx) => {
+            if (gIdx !== selectedGroupIndex) return group;
+            const updatedStories = group.stories.map((story, sIdx) => {
+              if (sIdx !== selectedStoryIndex) return story;
+              const currentComments = story.comments || [];
+              return { ...story, comments: [...currentComments, res.comment] };
+            });
+            return { ...group, stories: updatedStories };
+          });
+          setStoryGroups(updatedGroups);
+        }
+      } catch (err) {
+        showAlert('Could not post comment', 'Error');
+      }
+    }
+  };
+
+  useEffect(() => {
+    setStoryCommentText('');
+    setCommentInputFocused(false);
+  }, [selectedStoryIndex, selectedGroupIndex, viewerOpen]);
 
   const activeGroup = storyGroups[selectedGroupIndex];
   const activeStory = activeGroup ? activeGroup.stories[selectedStoryIndex] : null;
@@ -622,6 +658,29 @@ const Stories = () => {
                   {activeStory.text}
                 </div>
               )}
+
+              {/* Comment Overlay (opposite to Like Button) */}
+              <div className="story-view-comment-container">
+                <div className="story-comments-list">
+                  {activeStory.comments && activeStory.comments.map((c) => (
+                    <div key={c._id || c.createdAt} className="story-comment-bubble">
+                      <span className="story-comment-user">{c.user?.fullName || 'User'}:</span>
+                      {c.text}
+                    </div>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  placeholder="Reply to story..."
+                  value={storyCommentText}
+                  onChange={(e) => setStoryCommentText(e.target.value)}
+                  onKeyDown={handleCommentSubmit}
+                  onFocus={() => setCommentInputFocused(true)}
+                  onBlur={() => setCommentInputFocused(false)}
+                  className="story-comment-input"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
 
               {/* Heart/Like Button Overlay */}
               <div className="story-view-like-container">
