@@ -97,16 +97,21 @@ const Home = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        showAlert('Please select a valid image file', 'Invalid File');
-        return;
+      if (file.type.startsWith('video/')) {
+        setChosenFile(file);
+        setChosenUrl('');
+        const previewUrl = URL.createObjectURL(file);
+        setImagePreview(previewUrl);
+      } else if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setCropperSrc(ev.target.result);
+          setCropperOpen(true);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        showAlert('Please select a valid image or video file', 'Invalid File');
       }
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setCropperSrc(ev.target.result);
-        setCropperOpen(true);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -207,29 +212,37 @@ const Home = () => {
               maxLength={280}
             />
 
-            {imagePreview && (
+             {imagePreview && (
               <div className="image-preview-wrapper" style={{ display: 'block' }}>
                 <button className="remove-preview-btn" onClick={clearSelectedMedia} type="button">&times;</button>
-                <img src={imagePreview} alt="Post Upload Preview" />
+                {chosenFile && chosenFile.type.startsWith('video/') ? (
+                  <video
+                    src={imagePreview}
+                    controls
+                    style={{ width: '100%', maxHeight: '300px', borderRadius: '8px', objectFit: 'contain' }}
+                  />
+                ) : (
+                  <img src={imagePreview} alt="Post Upload Preview" />
+                )}
               </div>
             )}
 
             <div className="creator-actions">
               <div className="creator-buttons">
                 {/* File Upload Trigger */}
-                <button className="icon-label-btn" type="button" onClick={() => fileInputRef.current.click()} title="Add Image">
+                <button className="icon-label-btn" type="button" onClick={() => fileInputRef.current.click()} title="Add Photo/Video">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                     <circle cx="8.5" cy="8.5" r="1.5" />
                     <polyline points="21 15 16 10 5 21" />
                   </svg>
-                  <span>Photo</span>
+                  <span>Photo/Video</span>
                 </button>
                 <input
                   type="file"
                   ref={fileInputRef}
                   className="hidden-file-input"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   onChange={handleFileChange}
                 />
 

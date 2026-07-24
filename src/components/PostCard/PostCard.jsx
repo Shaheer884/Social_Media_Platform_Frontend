@@ -166,9 +166,18 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
         <div className="post-text" style={isDetailPage ? { fontSize: '1.1rem', lineHeight: '1.6' } : {}}>
           {post.content}
         </div>
-        {post.imageUrl && (
+        {(post.mediaUrl || post.imageUrl) && (
           <div className="post-image-wrapper" style={isDetailPage ? { marginTop: '16px' } : {}}>
-            <img src={getUploadUrl(post.imageUrl)} alt="Post media" loading="lazy" />
+            {post.mediaType === 'video' ? (
+              <video
+                src={getUploadUrl(post.mediaUrl || post.imageUrl)}
+                controls
+                onClick={(e) => e.stopPropagation()}
+                style={{ width: '100%', maxHeight: '450px', objectFit: 'contain', borderRadius: '8px', backgroundColor: '#000' }}
+              />
+            ) : (
+              <img src={getUploadUrl(post.mediaUrl || post.imageUrl)} alt="Post media" loading="lazy" />
+            )}
           </div>
         )}
       </div>
