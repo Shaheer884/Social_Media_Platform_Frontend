@@ -12,7 +12,7 @@ import { getUploadUrl } from '../../utils/mediaHelper';
 const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { removePost, toggleLike, updatePostCommentCount } = usePosts();
+  const { removePost, toggleLike, toggleSave, updatePostCommentCount } = usePosts();
   const { showAlert, showConfirm } = useDialog();
 
   const [optionsOpen, setOptionsOpen] = useState(false);
@@ -59,6 +59,11 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
       return;
     }
     toggleLike(post._id, post.isLiked);
+  };
+
+  const handleSaveClick = (e) => {
+    e.stopPropagation();
+    toggleSave(post._id, post.isSaved);
   };
 
   const handlePostDelete = async (e) => {
@@ -183,6 +188,24 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
           </svg>
           <span id={isDetailPage ? 'detail-comment-count' : undefined}>{post.commentCount}</span>
+        </button>
+
+        <button
+          className={`post-action-btn save-btn ${post.isSaved ? 'saved' : ''}`}
+          onClick={handleSaveClick}
+          style={{ marginLeft: 'auto', padding: '4px' }}
+          title={post.isSaved ? 'Unsave Post' : 'Save Post'}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          </svg>
         </button>
       </div>
 

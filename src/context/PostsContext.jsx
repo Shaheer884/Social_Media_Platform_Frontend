@@ -66,6 +66,28 @@ export const PostsProvider = ({ children }) => {
     }
   };
 
+  const toggleSave = async (postId, isSaved) => {
+    try {
+      if (isSaved) {
+        await postService.unsavePost(postId);
+        setPosts((prev) =>
+          prev.map((p) =>
+            p._id === postId ? { ...p, isSaved: false } : p
+          )
+        );
+      } else {
+        await postService.savePost(postId);
+        setPosts((prev) =>
+          prev.map((p) =>
+            p._id === postId ? { ...p, isSaved: true } : p
+          )
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const updatePostCommentCount = (postId, diff) => {
     setPosts((prev) =>
       prev.map((p) =>
@@ -86,6 +108,7 @@ export const PostsProvider = ({ children }) => {
         publishPost,
         removePost,
         toggleLike,
+        toggleSave,
         updatePostCommentCount
       }}
     >

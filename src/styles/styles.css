@@ -665,6 +665,15 @@ textarea {
   animation: heartPulse 0.4s ease;
 }
 
+.post-action-btn.saved {
+  color: var(--purple);
+}
+
+.post-action-btn.saved svg {
+  fill: var(--purple);
+  stroke: var(--purple);
+}
+
 /* Comment Thread Under Post */
 .comment-thread-section {
   padding-top: 12px;

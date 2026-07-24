@@ -25,6 +25,15 @@ const postService = {
   },
   getUserPosts(userId) {
     return api.get(`/posts/user/${userId}`);
+  },
+  savePost(id) {
+    return api.post(`/posts/${id}/save`);
+  },
+  unsavePost(id) {
+    return api.delete(`/posts/${id}/save`);
+  },
+  getSavedPosts() {
+    return api.get(`/posts/saved`);
   }
 };
 
