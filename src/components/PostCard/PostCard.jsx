@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { usePosts } from '../../context/PostsContext';
@@ -21,8 +21,43 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState('');
 
+  const videoRef = useRef(null);
+
   const isOwnPost = post.author?._id === currentUser?._id;
   const postAvatar = getUploadUrl(post.author?.profilePicture || '/uploads/default-avatar.png');
+
+  // Manage video playback: play only one video at a time, and pause when scrolled out of view
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handlePlay = () => {
+      const allVideos = document.querySelectorAll('video');
+      allVideos.forEach((v) => {
+        if (v !== video) {
+          v.pause();
+        }
+      });
+    };
+
+    video.addEventListener('play', handlePlay);
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          video.pause();
+        }
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(video);
+
+    return () => {
+      video.removeEventListener('play', handlePlay);
+      observer.unobserve(video);
+    };
+  }, []);
 
   // Toggle comments list
   const handleCommentBtnClick = () => {
@@ -170,6 +205,7 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
           <div className="post-image-wrapper" style={isDetailPage ? { marginTop: '16px' } : {}}>
             {post.mediaType === 'video' ? (
               <video
+                ref={videoRef}
                 src={getUploadUrl(post.mediaUrl || post.imageUrl)}
                 controls
                 onClick={(e) => e.stopPropagation()}
