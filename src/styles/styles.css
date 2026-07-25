@@ -821,6 +821,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
 }
 
 .suggested-user-item {
@@ -828,6 +829,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  width: 100%;
 }
 
 .suggested-user-info {
@@ -835,6 +837,8 @@ textarea {
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  flex: 1;
+  min-width: 0;
 }
 
 .suggested-user-avatar {
