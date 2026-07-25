@@ -56,6 +56,7 @@ export const AuthProvider = ({ children }) => {
     setCurrentUser((prev) => {
       const updated = {
         ...prev,
+        username: updatedData.username,
         fullName: updatedData.fullName,
         profilePicture: updatedData.profilePicture,
         coverPhoto: updatedData.coverPhoto

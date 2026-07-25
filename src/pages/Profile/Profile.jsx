@@ -34,6 +34,7 @@ const Profile = () => {
   // Edit Modal States
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editFullName, setEditFullName] = useState('');
+  const [editUsername, setEditUsername] = useState('');
   const [editLocation, setEditLocation] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editBirthday, setEditBirthday] = useState('');
@@ -63,6 +64,7 @@ const Profile = () => {
         setProfileUser(res.data);
         // Pre-fill edit fields
         setEditFullName(res.data.fullName);
+        setEditUsername(res.data.username || '');
         setEditLocation(res.data.location || '');
         setEditBio(res.data.bio || '');
         setEditBirthday(res.data.birthday ? res.data.birthday.split('T')[0] : '');
@@ -243,6 +245,7 @@ const Profile = () => {
       if (chosenAvatarFile || chosenCoverFile) {
         const formData = new FormData();
         formData.append('fullName', editFullName.trim());
+        formData.append('username', editUsername.trim());
         formData.append('location', editLocation.trim());
         formData.append('bio', editBio.trim());
         formData.append('birthday', editBirthday);
@@ -255,6 +258,7 @@ const Profile = () => {
       } else {
         res = await userService.updateProfile(currentUser._id, {
           fullName: editFullName.trim(),
+          username: editUsername.trim(),
           location: editLocation.trim(),
           bio: editBio.trim(),
           birthday: editBirthday,
@@ -266,6 +270,8 @@ const Profile = () => {
       if (res.success) {
         // Sync context
         updateLocalUser(res.data);
+        const oldUsername = profileUser?.username;
+        const newUsername = res.data.username;
         // Refresh local details
         await fetchProfile();
         setEditModalOpen(false);
@@ -273,6 +279,12 @@ const Profile = () => {
         if (searchParams.get('edit') === 'true') {
           navigate(location.pathname, { replace: true });
         }
+        // If username changed, redirect to the new username URL
+        if (newUsername && newUsername.toLowerCase() !== oldUsername?.toLowerCase()) {
+          navigate(`/profile/${newUsername}`, { replace: true });
+        }
+        // Show success popup
+        showAlert('Profile updated successfully!', 'Success');
       }
     } catch (err) {
       showAlert(err.message || 'Error updating profile', 'Error');
@@ -522,6 +534,11 @@ const Profile = () => {
             <div className="form-group" style={{ marginTop: '16px' }}>
               <label className="form-label" htmlFor="edit-fullName">Full Name</label>
               <input type="text" id="edit-fullName" className="form-input" value={editFullName} onChange={(e) => setEditFullName(e.target.value)} required />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="edit-username">Username</label>
+              <input type="text" id="edit-username" className="form-input" placeholder="Choose a username" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} required minLength={3} />
             </div>
 
             <div className="form-group">
