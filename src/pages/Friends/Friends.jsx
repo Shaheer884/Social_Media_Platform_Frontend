@@ -104,7 +104,7 @@ const Friends = () => {
 
   // Filter lists
   const pendingRequests = followers.filter(
-    (u) => u.relationshipStatus === 'follow' || !u.relationshipStatus || u.relationshipStatus === 'none'
+    (u) => u.relationshipStatus === 'follow' || u.relationshipStatus === 'follow_back' || !u.relationshipStatus || u.relationshipStatus === 'none'
   );
 
   const mutualFriends = followers.filter((u) => u.relationshipStatus === 'friends');

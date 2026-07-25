@@ -863,12 +863,17 @@ textarea {
   background: var(--primary-gradient);
   color: white;
   border: none;
-  padding: 4px 12px;
+  padding: 6px 0;
+  width: 96px; /* Consistent fixed width for all buttons */
   border-radius: 99px;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-align: center;
+  display: inline-block;
 }
 
 .follow-btn-sm.following {
