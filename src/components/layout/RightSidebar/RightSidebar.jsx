@@ -86,6 +86,10 @@ const RightSidebar = ({ onFollowChange }) => {
                   <button className="follow-btn-sm following" disabled>
                     Following
                   </button>
+                ) : u.relationshipStatus === 'follow_back' ? (
+                  <button className="follow-btn-sm follow-back" onClick={(e) => handleFollowClick(e, u._id)}>
+                    Follow Back
+                  </button>
                 ) : (
                   <button className="follow-btn-sm" onClick={(e) => handleFollowClick(e, u._id)}>
                     Follow

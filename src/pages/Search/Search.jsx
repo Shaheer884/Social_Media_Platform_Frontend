@@ -80,6 +80,9 @@ const Search = () => {
               } else if (user.relationshipStatus === 'following') {
                 btnClass = 'follow-btn-sm following modal-follow-btn';
                 btnText = 'Following';
+              } else if (user.relationshipStatus === 'follow_back') {
+                btnClass = 'follow-btn-sm follow-back modal-follow-btn';
+                btnText = 'Follow Back';
               }
 
               return (

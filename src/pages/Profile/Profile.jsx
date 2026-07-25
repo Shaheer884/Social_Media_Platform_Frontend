@@ -343,7 +343,6 @@ const Profile = () => {
   const avatar = getUploadUrl(u.profilePicture || '/uploads/default-avatar.png');
   const joinDate = new Date(u.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
-  // Friendship buttons logic
   let followBtnClass = 'btn btn-primary';
   let followBtnText = 'Follow';
   if (u.relationshipStatus === 'friends') {
@@ -352,6 +351,9 @@ const Profile = () => {
   } else if (u.relationshipStatus === 'following') {
     followBtnClass = 'btn btn-secondary following';
     followBtnText = 'Following';
+  } else if (u.relationshipStatus === 'follow_back') {
+    followBtnClass = 'btn btn-primary follow-back';
+    followBtnText = 'Follow Back';
   }
 
   return (
@@ -484,6 +486,9 @@ const Profile = () => {
               } else if (user.relationshipStatus === 'following') {
                 followBtnSmClass = 'follow-btn-sm following modal-follow-btn';
                 followBtnSmText = 'Following';
+              } else if (user.relationshipStatus === 'follow_back') {
+                followBtnSmClass = 'follow-btn-sm follow-back modal-follow-btn';
+                followBtnSmText = 'Follow Back';
               }
 
               return (
