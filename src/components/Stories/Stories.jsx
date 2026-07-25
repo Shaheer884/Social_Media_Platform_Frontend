@@ -36,6 +36,7 @@ const Stories = () => {
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [storyDuration, setStoryDuration] = useState(5000);
 
   // Edit Story States
   const [editModeOpen, setEditModeOpen] = useState(false);
@@ -50,6 +51,7 @@ const Stories = () => {
   const fileInputRef = useRef(null);
   const progressTimerRef = useRef(null);
   const storiesRef = useRef(null);
+  const viewerVideoRef = useRef(null);
 
   const loadStories = async () => {
     try {
@@ -83,6 +85,24 @@ const Stories = () => {
     }
   }, [loading]);
 
+  // Reset story duration on story change
+  useEffect(() => {
+    setStoryDuration(5000);
+  }, [selectedStoryIndex, selectedGroupIndex]);
+
+  // Sync play/pause for video stories in viewer
+  useEffect(() => {
+    const video = viewerVideoRef.current;
+    if (!video) return;
+
+    const shouldPlay = viewerOpen && !editModeOpen && !commentInputFocused;
+    if (shouldPlay) {
+      video.play().catch((err) => console.log('Story video autoplay blocked:', err));
+    } else {
+      video.pause();
+    }
+  }, [viewerOpen, editModeOpen, commentInputFocused, selectedStoryIndex, selectedGroupIndex]);
+
   // Autoplay Logic
   useEffect(() => {
     if (!viewerOpen || editModeOpen || commentInputFocused) {
@@ -91,7 +111,7 @@ const Stories = () => {
     }
 
     setProgress(0);
-    const duration = 5000; // 5 seconds per story
+    const duration = storyDuration;
     const step = 50; // Update progress every 50ms
     const totalSteps = duration / step;
     let currentStep = 0;
@@ -110,7 +130,14 @@ const Stories = () => {
     return () => {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
     };
-  }, [viewerOpen, selectedGroupIndex, selectedStoryIndex, editModeOpen, commentInputFocused]);
+  }, [viewerOpen, selectedGroupIndex, selectedStoryIndex, editModeOpen, commentInputFocused, storyDuration]);
+
+  const handleVideoLoadedMetadata = (e) => {
+    const durationSec = e.target.duration;
+    if (durationSec && !isNaN(durationSec)) {
+      setStoryDuration(durationSec * 1000);
+    }
+  };
 
   const handleNextStory = () => {
     const currentGroup = storyGroups[selectedGroupIndex];
@@ -155,17 +182,50 @@ const Stories = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        showAlert('Please select a valid image file', 'Invalid File');
-        return;
+      if (file.type.startsWith('video/')) {
+        const videoElement = document.createElement('video');
+        const objectUrl = URL.createObjectURL(file);
+        videoElement.src = objectUrl;
+        videoElement.onloadedmetadata = () => {
+          if (videoElement.duration > 60) {
+            showAlert('Video duration cannot exceed 60 seconds', 'Invalid Video Length');
+            URL.revokeObjectURL(objectUrl);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+          }
+          // Clean up previous blob if any
+          if (imagePreview && imagePreview.startsWith('blob:')) {
+            URL.revokeObjectURL(imagePreview);
+          }
+          setChosenFile(file);
+          setImagePreview(objectUrl);
+        };
+      } else if (file.type.startsWith('image/')) {
+        // Clean up previous blob if any
+        if (imagePreview && imagePreview.startsWith('blob:')) {
+          URL.revokeObjectURL(imagePreview);
+        }
+        setChosenFile(file);
+        const reader = new FileReader();
+        reader.onload = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        showAlert('Please select a valid image or video file', 'Invalid File');
       }
-      setChosenFile(file);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
     }
+  };
+
+  const closeCreateModal = () => {
+    setCreateModalOpen(false);
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setChosenFile(null);
+    setImagePreview('');
+    setStoryText('');
+    setChosenGradient(GRADIENTS[0]);
   };
 
   const triggerFileSelect = () => {
@@ -175,7 +235,7 @@ const Stories = () => {
   const handlePublishStory = async (e) => {
     e.preventDefault();
     if (storyCreatorTab === 'image' && !chosenFile) {
-      showAlert('Please choose an image for your story', 'Error');
+      showAlert('Please choose an image or video for your story', 'Error');
       return;
     }
     if (storyCreatorTab === 'text' && !storyText.trim()) {
@@ -203,6 +263,9 @@ const Stories = () => {
         setCreateModalOpen(false);
         // Reset fields
         setStoryText('');
+        if (imagePreview && imagePreview.startsWith('blob:')) {
+          URL.revokeObjectURL(imagePreview);
+        }
         setChosenFile(null);
         setImagePreview('');
         setChosenGradient(GRADIENTS[0]);
@@ -406,7 +469,6 @@ const Stories = () => {
         {storyGroups.map((group, idx) => {
           // If own story is first, we already render the creation card, but we want to show the active preview bubble
           const lastStory = group.stories[group.stories.length - 1];
-          const hasImage = !!lastStory.imageUrl;
 
           return (
             <div key={group.user._id} className="story-card" onClick={() => openViewer(idx)}>
@@ -419,7 +481,15 @@ const Stories = () => {
                 />
               </div>
 
-              {hasImage ? (
+              {lastStory.mediaType === 'video' ? (
+                <video
+                  src={getUploadUrl(lastStory.imageUrl)}
+                  className="story-card-bg"
+                  muted
+                  playsInline
+                  style={{ objectFit: 'cover' }}
+                />
+              ) : lastStory.imageUrl ? (
                 <img
                   src={getUploadUrl(lastStory.imageUrl)}
                   className="story-card-bg"
@@ -440,13 +510,13 @@ const Stories = () => {
       </div>
 
       {/* Creation Modal */}
-      <Modal isOpen={createModalOpen} onClose={() => setCreateModalOpen(false)} title="Create Story">
+      <Modal isOpen={createModalOpen} onClose={closeCreateModal} title="Create Story">
         <div className="story-creator-option-tabs">
           <div
             className={`story-creator-tab ${storyCreatorTab === 'image' ? 'active' : ''}`}
             onClick={() => setStoryCreatorTab('image')}
           >
-            Image Story
+            Photo/Video Story
           </div>
           <div
             className={`story-creator-tab ${storyCreatorTab === 'text' ? 'active' : ''}`}
@@ -462,10 +532,14 @@ const Stories = () => {
               <div style={{ textAlign: 'center', marginBottom: '16px' }}>
                 {imagePreview ? (
                   <div style={{ position: 'relative', width: '150px', height: '225px', borderRadius: '12px', overflow: 'hidden', margin: '0 auto 12px', border: '1px solid var(--border-color)' }}>
-                    <img src={imagePreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Selected preview" />
+                    {chosenFile && chosenFile.type.startsWith('video/') ? (
+                      <video src={imagePreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} controls />
+                    ) : (
+                      <img src={imagePreview} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Selected preview" />
+                    )}
                     <button
                       type="button"
-                      onClick={() => { setChosenFile(null); setImagePreview(''); }}
+                      onClick={() => { if (imagePreview && imagePreview.startsWith('blob:')) { URL.revokeObjectURL(imagePreview); } setChosenFile(null); setImagePreview(''); }}
                       style={{ position: 'absolute', top: '8px', right: '8px', backgroundColor: 'rgba(0,0,0,0.6)', border: 'none', color: '#fff', borderRadius: '50%', width: '24px', height: '24px', cursor: 'pointer', fontSize: '0.8rem' }}
                     >
                       &times;
@@ -481,14 +555,14 @@ const Stories = () => {
                       <circle cx="8.5" cy="8.5" r="1.5" />
                       <polyline points="21 15 16 10 5 21" />
                     </svg>
-                    <span>Choose an image</span>
+                    <span>Choose an image or video</span>
                   </div>
                 )}
                 <input
                   type="file"
                   ref={fileInputRef}
                   className="hidden-file-input"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   onChange={handleFileChange}
                 />
               </div>
@@ -648,7 +722,18 @@ const Stories = () => {
             <div className="story-view-body">
               {activeStory.imageUrl ? (
                 <>
-                  <img src={getUploadUrl(activeStory.imageUrl)} className="story-view-bg-image" alt="Story view" />
+                  {activeStory.mediaType === 'video' ? (
+                    <video
+                      ref={viewerVideoRef}
+                      src={getUploadUrl(activeStory.imageUrl)}
+                      className="story-view-bg-image"
+                      style={{ objectFit: 'contain', backgroundColor: '#000' }}
+                      playsInline
+                      onLoadedMetadata={handleVideoLoadedMetadata}
+                    />
+                  ) : (
+                    <img src={getUploadUrl(activeStory.imageUrl)} className="story-view-bg-image" alt="Story view" />
+                  )}
                   {activeStory.text && (
                     <div className="story-view-text-overlay">{activeStory.text}</div>
                   )}
