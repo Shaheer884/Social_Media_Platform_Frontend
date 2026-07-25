@@ -1110,6 +1110,42 @@ textarea {
   min-height: 80px;
 }
 
+/* Password Visibility Toggle Styles */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.password-input-wrapper .form-input {
+  padding-right: 44px; /* Ensure input text doesn't overlap the eye icon */
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  font-size: 1.1rem;
+  transition: color 0.2s ease, transform 0.1s ease;
+  user-select: none;
+}
+
+.password-toggle-btn:hover {
+  color: var(--text-main);
+}
+
+.password-toggle-btn:active {
+  transform: scale(0.95);
+}
+
 /* Auth Pages Styling */
 .auth-page {
   display: flex;
