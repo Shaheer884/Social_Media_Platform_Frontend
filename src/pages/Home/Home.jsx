@@ -21,17 +21,15 @@ const Home = () => {
 
   const [postText, setPostText] = useState('');
   const [chosenFile, setChosenFile] = useState(null);
-  const [chosenUrl, setChosenUrl] = useState('');
   const [imagePreview, setImagePreview] = useState('');
   const [publishLoading, setPublishLoading] = useState(false);
-  const [urlModalOpen, setUrlModalOpen] = useState(false);
-  const [urlInput, setUrlInput] = useState('');
   const [cropperOpen, setCropperOpen] = useState(false);
   const [cropperSrc, setCropperSrc] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   // Initial feed fetching
   useEffect(() => {
@@ -117,11 +115,13 @@ const Home = () => {
 
   const handleCropComplete = (croppedFile, previewUrl) => {
     setChosenFile(croppedFile);
-    setChosenUrl('');
     setImagePreview(previewUrl);
     setCropperOpen(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
     }
   };
 
@@ -130,37 +130,24 @@ const Home = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
-
-  const handleUrlModalOpen = () => {
-    setUrlInput(chosenUrl);
-    setUrlModalOpen(true);
-  };
-
-  const handleUrlModalSave = () => {
-    let url = urlInput.trim();
-    if (url) {
-      if (!/^https?:\/\//i.test(url)) {
-        url = 'https://' + url;
-      }
-      setChosenUrl(url);
-      setChosenFile(null); // Reset file
-      setImagePreview(url);
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
     }
-    setUrlModalOpen(false);
   };
 
   const clearSelectedMedia = () => {
     setChosenFile(null);
-    setChosenUrl('');
     setImagePreview('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
   };
 
   const handlePublish = async () => {
-    if (!postText.trim() && !chosenFile && !chosenUrl) return;
+    if (!postText.trim() && !chosenFile) return;
 
     setPublishLoading(true);
     try {
@@ -172,8 +159,7 @@ const Home = () => {
         res = await publishPost(formData);
       } else {
         res = await publishPost({
-          content: postText.trim(),
-          imageUrlUrl: chosenUrl
+          content: postText.trim()
         });
       }
 
@@ -194,7 +180,7 @@ const Home = () => {
     }
   };
 
-  const canPublish = (postText.trim().length > 0 || chosenFile !== null || chosenUrl !== '') && postText.length <= 280;
+  const canPublish = (postText.trim().length > 0 || chosenFile !== null) && postText.length <= 280;
 
   return (
     <Layout>
@@ -246,14 +232,22 @@ const Home = () => {
                   onChange={handleFileChange}
                 />
 
-                {/* Link Photo Trigger */}
-                <button className="icon-label-btn" type="button" onClick={handleUrlModalOpen} title="Add Image URL">
+                {/* Camera Trigger */}
+                <button className="icon-label-btn" type="button" onClick={() => cameraInputRef.current.click()} title="Open Camera">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                    <circle cx="12" cy="13" r="4" />
                   </svg>
-                  <span>Link Photo</span>
+                  <span>Camera</span>
                 </button>
+                <input
+                  type="file"
+                  ref={cameraInputRef}
+                  className="hidden-file-input"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleFileChange}
+                />
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -338,26 +332,7 @@ const Home = () => {
         </div>
       )}
 
-      {/* Link Image URL Modal */}
-      <Modal isOpen={urlModalOpen} onClose={() => setUrlModalOpen(false)} title="Add Image URL">
-        <div className="modal-body">
-          <div className="form-group">
-            <label className="form-label" htmlFor="dialog-image-url">Image web link</label>
-            <input
-              type="url"
-              id="dialog-image-url"
-              className="form-input"
-              placeholder="https://example.com/image.jpg"
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-            />
-          </div>
-        </div>
-        <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={() => setUrlModalOpen(false)}>Cancel</button>
-          <button className="btn btn-primary" onClick={handleUrlModalSave}>Add Image</button>
-        </div>
-      </Modal>
+
 
       <ImageCropperModal
         isOpen={cropperOpen}
