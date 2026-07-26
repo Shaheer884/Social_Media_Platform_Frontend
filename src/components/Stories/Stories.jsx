@@ -52,6 +52,8 @@ const Stories = () => {
   const progressTimerRef = useRef(null);
   const storiesRef = useRef(null);
   const viewerVideoRef = useRef(null);
+  const commentsListRef = useRef(null);
+  const lastActiveStoryIdRef = useRef(null);
 
   const loadStories = async () => {
     try {
@@ -102,6 +104,58 @@ const Stories = () => {
       video.pause();
     }
   }, [viewerOpen, editModeOpen, commentInputFocused, selectedStoryIndex, selectedGroupIndex]);
+
+  // Auto-scroll comments in story viewer (TikTok style)
+  useEffect(() => {
+    const container = commentsListRef.current;
+    if (!container || !viewerOpen || !activeStory) return;
+
+    const isNewStory = lastActiveStoryIdRef.current !== activeStory._id;
+    lastActiveStoryIdRef.current = activeStory._id;
+
+    if (isNewStory) {
+      // Reset scroll to top
+      container.scrollTop = 0;
+
+      // Duration capped just below active duration
+      const duration = Math.max(3000, storyDuration - 800);
+      let animationFrameId;
+      let delayTimeout;
+
+      delayTimeout = setTimeout(() => {
+        const scrollHeight = container.scrollHeight;
+        const clientHeight = container.clientHeight;
+        const maxScroll = scrollHeight - clientHeight;
+
+        if (maxScroll <= 0) return;
+
+        const startTime = performance.now();
+
+        const animateScroll = (now) => {
+          const elapsed = now - startTime;
+          const progressPercent = Math.min(elapsed / duration, 1);
+
+          container.scrollTop = progressPercent * maxScroll;
+
+          if (progressPercent < 1) {
+            animationFrameId = requestAnimationFrame(animateScroll);
+          }
+        };
+
+        animationFrameId = requestAnimationFrame(animateScroll);
+      }, 500);
+
+      return () => {
+        clearTimeout(delayTimeout);
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      };
+    } else {
+      // User commented: scroll directly to the bottom
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [selectedStoryIndex, selectedGroupIndex, viewerOpen, activeStory, storyDuration]);
 
   // Autoplay Logic
   useEffect(() => {
@@ -746,7 +800,7 @@ const Stories = () => {
 
               {/* Comment Overlay (opposite to Like Button) */}
               <div className="story-view-comment-container">
-                <div className="story-comments-list" key={activeStory._id}>
+                <div className="story-comments-list" key={activeStory._id} ref={commentsListRef}>
                   {activeStory.comments && activeStory.comments.map((c, index) => (
                     <div
                       key={c._id || c.createdAt || index}
