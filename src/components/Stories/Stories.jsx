@@ -55,55 +55,11 @@ const Stories = () => {
   const commentsListRef = useRef(null);
   const lastActiveStoryIdRef = useRef(null);
 
-  const loadStories = async () => {
-    try {
-      const res = await storyService.getStories();
-      if (res.success) {
-        setStoryGroups(res.data);
-      }
-    } catch (err) {
-      console.error('Failed to load stories:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadStories();
-  }, []);
-
-  useEffect(() => {
-    const el = storiesRef.current;
-    if (el) {
-      const handleWheel = (e) => {
-        if (e.deltaY === 0) return;
-        e.preventDefault();
-        el.scrollLeft += e.deltaY;
-      };
-      el.addEventListener('wheel', handleWheel, { passive: false });
-      return () => {
-        el.removeEventListener('wheel', handleWheel);
-      };
-    }
-  }, [loading]);
-
-  // Reset story duration on story change
-  useEffect(() => {
-    setStoryDuration(5000);
-  }, [selectedStoryIndex, selectedGroupIndex]);
-
-  // Sync play/pause for video stories in viewer
-  useEffect(() => {
-    const video = viewerVideoRef.current;
-    if (!video) return;
-
-    const shouldPlay = viewerOpen && !editModeOpen && !commentInputFocused;
-    if (shouldPlay) {
-      video.play().catch((err) => console.log('Story video autoplay blocked:', err));
-    } else {
-      video.pause();
-    }
-  }, [viewerOpen, editModeOpen, commentInputFocused, selectedStoryIndex, selectedGroupIndex]);
+  const activeGroup = storyGroups[selectedGroupIndex];
+  const activeStory = activeGroup ? activeGroup.stories[selectedStoryIndex] : null;
+  const isOwnActiveStory = activeStory && activeStory.user._id === currentUser?._id;
+  const isLiked = activeStory && activeStory.likes && activeStory.likes.includes(currentUser?._id);
+  const likeCount = activeStory && activeStory.likes ? activeStory.likes.length : 0;
 
   // Auto-scroll comments in story viewer (TikTok style)
   useEffect(() => {
@@ -156,6 +112,56 @@ const Stories = () => {
       container.scrollTop = container.scrollHeight;
     }
   }, [selectedStoryIndex, selectedGroupIndex, viewerOpen, activeStory, storyDuration]);
+
+  const loadStories = async () => {
+    try {
+      const res = await storyService.getStories();
+      if (res.success) {
+        setStoryGroups(res.data);
+      }
+    } catch (err) {
+      console.error('Failed to load stories:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStories();
+  }, []);
+
+  useEffect(() => {
+    const el = storiesRef.current;
+    if (el) {
+      const handleWheel = (e) => {
+        if (e.deltaY === 0) return;
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      };
+      el.addEventListener('wheel', handleWheel, { passive: false });
+      return () => {
+        el.removeEventListener('wheel', handleWheel);
+      };
+    }
+  }, [loading]);
+
+  // Reset story duration on story change
+  useEffect(() => {
+    setStoryDuration(5000);
+  }, [selectedStoryIndex, selectedGroupIndex]);
+
+  // Sync play/pause for video stories in viewer
+  useEffect(() => {
+    const video = viewerVideoRef.current;
+    if (!video) return;
+
+    const shouldPlay = viewerOpen && !editModeOpen && !commentInputFocused;
+    if (shouldPlay) {
+      video.play().catch((err) => console.log('Story video autoplay blocked:', err));
+    } else {
+      video.pause();
+    }
+  }, [viewerOpen, editModeOpen, commentInputFocused, selectedStoryIndex, selectedGroupIndex]);
 
   // Autoplay Logic
   useEffect(() => {
@@ -483,12 +489,6 @@ const Stories = () => {
     setStoryCommentText('');
     setCommentInputFocused(false);
   }, [selectedStoryIndex, selectedGroupIndex, viewerOpen]);
-
-  const activeGroup = storyGroups[selectedGroupIndex];
-  const activeStory = activeGroup ? activeGroup.stories[selectedStoryIndex] : null;
-  const isOwnActiveStory = activeStory && activeStory.user._id === currentUser?._id;
-  const isLiked = activeStory && activeStory.likes && activeStory.likes.includes(currentUser?._id);
-  const likeCount = activeStory && activeStory.likes ? activeStory.likes.length : 0;
 
   if (loading) {
     return (
