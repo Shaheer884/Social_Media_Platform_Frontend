@@ -97,7 +97,6 @@ const Home = () => {
     if (file) {
       if (file.type.startsWith('video/')) {
         setChosenFile(file);
-        setChosenUrl('');
         const previewUrl = URL.createObjectURL(file);
         setImagePreview(previewUrl);
       } else if (file.type.startsWith('image/')) {
