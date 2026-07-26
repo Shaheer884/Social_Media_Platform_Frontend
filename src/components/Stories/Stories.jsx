@@ -746,9 +746,13 @@ const Stories = () => {
 
               {/* Comment Overlay (opposite to Like Button) */}
               <div className="story-view-comment-container">
-                <div className="story-comments-list">
-                  {activeStory.comments && activeStory.comments.map((c) => (
-                    <div key={c._id || c.createdAt} className="story-comment-bubble">
+                <div className="story-comments-list" key={activeStory._id}>
+                  {activeStory.comments && activeStory.comments.map((c, index) => (
+                    <div
+                      key={c._id || c.createdAt || index}
+                      className="story-comment-bubble animate-comment-bubble"
+                      style={{ animationDelay: `${Math.min(index, 4) * 0.1}s` }}
+                    >
                       <span className="story-comment-user">{c.user?.fullName || 'User'}:</span>
                       {c.text}
                     </div>
