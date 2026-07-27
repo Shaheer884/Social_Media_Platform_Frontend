@@ -1566,8 +1566,37 @@ textarea {
 }
 
 .profile-edit-cover-preview-wrapper:hover .edit-overlay-btn,
-.profile-edit-avatar-preview-wrapper:hover .edit-overlay-btn {
+.profile-edit-avatar-preview-wrapper:hover .edit-overlay-btn,
+.edit-overlay-btn.menu-active {
   opacity: 1;
+}
+
+.photo-options-dropdown {
+  position: absolute;
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  width: 160px;
+  box-shadow: var(--shadow-lg);
+  padding: 6px 0;
+  z-index: 999;
+  display: none;
+  animation: scaleIn 0.15s ease;
+}
+
+.photo-options-dropdown.active {
+  display: block;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* Animations */

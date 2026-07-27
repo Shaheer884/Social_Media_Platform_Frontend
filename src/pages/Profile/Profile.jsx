@@ -54,6 +54,12 @@ const Profile = () => {
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
 
+  // Photo menu states & refs
+  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
+  const [coverMenuOpen, setCoverMenuOpen] = useState(false);
+  const avatarCameraInputRef = useRef(null);
+  const coverCameraInputRef = useRef(null);
+
   const isOwnProfile = profileUser?._id === currentUser?._id;
 
   const fetchProfile = async () => {
@@ -107,6 +113,23 @@ const Profile = () => {
       setEditModalOpen(true);
     }
   }, [searchParams, isOwnProfile]);
+
+  // Close dropdowns on document click and modal close
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      setAvatarMenuOpen(false);
+      setCoverMenuOpen(false);
+    };
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
+  }, []);
+
+  useEffect(() => {
+    if (!editModalOpen) {
+      setAvatarMenuOpen(false);
+      setCoverMenuOpen(false);
+    }
+  }, [editModalOpen]);
 
   const handleFollowToggle = async () => {
     if (!profileUser) return;
@@ -178,6 +201,66 @@ const Profile = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleAvatarIconClick = (e) => {
+    e.stopPropagation();
+    setAvatarMenuOpen(prev => !prev);
+    setCoverMenuOpen(false);
+  };
+
+  const handleCoverIconClick = (e) => {
+    e.stopPropagation();
+    setCoverMenuOpen(prev => !prev);
+    setAvatarMenuOpen(false);
+  };
+
+  const handleTakeAvatarClick = (e) => {
+    e.stopPropagation();
+    if (avatarCameraInputRef.current) {
+      avatarCameraInputRef.current.click();
+    }
+    setAvatarMenuOpen(false);
+  };
+
+  const handleSelectAvatarClick = (e) => {
+    e.stopPropagation();
+    if (avatarInputRef.current) {
+      avatarInputRef.current.click();
+    }
+    setAvatarMenuOpen(false);
+  };
+
+  const handleDeleteAvatarClick = (e) => {
+    e.stopPropagation();
+    setChosenAvatarFile(null);
+    setEditAvatarUrl('/uploads/default-avatar.png');
+    setAvatarPreview(getUploadUrl('/uploads/default-avatar.png'));
+    setAvatarMenuOpen(false);
+  };
+
+  const handleTakeCoverClick = (e) => {
+    e.stopPropagation();
+    if (coverCameraInputRef.current) {
+      coverCameraInputRef.current.click();
+    }
+    setCoverMenuOpen(false);
+  };
+
+  const handleSelectCoverClick = (e) => {
+    e.stopPropagation();
+    if (coverInputRef.current) {
+      coverInputRef.current.click();
+    }
+    setCoverMenuOpen(false);
+  };
+
+  const handleDeleteCoverClick = (e) => {
+    e.stopPropagation();
+    setChosenCoverFile(null);
+    setEditCoverUrl('/uploads/default-cover.png');
+    setCoverPreview(getUploadUrl('/uploads/default-cover.png'));
+    setCoverMenuOpen(false);
+  };
+
   const handleAvatarFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -203,12 +286,16 @@ const Profile = () => {
     setCropperOpen(false);
     if (avatarInputRef.current) avatarInputRef.current.value = '';
     if (coverInputRef.current) coverInputRef.current.value = '';
+    if (avatarCameraInputRef.current) avatarCameraInputRef.current.value = '';
+    if (coverCameraInputRef.current) coverCameraInputRef.current.value = '';
   };
 
   const handleCropCancel = () => {
     setCropperOpen(false);
     if (avatarInputRef.current) avatarInputRef.current.value = '';
     if (coverInputRef.current) coverInputRef.current.value = '';
+    if (avatarCameraInputRef.current) avatarCameraInputRef.current.value = '';
+    if (coverCameraInputRef.current) coverCameraInputRef.current.value = '';
   };
 
   // URL inputs live previews
@@ -522,17 +609,57 @@ const Profile = () => {
             {/* Live Cover and Avatar Preview Panel */}
             <div className="profile-edit-cover-preview-wrapper" id="edit-cover-wrapper">
               <img src={coverPreview} id="edit-cover-img" className="profile-edit-cover-preview" alt="Cover Preview" />
-              <button className="edit-overlay-btn" type="button" onClick={() => coverInputRef.current.click()} title="Change Cover Image">
+              <button className={`edit-overlay-btn ${coverMenuOpen ? 'menu-active' : ''}`} type="button" onClick={handleCoverIconClick} title="Change Cover Image">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
               </button>
-              <input type="file" ref={coverInputRef} className="hidden-file-input" accept="image/*" onChange={handleCoverFileChange} />
 
-              <div className="profile-edit-avatar-preview-wrapper" id="edit-avatar-wrapper">
-                <img src={avatarPreview} id="edit-avatar-img" className="profile-edit-avatar-preview" alt="Avatar Preview" />
-                <button className="edit-overlay-btn" type="button" onClick={() => avatarInputRef.current.click()} title="Change Avatar Image">
+              {coverMenuOpen && (
+                <div className="photo-options-dropdown active" style={{ top: '65%', left: '50%', transform: 'translate(-50%, 0)' }}>
+                  <div className="dropdown-item" onClick={handleTakeCoverClick}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                    <span>Take Photo</span>
+                  </div>
+                  <div className="dropdown-item" onClick={handleSelectCoverClick}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+                    <span>Select Photo</span>
+                  </div>
+                  <div className="dropdown-item" onClick={handleDeleteCoverClick} style={{ color: 'var(--danger)' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                    <span>Delete Photo</span>
+                  </div>
+                </div>
+              )}
+
+              <input type="file" ref={coverInputRef} className="hidden-file-input" accept="image/*" onChange={handleCoverFileChange} />
+              <input type="file" ref={coverCameraInputRef} className="hidden-file-input" accept="image/*" capture="environment" onChange={handleCoverFileChange} />
+
+              <div className="profile-edit-avatar-preview-wrapper" id="edit-avatar-wrapper" style={{ overflow: 'visible' }}>
+                <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden' }}>
+                  <img src={avatarPreview} id="edit-avatar-img" className="profile-edit-avatar-preview" alt="Avatar Preview" />
+                </div>
+                <button className={`edit-overlay-btn ${avatarMenuOpen ? 'menu-active' : ''}`} type="button" onClick={handleAvatarIconClick} title="Change Avatar Image">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
                 </button>
+
+                {avatarMenuOpen && (
+                  <div className="photo-options-dropdown active" style={{ top: '40px', left: '0', zIndex: 10 }}>
+                    <div className="dropdown-item" onClick={handleTakeAvatarClick}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
+                      <span>Take Photo</span>
+                    </div>
+                    <div className="dropdown-item" onClick={handleSelectAvatarClick}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+                      <span>Select Photo</span>
+                    </div>
+                    <div className="dropdown-item" onClick={handleDeleteAvatarClick} style={{ color: 'var(--danger)' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                      <span>Delete Photo</span>
+                    </div>
+                  </div>
+                )}
+
                 <input type="file" ref={avatarInputRef} className="hidden-file-input" accept="image/*" onChange={handleAvatarFileChange} />
+                <input type="file" ref={avatarCameraInputRef} className="hidden-file-input" accept="image/*" capture="user" onChange={handleAvatarFileChange} />
               </div>
             </div>
 
