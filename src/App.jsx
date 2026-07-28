@@ -22,10 +22,11 @@ const Messages = lazy(() => import('./pages/Messages/Messages'));
 const Saved = lazy(() => import('./pages/Saved/Saved'));
 const Friends = lazy(() => import('./pages/Friends/Friends'));
 const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
+const Verify = lazy(() => import('./pages/Verify/Verify'));
 
 // Protected Routes wrapper
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, currentUser } = useAuth();
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -33,7 +34,13 @@ const ProtectedRoute = ({ children }) => {
       </div>
     );
   }
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  if (currentUser && currentUser.isVerified === false) {
+    return <Navigate to="/verify" replace />;
+  }
+  return children;
 };
 
 // Public Routes wrapper
@@ -47,6 +54,25 @@ const PublicRoute = ({ children }) => {
     );
   }
   return !isAuthenticated ? children : <Navigate to="/" replace />;
+};
+
+// Verification Route wrapper
+const VerificationRoute = ({ children }) => {
+  const { isAuthenticated, loading, currentUser } = useAuth();
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Spinner />
+      </div>
+    );
+  }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  if (currentUser && currentUser.isVerified !== false) {
+    return <Navigate to="/" replace />;
+  }
+  return children;
 };
 
 // Toast notification pop-up component
@@ -122,6 +148,7 @@ const AppContent = () => {
           {/* Public Routes */}
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/verify" element={<VerificationRoute><Verify /></VerificationRoute>} />
 
           {/* Protected Routes */}
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />

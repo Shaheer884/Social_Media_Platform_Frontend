@@ -6,6 +6,12 @@ const authService = {
   },
   login(credentials) {
     return api.post('/auth/login', credentials);
+  },
+  verify(code) {
+    return api.post('/auth/verify', { code });
+  },
+  resendVerification() {
+    return api.post('/auth/resend-verification');
   }
 };
 

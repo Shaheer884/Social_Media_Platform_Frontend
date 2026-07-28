@@ -45,6 +45,20 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  const verify = async (code) => {
+    const res = await authService.verify(code);
+    if (res.success) {
+      const userData = res.data;
+      sessionStorage.setItem('user', JSON.stringify(userData));
+      setCurrentUser(userData);
+    }
+    return res;
+  };
+
+  const resendVerification = async () => {
+    return await authService.resendVerification();
+  };
+
   const logout = () => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
@@ -75,6 +89,8 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!token,
         login,
         register,
+        verify,
+        resendVerification,
         logout,
         updateLocalUser
       }}
