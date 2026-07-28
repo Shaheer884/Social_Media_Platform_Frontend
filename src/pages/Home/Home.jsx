@@ -20,8 +20,8 @@ const Home = () => {
   const navigate = useNavigate();
 
   const [postText, setPostText] = useState('');
-  const [chosenFile, setChosenFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
+  const [chosenFiles, setChosenFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [publishLoading, setPublishLoading] = useState(false);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [cropperSrc, setCropperSrc] = useState('');
@@ -93,28 +93,56 @@ const Home = () => {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.type.startsWith('video/')) {
-        setChosenFile(file);
-        const previewUrl = URL.createObjectURL(file);
-        setImagePreview(previewUrl);
-      } else if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          setCropperSrc(ev.target.result);
-          setCropperOpen(true);
-        };
-        reader.readAsDataURL(file);
-      } else {
-        showAlert('Please select a valid image or video file', 'Invalid File');
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const validFiles = [];
+    const validPreviews = [];
+
+    for (const file of files) {
+      const isVideo = file.type.startsWith('video/');
+      const isImage = file.type.startsWith('image/');
+
+      if (!isVideo && !isImage) {
+        showAlert('Please select valid image or video files', 'Invalid File Type');
+        return;
       }
+
+      if (isImage && file.size > 5 * 1024 * 1024) {
+        showAlert(`Image ${file.name} is too large. Maximum size is 5MB.`, 'File Too Large');
+        return;
+      }
+
+      if (isVideo && file.size > 100 * 1024 * 1024) {
+        showAlert(`Video ${file.name} is too large. Maximum size is 100MB.`, 'File Too Large');
+        return;
+      }
+
+      validFiles.push(file);
+      validPreviews.push({
+        url: URL.createObjectURL(file),
+        type: isVideo ? 'video' : 'image',
+        name: file.name
+      });
+    }
+
+    if (validFiles.length === 1 && validFiles[0].type.startsWith('image/')) {
+      const file = validFiles[0];
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        setCropperSrc(ev.target.result);
+        setCropperOpen(true);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setChosenFiles((prev) => [...prev, ...validFiles]);
+      setImagePreviews((prev) => [...prev, ...validPreviews]);
     }
   };
 
   const handleCropComplete = (croppedFile, previewUrl) => {
-    setChosenFile(croppedFile);
-    setImagePreview(previewUrl);
+    setChosenFiles((prev) => [...prev, croppedFile]);
+    setImagePreviews((prev) => [...prev, { url: previewUrl, type: 'image', name: croppedFile.name }]);
     setCropperOpen(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -134,9 +162,23 @@ const Home = () => {
     }
   };
 
+  const removeSelectedFile = (index) => {
+    const preview = imagePreviews[index];
+    if (preview && preview.url.startsWith('blob:')) {
+      URL.revokeObjectURL(preview.url);
+    }
+    setChosenFiles((prev) => prev.filter((_, i) => i !== index));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const clearSelectedMedia = () => {
-    setChosenFile(null);
-    setImagePreview('');
+    imagePreviews.forEach((p) => {
+      if (p.url.startsWith('blob:')) {
+        URL.revokeObjectURL(p.url);
+      }
+    });
+    setChosenFiles([]);
+    setImagePreviews([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -146,15 +188,17 @@ const Home = () => {
   };
 
   const handlePublish = async () => {
-    if (!postText.trim() && !chosenFile) return;
+    if (!postText.trim() && chosenFiles.length === 0) return;
 
     setPublishLoading(true);
     try {
       let res;
-      if (chosenFile) {
+      if (chosenFiles.length > 0) {
         const formData = new FormData();
         formData.append('content', postText.trim());
-        formData.append('postImage', chosenFile);
+        chosenFiles.forEach((file) => {
+          formData.append('postImages', file);
+        });
         res = await publishPost(formData);
       } else {
         res = await publishPost({
@@ -179,7 +223,7 @@ const Home = () => {
     }
   };
 
-  const canPublish = (postText.trim().length > 0 || chosenFile !== null) && postText.length <= 280;
+  const canPublish = (postText.trim().length > 0 || chosenFiles.length > 0) && postText.length <= 280;
 
   return (
     <Layout>
@@ -197,18 +241,31 @@ const Home = () => {
               maxLength={280}
             />
 
-             {imagePreview && (
-              <div className="image-preview-wrapper" style={{ display: 'block' }}>
-                <button className="remove-preview-btn" onClick={clearSelectedMedia} type="button">&times;</button>
-                {chosenFile && chosenFile.type.startsWith('video/') ? (
-                  <video
-                    src={imagePreview}
-                    controls
-                    style={{ width: '100%', maxHeight: '300px', borderRadius: '8px', objectFit: 'contain' }}
-                  />
-                ) : (
-                  <img src={imagePreview} alt="Post Upload Preview" />
-                )}
+             {imagePreviews.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '12px', marginBottom: '12px' }}>
+                {imagePreviews.map((p, idx) => (
+                  <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                    <button
+                      type="button"
+                      onClick={() => removeSelectedFile(idx)}
+                      style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', cursor: 'pointer', zIndex: 2 }}
+                    >
+                      &times;
+                    </button>
+                    {p.type === 'video' ? (
+                      <video
+                        src={p.url}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <img
+                        src={p.url}
+                        alt="upload preview"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    )}
+                  </div>
+                ))}
               </div>
             )}
 
@@ -223,11 +280,12 @@ const Home = () => {
                   </svg>
                   <span>Photo/Video</span>
                 </button>
-                <input
+                 <input
                   type="file"
                   ref={fileInputRef}
                   className="hidden-file-input"
                   accept="image/*,video/*"
+                  multiple
                   onChange={handleFileChange}
                 />
 

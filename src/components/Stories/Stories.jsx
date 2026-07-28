@@ -242,7 +242,25 @@ const Stories = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.type.startsWith('video/')) {
+      const isVideo = file.type.startsWith('video/');
+      const isImage = file.type.startsWith('image/');
+
+      if (!isVideo && !isImage) {
+        showAlert('Please select a valid image or video file', 'Invalid File');
+        return;
+      }
+
+      if (isImage && file.size > 5 * 1024 * 1024) {
+        showAlert('Image file size is too large. Maximum size is 5MB.', 'File Too Large');
+        return;
+      }
+
+      if (isVideo && file.size > 100 * 1024 * 1024) {
+        showAlert('Video file size is too large. Maximum size is 100MB.', 'File Too Large');
+        return;
+      }
+
+      if (isVideo) {
         const videoElement = document.createElement('video');
         const objectUrl = URL.createObjectURL(file);
         videoElement.src = objectUrl;

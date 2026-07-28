@@ -96,6 +96,12 @@ export const PostsProvider = ({ children }) => {
     );
   };
 
+  const updatePostInFeed = (updatedPost) => {
+    setPosts((prev) =>
+      prev.map((p) => (p._id === updatedPost._id ? { ...p, ...updatedPost } : p))
+    );
+  };
+
   return (
     <PostsContext.Provider
       value={{
@@ -109,7 +115,8 @@ export const PostsProvider = ({ children }) => {
         removePost,
         toggleLike,
         toggleSave,
-        updatePostCommentCount
+        updatePostCommentCount,
+        updatePostInFeed
       }}
     >
       {children}

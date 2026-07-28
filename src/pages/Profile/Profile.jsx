@@ -185,10 +185,13 @@ const Profile = () => {
     }
   };
 
-  // Live previews for edit file inputs and cropping
   const openCropperForFile = (file, target, aspect) => {
     if (!file.type.startsWith('image/')) {
       showAlert('Please select a valid image file', 'Invalid File');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showAlert('Image file size is too large. Maximum size is 5MB.', 'File Too Large');
       return;
     }
     const reader = new FileReader();

@@ -8,14 +8,18 @@ import commentService from '../../services/commentService';
 import CommentCard from '../CommentCard/CommentCard';
 import Spinner from '../Loader/Spinner';
 import { getUploadUrl } from '../../utils/mediaHelper';
+import EditPostModal from '../Modal/EditPostModal';
 
 const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { removePost, toggleLike, toggleSave, updatePostCommentCount } = usePosts();
+  const { removePost, toggleLike, toggleSave, updatePostCommentCount, updatePostInFeed } = usePosts();
   const { showAlert, showConfirm } = useDialog();
 
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [commentsOpen, setCommentsOpen] = useState(isDetailPage); // Auto-open on detail page
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -183,7 +187,14 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
                 </svg>
               </button>
               <div className={`post-options-dropdown ${optionsOpen ? 'active' : ''}`}>
-                <div className="dropdown-item delete-post-btn" onClick={handlePostDelete} style={{ color: 'var(--danger)' }}>
+                <div className="dropdown-item edit-post-btn" onClick={(e) => { e.stopPropagation(); setEditModalOpen(true); }} style={{ borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', cursor: 'pointer' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z" />
+                  </svg>
+                  <span>Edit</span>
+                </div>
+                <div className="dropdown-item delete-post-btn" onClick={handlePostDelete} style={{ color: 'var(--danger)', display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', cursor: 'pointer' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M3 6h18" />
                     <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
@@ -201,8 +212,49 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
         <div className="post-text" style={isDetailPage ? { fontSize: '1.1rem', lineHeight: '1.6' } : {}}>
           {post.content}
         </div>
-        {(post.mediaUrl || post.imageUrl) && (
-          <div className="post-image-wrapper" style={isDetailPage ? { marginTop: '16px' } : {}}>
+        {post.media && post.media.length > 0 ? (
+          <div className={`post-media-grid items-${Math.min(post.media.length, 4)}`} onClick={(e) => e.stopPropagation()}>
+            {post.media.slice(0, 4).map((item, idx) => {
+              const isLast = idx === 3 && post.media.length > 4;
+              const optimizedUrl = item.url.replace('/upload/', '/upload/q_auto,f_auto/');
+              return (
+                <div 
+                  key={item.publicId || idx} 
+                  className="media-grid-item" 
+                  onClick={() => {
+                    setActiveMediaIndex(idx);
+                    setLightboxOpen(true);
+                  }}
+                >
+                  {item.resourceType === 'video' ? (
+                    <video
+                      src={item.url}
+                      className="grid-media-element"
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  ) : (
+                    <img 
+                      src={optimizedUrl} 
+                      alt={`Post media ${idx}`} 
+                      className="grid-media-element" 
+                      loading="lazy" 
+                    />
+                  )}
+                  {isLast && (
+                    <div className="media-grid-overlay">
+                      <span>+{post.media.length - 4}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (post.mediaUrl || post.imageUrl) && (
+          <div className="post-image-wrapper" style={isDetailPage ? { marginTop: '16px' } : {}} onClick={(e) => {
+            e.stopPropagation();
+            setActiveMediaIndex(0);
+            setLightboxOpen(true);
+          }}>
             {post.mediaType === 'video' ? (
               <video
                 ref={videoRef}
@@ -298,6 +350,88 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
         </div>
       </div>
     </div>
+
+    <EditPostModal
+      isOpen={editModalOpen}
+      onClose={() => setEditModalOpen(false)}
+      post={post}
+      onUpdateSuccess={(updatedPost) => {
+        updatePostInFeed(updatedPost);
+      }}
+    />
+
+    {/* Fullscreen Lightbox Preview */}
+    {lightboxOpen && (
+      <div className="lightbox-overlay" onClick={() => setLightboxOpen(false)}>
+        <button className="lightbox-close" onClick={() => setLightboxOpen(false)}>&times;</button>
+        
+        {(() => {
+          const mediaItems = post.media && post.media.length > 0 
+            ? post.media 
+            : (post.mediaUrl || post.imageUrl)
+              ? [{ url: post.mediaUrl || post.imageUrl, resourceType: post.mediaType }]
+              : [];
+          
+          if (mediaItems.length === 0) return null;
+          
+          return (
+            <>
+              {mediaItems.length > 1 && (
+                <>
+                  <button 
+                    className="lightbox-prev" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveMediaIndex((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1));
+                    }}
+                  >
+                    &#10094;
+                  </button>
+                  <button 
+                    className="lightbox-next" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveMediaIndex((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1));
+                    }}
+                  >
+                    &#10095;
+                  </button>
+                </>
+              )}
+
+              <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+                {(() => {
+                  const activeItem = mediaItems[activeMediaIndex];
+                  if (!activeItem) return null;
+
+                  if (activeItem.resourceType === 'video') {
+                    return (
+                      <video 
+                        src={activeItem.url} 
+                        controls 
+                        autoPlay 
+                        className="lightbox-media"
+                        style={{ maxHeight: '90vh', maxWidth: '90vw' }}
+                      />
+                    );
+                  } else {
+                    return (
+                      <img 
+                        src={activeItem.url} 
+                        alt="Lightbox preview" 
+                        className="lightbox-media"
+                        style={{ maxHeight: '90vh', maxWidth: '90vw', objectFit: 'contain' }}
+                      />
+                    );
+                  }
+                })()}
+              </div>
+            </>
+          );
+        })()}
+      </div>
+    )}
+  </>
   );
 };
 
