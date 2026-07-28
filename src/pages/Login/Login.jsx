@@ -109,7 +109,10 @@ const Login = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="password" className="form-label">Password</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label htmlFor="password" className="form-label" style={{ marginBottom: 0 }}>Password</label>
+                    <Link to="/forgot-password" style={{ fontSize: '0.8rem', color: 'var(--purple)', textDecoration: 'underline' }}>Forgot Password?</Link>
+                  </div>
                   <div className="password-input-wrapper">
                     <input
                       type={showPassword ? 'text' : 'password'}

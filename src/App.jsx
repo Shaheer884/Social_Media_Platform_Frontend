@@ -23,6 +23,9 @@ const Saved = lazy(() => import('./pages/Saved/Saved'));
 const Friends = lazy(() => import('./pages/Friends/Friends'));
 const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
 const Verify = lazy(() => import('./pages/Verify/Verify'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword/ForgotPassword'));
+const VerifyResetCode = lazy(() => import('./pages/VerifyResetCode/VerifyResetCode'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword/ResetPassword'));
 
 // Protected Routes wrapper
 const ProtectedRoute = ({ children }) => {
@@ -149,6 +152,9 @@ const AppContent = () => {
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/verify" element={<VerificationRoute><Verify /></VerificationRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+          <Route path="/verify-reset-code" element={<PublicRoute><VerifyResetCode /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
           {/* Protected Routes */}
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
