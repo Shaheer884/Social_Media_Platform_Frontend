@@ -159,7 +159,8 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
   }, []);
 
   return (
-    <div className="card post-card" id={`post-${post._id}`}>
+    <>
+      <div className="card post-card" id={`post-${post._id}`}>
       <div className="post-header">
         <div
           className="post-author-details"
