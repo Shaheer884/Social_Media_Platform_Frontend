@@ -538,7 +538,25 @@ const Profile = () => {
       </div>
 
       <div id="user-posts-container">
-        {loadingPosts ? (
+        {u.isPrivate && !isOwnProfile ? (
+          <div style={{
+            padding: '60px 40px',
+            textAlign: 'center',
+            backgroundColor: 'var(--card-bg)',
+            borderRadius: '16px',
+            border: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <div style={{ fontSize: '3rem' }}>🔒</div>
+            <h3 style={{ color: 'var(--text-main)', margin: 0 }}>This Account is Private</h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0, maxWidth: '280px' }}>
+              Follow this user to see their posts and stories.
+            </p>
+          </div>
+        ) : loadingPosts ? (
           <div style={{ textAlign: 'center', padding: '20px' }}>
             <Spinner />
           </div>
