@@ -433,8 +433,9 @@ const Profile = () => {
   }
 
   const u = profileUser;
-  const cover = getUploadUrl(u.coverPhoto || '/uploads/default-cover.png');
-  const avatar = getUploadUrl(u.profilePicture || '/uploads/default-avatar.png');
+  const showPrivateMedia = !u.isPrivate || isOwnProfile || u.relationshipStatus === 'friends';
+  const cover = getUploadUrl(showPrivateMedia ? (u.coverPhoto || '/uploads/default-cover.png') : '/uploads/default-cover.png');
+  const avatar = getUploadUrl(showPrivateMedia ? (u.profilePicture || '/uploads/default-avatar.png') : '/uploads/default-avatar.png');
   const joinDate = new Date(u.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
   let followBtnClass = 'btn btn-primary';
