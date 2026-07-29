@@ -2691,3 +2691,42 @@ textarea {
     opacity: 1;
   }
 }
+
+/* Image Preview Crop Hover Effect */
+.preview-image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.preview-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+  display: block;
+}
+
+.preview-image-container:hover img {
+  transform: scale(1.05);
+}
+
+.crop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: #fff;
+}
+
+.preview-image-container:hover .crop-overlay {
+  opacity: 1;
+}

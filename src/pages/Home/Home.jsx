@@ -25,6 +25,10 @@ const Home = () => {
   const [publishLoading, setPublishLoading] = useState(false);
   const [cropperOpen, setCropperOpen] = useState(false);
   const [cropperSrc, setCropperSrc] = useState('');
+  const [cropperFileType, setCropperFileType] = useState('image/jpeg');
+  const [cropperFileName, setCropperFileName] = useState('image.jpg');
+  const [croppingIndex, setCroppingIndex] = useState(null);
+  const [tempOriginalFile, setTempOriginalFile] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
@@ -122,12 +126,16 @@ const Home = () => {
       validPreviews.push({
         url: URL.createObjectURL(file),
         type: isVideo ? 'video' : 'image',
-        name: file.name
+        name: file.name,
+        originalFile: isVideo ? null : file
       });
     }
 
     if (validFiles.length === 1 && validFiles[0].type.startsWith('image/')) {
       const file = validFiles[0];
+      setTempOriginalFile(file);
+      setCropperFileType(file.type);
+      setCropperFileName(file.name);
       const reader = new FileReader();
       reader.onload = (ev) => {
         setCropperSrc(ev.target.result);
@@ -140,9 +148,58 @@ const Home = () => {
     }
   };
 
+  const handleStartCrop = (idx) => {
+    const preview = imagePreviews[idx];
+    if (!preview || preview.type !== 'image') return;
+
+    const fileToCrop = preview.originalFile || chosenFiles[idx];
+    if (!fileToCrop) return;
+
+    setCropperFileType(fileToCrop.type);
+    setCropperFileName(fileToCrop.name);
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setCropperSrc(ev.target.result);
+      setCroppingIndex(idx);
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(fileToCrop);
+  };
+
   const handleCropComplete = (croppedFile, previewUrl) => {
-    setChosenFiles((prev) => [...prev, croppedFile]);
-    setImagePreviews((prev) => [...prev, { url: previewUrl, type: 'image', name: croppedFile.name }]);
+    if (croppingIndex !== null) {
+      setChosenFiles((prev) => {
+        const next = [...prev];
+        next[croppingIndex] = croppedFile;
+        return next;
+      });
+      setImagePreviews((prev) => {
+        const next = [...prev];
+        if (next[croppingIndex]?.url?.startsWith('blob:')) {
+          URL.revokeObjectURL(next[croppingIndex].url);
+        }
+        next[croppingIndex] = {
+          ...next[croppingIndex],
+          url: previewUrl,
+          name: croppedFile.name
+        };
+        return next;
+      });
+      setCroppingIndex(null);
+    } else {
+      setChosenFiles((prev) => [...prev, croppedFile]);
+      setImagePreviews((prev) => [
+        ...prev,
+        {
+          url: previewUrl,
+          type: 'image',
+          name: croppedFile.name,
+          originalFile: tempOriginalFile
+        }
+      ]);
+      setTempOriginalFile(null);
+    }
     setCropperOpen(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -154,6 +211,8 @@ const Home = () => {
 
   const handleCropCancel = () => {
     setCropperOpen(false);
+    setCroppingIndex(null);
+    setTempOriginalFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -248,7 +307,7 @@ const Home = () => {
                     <button
                       type="button"
                       onClick={() => removeSelectedFile(idx)}
-                      style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', cursor: 'pointer', zIndex: 2 }}
+                      style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', cursor: 'pointer', zIndex: 3 }}
                     >
                       &times;
                     </button>
@@ -258,11 +317,22 @@ const Home = () => {
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
                     ) : (
-                      <img
-                        src={p.url}
-                        alt="upload preview"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
+                      <div
+                        onClick={() => handleStartCrop(idx)}
+                        className="preview-image-container"
+                        title="Click to crop image"
+                      >
+                        <img
+                          src={p.url}
+                          alt="upload preview"
+                        />
+                        <div className="crop-overlay">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M6.13 1L6 16a2 2 0 0 0 2 2h15" />
+                            <path d="M1 6.13L16 6a2 2 0 0 1 2 2v15" />
+                          </svg>
+                        </div>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -398,6 +468,8 @@ const Home = () => {
         onCrop={handleCropComplete}
         onClose={handleCropCancel}
         title="Crop Post Image"
+        fileType={cropperFileType}
+        fileName={cropperFileName}
       />
     </Layout>
   );

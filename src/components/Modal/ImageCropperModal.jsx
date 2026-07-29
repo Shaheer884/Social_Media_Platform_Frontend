@@ -1,7 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Spinner from '../Loader/Spinner';
 
-const ImageCropperModal = ({ isOpen, imageSrc, aspectRatio = 1, onCrop, onClose, title = "Crop Image" }) => {
+const ImageCropperModal = ({
+  isOpen,
+  imageSrc,
+  aspectRatio = 1,
+  onCrop,
+  onClose,
+  title = "Crop Image",
+  fileType = "image/jpeg",
+  fileName = "cropped_image.jpg"
+}) => {
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -220,24 +229,30 @@ const ImageCropperModal = ({ isOpen, imageSrc, aspectRatio = 1, onCrop, onClose,
       sHeight
     );
 
-    // Extract mime type from base64 data URL
-    let mimeType = 'image/jpeg';
+    // Use original fileType/fileName, or extract from data URL if not provided
+    let mimeType = fileType || 'image/jpeg';
     if (imageSrc && imageSrc.startsWith('data:')) {
       const match = imageSrc.match(/data:([^;]+);/);
       if (match) {
         mimeType = match[1];
       }
     }
-    const extension = mimeType.split('/')[1] || 'jpg';
+    
+    // Fallback filename check
+    let finalFileName = fileName;
+    if (!finalFileName) {
+      const extension = mimeType.split('/')[1] || 'jpg';
+      finalFileName = `cropped_image.${extension}`;
+    }
 
     canvas.toBlob((blob) => {
       if (blob) {
-        // Create a File object using the correct mimeType and high quality for JPEG
-        const file = new File([blob], `cropped_image.${extension}`, { type: mimeType });
+        // Create a File object using the correct mimeType and high quality for lossy formats
+        const file = new File([blob], finalFileName, { type: mimeType });
         const previewUrl = URL.createObjectURL(blob);
         onCrop(file, previewUrl);
       }
-    }, mimeType, mimeType === 'image/jpeg' ? 0.95 : undefined);
+    }, mimeType, (mimeType === 'image/jpeg' || mimeType === 'image/webp') ? 0.95 : undefined);
   };
 
   return (
