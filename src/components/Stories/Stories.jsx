@@ -117,7 +117,9 @@ const Stories = () => {
     try {
       const res = await storyService.getStories();
       if (res.success) {
-        setStoryGroups(res.data);
+        const hiddenUsers = JSON.parse(localStorage.getItem('hidden_stories_users') || '[]');
+        const filtered = res.data.filter((group) => !hiddenUsers.includes(group.user._id.toString()));
+        setStoryGroups(filtered);
       }
     } catch (err) {
       console.error('Failed to load stories:', err);
@@ -355,6 +357,49 @@ const Stories = () => {
     }
   };
 
+  // Hide user stories
+  const handleHideUserStories = async (e, userToHide) => {
+    e.stopPropagation();
+    if (!userToHide) return;
+
+    const confirmHide = await showConfirm(
+      `Are you sure you want to hide all stories from ${userToHide.fullName}? You will no longer see their stories in your feed.`,
+      'Hide Stories'
+    );
+    if (!confirmHide) return;
+
+    try {
+      const hiddenUsers = JSON.parse(localStorage.getItem('hidden_stories_users') || '[]');
+      if (!hiddenUsers.includes(userToHide._id.toString())) {
+        hiddenUsers.push(userToHide._id.toString());
+        localStorage.setItem('hidden_stories_users', JSON.stringify(hiddenUsers));
+      }
+
+      // Filter locally
+      setStoryGroups((prev) => prev.filter((group) => group.user._id.toString() !== userToHide._id.toString()));
+      
+      // Close the viewer
+      setViewerOpen(false);
+      showAlert(`Stories from ${userToHide.fullName} have been hidden.`, 'Success');
+    } catch (err) {
+      console.error(err);
+      showAlert('Could not hide stories', 'Error');
+    }
+  };
+
+  const handleResetHiddenStories = async (e) => {
+    e.stopPropagation();
+    const confirmReset = await showConfirm(
+      'Are you sure you want to unhide all stories that you previously muted?',
+      'Unhide Stories'
+    );
+    if (!confirmReset) return;
+
+    localStorage.removeItem('hidden_stories_users');
+    loadStories();
+    showAlert('All hidden stories have been restored.', 'Success');
+  };
+
   // Delete Story
   const handleDeleteStory = async (storyId) => {
     const confirmDelete = await showConfirm(
@@ -579,6 +624,39 @@ const Stories = () => {
             </div>
           );
         })}
+
+        {/* Reset hidden stories button if any exist */}
+        {(() => {
+          const hiddenUsersCount = JSON.parse(localStorage.getItem('hidden_stories_users') || '[]').length;
+          if (hiddenUsersCount > 0) {
+            return (
+              <button
+                onClick={handleResetHiddenStories}
+                className="story-card"
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: 'var(--card-bg)',
+                  border: '1px dashed var(--border-color)',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.8rem',
+                  gap: '8px',
+                  padding: '10px'
+                }}
+                title="Unhide all muted users' stories"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span style={{ fontWeight: 600, fontSize: '0.75rem' }}>Unhide All ({hiddenUsersCount})</span>
+              </button>
+            );
+          }
+          return null;
+        })()}
       </div>
 
       {/* Creation Modal */}
@@ -776,6 +854,21 @@ const Stories = () => {
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                         <line x1="10" y1="11" x2="10" y2="17" />
                         <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                {!isOwnActiveStory && (
+                  <div className="story-view-owner-actions">
+                    <button
+                      className="story-view-action-icon-btn"
+                      title="Hide Stories from this user"
+                      onClick={(e) => handleHideUserStories(e, activeStory.user)}
+                      style={{ color: '#ef4444' }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
                       </svg>
                     </button>
                   </div>
