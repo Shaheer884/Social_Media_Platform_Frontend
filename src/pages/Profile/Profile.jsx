@@ -38,6 +38,7 @@ const Profile = () => {
   const [editLocation, setEditLocation] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editBirthday, setEditBirthday] = useState('');
+  const [editIsPrivate, setEditIsPrivate] = useState(false);
   const [editAvatarUrl, setEditAvatarUrl] = useState('');
   const [editCoverUrl, setEditCoverUrl] = useState('');
   const [chosenAvatarFile, setChosenAvatarFile] = useState(null);
@@ -74,6 +75,7 @@ const Profile = () => {
         setEditLocation(res.data.location || '');
         setEditBio(res.data.bio || '');
         setEditBirthday(res.data.birthday ? res.data.birthday.split('T')[0] : '');
+        setEditIsPrivate(res.data.isPrivate || false);
         setAvatarPreview(getUploadUrl(res.data.profilePicture || '/uploads/default-avatar.png'));
         setCoverPreview(getUploadUrl(res.data.coverPhoto || '/uploads/default-cover.png'));
       }
@@ -339,6 +341,7 @@ const Profile = () => {
         formData.append('location', editLocation.trim());
         formData.append('bio', editBio.trim());
         formData.append('birthday', editBirthday);
+        formData.append('isPrivate', editIsPrivate);
         if (chosenAvatarFile) formData.append('profilePicture', chosenAvatarFile);
         if (chosenCoverFile) formData.append('coverPhoto', chosenCoverFile);
         if (editAvatarUrl && !chosenAvatarFile) formData.append('profilePictureUrl', editAvatarUrl);
@@ -353,7 +356,8 @@ const Profile = () => {
           bio: editBio.trim(),
           birthday: editBirthday,
           profilePictureUrl: editAvatarUrl.trim(),
-          coverPhotoUrl: editCoverUrl.trim()
+          coverPhotoUrl: editCoverUrl.trim(),
+          isPrivate: editIsPrivate
         });
       }
 
@@ -689,6 +693,19 @@ const Profile = () => {
             <div className="form-group">
               <label className="form-label" htmlFor="edit-birthday">Birthday</label>
               <input type="date" id="edit-birthday" className="form-input" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} />
+            </div>
+
+            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '16px', marginBottom: '16px' }}>
+              <input
+                type="checkbox"
+                id="edit-isPrivate"
+                checked={editIsPrivate}
+                onChange={(e) => setEditIsPrivate(e.target.checked)}
+                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--purple)' }}
+              />
+              <label htmlFor="edit-isPrivate" style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)', cursor: 'pointer' }}>
+                Private Account (Hide posts & stories from feed)
+              </label>
             </div>
 
             <div className="delete-account-section" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
