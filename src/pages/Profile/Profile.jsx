@@ -901,7 +901,6 @@ const Profile = () => {
             ) : (
               wishes.map((wish) => {
                 const isWishSender = wish.sender?._id === currentUser?._id;
-                const isWishRecipient = wish.recipient === currentUser?._id;
                 const hasLiked = wish.likes.includes(currentUser?._id);
 
                 return (
@@ -918,7 +917,7 @@ const Profile = () => {
                             <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{wish.sender?.fullName}</span>
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>@{wish.sender?.username}</span>
                           </div>
-                          {(isWishSender || isWishRecipient) && (
+                          {isWishSender && (
                             <button
                               onClick={() => handleDeleteWish(wish._id)}
                               style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.75rem', cursor: 'pointer' }}
