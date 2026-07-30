@@ -15,6 +15,22 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [captchaText, setCaptchaText] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+
+  const refreshCaptcha = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < 6; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setCaptchaText(result);
+    setCaptchaInput('');
+  };
+
+  useEffect(() => {
+    refreshCaptcha();
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -32,6 +48,12 @@ const Register = () => {
 
     if (!trimmedFullName || !trimmedUsername || !trimmedEmail || !password) {
       setError('Please fill out all fields');
+      return;
+    }
+
+    if (captchaInput !== captchaText) {
+      setError('Incorrect Captcha code. Please try again.');
+      refreshCaptcha();
       return;
     }
 
@@ -179,6 +201,65 @@ const Register = () => {
                   <small style={{ display: 'block', marginTop: '4px', fontSize: '0.75rem', color: '#888' }}>
                     Password must contain at least 6 characters, including 1 uppercase, 1 lowercase, 1 number, and 1 special character.
                   </small>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: '16px' }}>
+                  <label htmlFor="captchaInput" className="form-label">Captcha Verification</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <div style={{
+                      flex: 1,
+                      background: 'var(--input-bg)',
+                      border: '1px dashed var(--border-color)',
+                      borderRadius: '8px',
+                      padding: '10px',
+                      textAlign: 'center',
+                      fontSize: '1.25rem',
+                      fontWeight: 'bold',
+                      fontFamily: 'monospace',
+                      letterSpacing: '6px',
+                      color: 'var(--text-main)',
+                      textDecoration: 'line-through',
+                      fontStyle: 'italic',
+                      userSelect: 'none',
+                      boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.05)',
+                      transform: 'skewX(-10deg)',
+                      display: 'inline-block',
+                      width: '100%'
+                    }}>
+                      {captchaText}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={refreshCaptcha}
+                      className="btn"
+                      style={{
+                        padding: '10px 14px',
+                        backgroundColor: 'var(--card-bg)',
+                        color: 'var(--text-main)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '1.1rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s',
+                        boxShadow: 'var(--shadow-sm)'
+                      }}
+                      title="Refresh Captcha"
+                    >
+                      ↻
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    id="captchaInput"
+                    className="form-input"
+                    placeholder="Enter the 6-character Captcha code"
+                    value={captchaInput}
+                    onChange={(e) => setCaptchaInput(e.target.value)}
+                    required
+                  />
                 </div>
 
                 <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} disabled={loading}>
