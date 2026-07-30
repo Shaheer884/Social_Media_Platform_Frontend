@@ -67,6 +67,8 @@ const Profile = () => {
   const [replyInputWishId, setReplyInputWishId] = useState(null);
   const [replyMessage, setReplyMessage] = useState('');
   const [postingReply, setPostingReply] = useState(false);
+  const [editingWishId, setEditingWishId] = useState(null);
+  const [editingWishText, setEditingWishText] = useState('');
 
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
@@ -189,10 +191,10 @@ const Profile = () => {
   }, [profileUser?._id, activeTab]);
 
   useEffect(() => {
-    if (searchParams.get('wish') === 'true') {
+    if (searchParams.get('wish') === 'true' && isBirthdayToday) {
       setActiveTab('birthday');
     }
-  }, [searchParams]);
+  }, [searchParams, isBirthdayToday]);
 
   const handleLikeWish = async (wishId) => {
     try {
@@ -219,6 +221,20 @@ const Profile = () => {
       showAlert(err.message || 'Error replying', 'Error');
     } finally {
       setPostingReply(false);
+    }
+  };
+
+  const handleEditWish = async (wishId, newText) => {
+    if (!newText.trim()) return;
+    try {
+      const res = await birthdayService.editWish(wishId, newText.trim());
+      if (res.success) {
+        setWishes(prev => prev.map(w => w._id === wishId ? res.data : w));
+        setEditingWishId(null);
+        showAlert('Your birthday wish has been updated!', 'Success');
+      }
+    } catch (err) {
+      showAlert(err.message || 'Error updating wish', 'Error');
     }
   };
 
@@ -621,9 +637,18 @@ const Profile = () => {
           </div>
         </div>
 
-        <div className="profile-actions-wrapper">
+        <div className="profile-actions-wrapper" style={{ display: 'flex', gap: '8px' }}>
           {isOwnProfile ? (
-            <button className="btn btn-secondary" onClick={() => setEditModalOpen(true)}>Edit Profile</button>
+            <>
+              <button
+                className="btn btn-secondary"
+                onClick={() => navigate(`/profile/${u.username}/memories`)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <span>📸</span> Memories
+              </button>
+              <button className="btn btn-secondary" onClick={() => setEditModalOpen(true)}>Edit Profile</button>
+            </>
           ) : (
             <button className={followBtnClass} onClick={handleFollowToggle} disabled={followLoading}>
               {u.relationshipStatus === 'friends' && (
@@ -721,7 +746,7 @@ const Profile = () => {
       </div>
 
       {/* Profile Tabs */}
-      {hasBirthdayAccess ? (
+      {hasBirthdayAccess && isBirthdayToday ? (
         <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', marginBottom: '20px', gap: '20px' }}>
           <button
             onClick={() => setActiveTab('posts')}
@@ -918,17 +943,55 @@ const Profile = () => {
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>@{wish.sender?.username}</span>
                           </div>
                           {isWishSender && (
-                            <button
-                              onClick={() => handleDeleteWish(wish._id)}
-                              style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.75rem', cursor: 'pointer' }}
-                            >
-                              Delete
-                            </button>
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                              <button
+                                onClick={() => { setEditingWishId(wish._id); setEditingWishText(wish.message); }}
+                                style={{ background: 'none', border: 'none', color: 'var(--purple)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteWish(wish._id)}
+                                style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}
+                              >
+                                Delete
+                              </button>
+                            </div>
                           )}
                         </div>
-                        <p style={{ margin: '8px 0', fontSize: '0.9rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>
-                          {wish.message}
-                        </p>
+                        {editingWishId === wish._id ? (
+                          <div style={{ marginTop: '8px', marginBottom: '8px' }}>
+                            <textarea
+                              className="form-input form-textarea"
+                              value={editingWishText}
+                              onChange={(e) => setEditingWishText(e.target.value)}
+                              rows="2"
+                              maxLength="300"
+                              style={{ width: '100%', marginBottom: '6px' }}
+                            />
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                              <button
+                                onClick={() => setEditingWishId(null)}
+                                className="btn btn-secondary"
+                                style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => handleEditWish(wish._id, editingWishText)}
+                                className="btn btn-primary"
+                                style={{ padding: '4px 10px', fontSize: '0.75rem' }}
+                                disabled={!editingWishText.trim()}
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p style={{ margin: '8px 0', fontSize: '0.9rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>
+                            {wish.message}
+                          </p>
+                        )}
 
                         {/* Actions row: Like and Reply toggler */}
                         <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '12px' }}>

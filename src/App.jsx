@@ -22,6 +22,7 @@ const Messages = lazy(() => import('./pages/Messages/Messages'));
 const Saved = lazy(() => import('./pages/Saved/Saved'));
 const Friends = lazy(() => import('./pages/Friends/Friends'));
 const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
+const BirthdayMemoriesPage = lazy(() => import('./pages/BirthdayMemories/BirthdayMemoriesPage'));
 const Verify = lazy(() => import('./pages/Verify/Verify'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword/ForgotPassword'));
 const VerifyResetCode = lazy(() => import('./pages/VerifyResetCode/VerifyResetCode'));
@@ -169,6 +170,7 @@ const AppContent = () => {
           {/* Protected Routes */}
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/profile/:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/profile/:username/memories" element={<ProtectedRoute><BirthdayMemoriesPage /></ProtectedRoute>} />
           <Route path="/post/:id" element={<ProtectedRoute><PostDetail /></ProtectedRoute>} />
           <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
           <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />

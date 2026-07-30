@@ -11,7 +11,13 @@ const birthdayService = {
     return api.post('/birthday/send-gift', { recipientId, giftType, message });
   },
   getWishesAndGifts(userId) {
-    return api.get(`/birthday/wishes/${userId}`);
+    return api.get(`/birthday/wall/${userId}`);
+  },
+  editWish(wishId, message) {
+    return api.put(`/birthday/wish/${wishId}`, { message });
+  },
+  getMemories(userId) {
+    return api.get(`/birthday/memories/${userId}`);
   },
   likeWish(wishId) {
     return api.post(`/birthday/wishes/${wishId}/like`);
