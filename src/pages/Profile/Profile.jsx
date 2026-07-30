@@ -6,11 +6,14 @@ import { usePosts } from '../../context/PostsContext';
 import { useDialog } from '../../context/CustomDialogContext';
 import userService from '../../services/userService';
 import postService from '../../services/postService';
+import postCardService from '../../services/postService'; // keep original ref if any
 import PostCard from '../../components/PostCard/PostCard';
 import Spinner from '../../components/Loader/Spinner';
 import Modal from '../../components/Modal/Modal';
 import { getUploadUrl } from '../../utils/mediaHelper';
 import ImageCropperModal from '../../components/Modal/ImageCropperModal';
+import birthdayService from '../../services/birthdayService';
+import GiftModal from '../../components/Birthday/GiftModal';
 
 const Profile = () => {
   const { username } = useParams();
@@ -38,6 +41,7 @@ const Profile = () => {
   const [editLocation, setEditLocation] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editBirthday, setEditBirthday] = useState('');
+  const [editBirthdayPrivacy, setEditBirthdayPrivacy] = useState('Public');
   const [editIsPrivate, setEditIsPrivate] = useState(false);
   const [editAvatarUrl, setEditAvatarUrl] = useState('');
   const [editCoverUrl, setEditCoverUrl] = useState('');
@@ -51,6 +55,18 @@ const Profile = () => {
   const [cropperAspect, setCropperAspect] = useState(1);
   const [cropperTarget, setCropperTarget] = useState('avatar');
   const [followLoading, setFollowLoading] = useState(false);
+
+  // Birthday Wall States
+  const [activeTab, setActiveTab] = useState('posts');
+  const [wishes, setWishes] = useState([]);
+  const [gifts, setGifts] = useState([]);
+  const [loadingWishes, setLoadingWishes] = useState(true);
+  const [giftModalOpen, setGiftModalOpen] = useState(false);
+  const [newWishMessage, setNewWishMessage] = useState('');
+  const [postingWish, setPostingWish] = useState(false);
+  const [replyInputWishId, setReplyInputWishId] = useState(null);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [postingReply, setPostingReply] = useState(false);
 
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
@@ -75,6 +91,7 @@ const Profile = () => {
         setEditLocation(res.data.location || '');
         setEditBio(res.data.bio || '');
         setEditBirthday(res.data.birthday ? res.data.birthday.split('T')[0] : '');
+        setEditBirthdayPrivacy(res.data.birthdayPrivacy || 'Public');
         setEditIsPrivate(res.data.isPrivate || false);
         setAvatarPreview(getUploadUrl(res.data.profilePicture || '/uploads/default-avatar.png'));
         setCoverPreview(getUploadUrl(res.data.coverPhoto || '/uploads/default-cover.png'));
@@ -108,6 +125,147 @@ const Profile = () => {
   useEffect(() => {
     fetchProfilePosts();
   }, [profileUser?._id]);
+
+  const hasBirthdayAccess = profileUser?.birthday && (
+    profileUser.birthdayPrivacy === 'Public' ||
+    isOwnProfile ||
+    (profileUser.birthdayPrivacy === 'Friends Only' && profileUser.relationshipStatus === 'friends')
+  );
+
+  const isBirthdayToday = (() => {
+    if (!profileUser?.birthday) return false;
+    const today = new Date();
+    const bday = new Date(profileUser.birthday);
+    return bday.getMonth() === today.getMonth() && bday.getDate() === today.getDate();
+  })();
+
+  const getCountdownString = () => {
+    if (!profileUser?.birthday) return null;
+    const today = new Date();
+    const bday = new Date(profileUser.birthday);
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    if (bday.getMonth() === today.getMonth() && bday.getDate() === today.getDate()) {
+      return "🎉 Happy Birthday!";
+    }
+
+    const bdayThisYear = new Date(today.getFullYear(), bday.getMonth(), bday.getDate());
+    bdayThisYear.setHours(0, 0, 0, 0);
+    
+    let targetBday = bdayThisYear;
+    if (bdayThisYear < startOfToday) {
+      targetBday = new Date(today.getFullYear() + 1, bday.getMonth(), bday.getDate());
+    }
+    targetBday.setHours(0, 0, 0, 0);
+
+    const diffTime = targetBday.getTime() - today.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffTime % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+    if (diffDays === 0) {
+      return `Birthday in: ${diffHours} Hour${diffHours !== 1 ? 's' : ''}`;
+    }
+    return `Birthday in: ${diffDays} Day${diffDays !== 1 ? 's' : ''} and ${diffHours} Hour${diffHours !== 1 ? 's' : ''}`;
+  };
+
+  const fetchWishesAndGifts = async () => {
+    if (!profileUser?._id || !hasBirthdayAccess) return;
+    setLoadingWishes(true);
+    try {
+      const res = await birthdayService.getWishesAndGifts(profileUser._id);
+      if (res.success) {
+        setWishes(res.data.wishes);
+        setGifts(res.data.gifts);
+      }
+    } catch (err) {
+      console.error('Error fetching wishes and gifts:', err);
+    } finally {
+      setLoadingWishes(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchWishesAndGifts();
+  }, [profileUser?._id, activeTab]);
+
+  useEffect(() => {
+    if (searchParams.get('wish') === 'true') {
+      setActiveTab('birthday');
+    }
+  }, [searchParams]);
+
+  const handleLikeWish = async (wishId) => {
+    try {
+      const res = await birthdayService.likeWish(wishId);
+      if (res.success) {
+        setWishes(prev => prev.map(w => w._id === wishId ? { ...w, likes: res.data.likes } : w));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleReplyWish = async (wishId) => {
+    if (!replyMessage.trim()) return;
+    setPostingReply(true);
+    try {
+      const res = await birthdayService.replyWish(wishId, replyMessage.trim());
+      if (res.success) {
+        setWishes(prev => prev.map(w => w._id === wishId ? res.data : w));
+        setReplyMessage('');
+        setReplyInputWishId(null);
+      }
+    } catch (err) {
+      showAlert(err.message || 'Error replying', 'Error');
+    } finally {
+      setPostingReply(false);
+    }
+  };
+
+  const handleDeleteWish = async (wishId) => {
+    const confirmDelete = await showConfirm('Are you sure you want to delete this birthday wish?', 'Delete Wish');
+    if (!confirmDelete) return;
+
+    try {
+      const res = await birthdayService.deleteWish(wishId);
+      if (res.success) {
+        setWishes(prev => prev.filter(w => w._id !== wishId));
+      }
+    } catch (err) {
+      showAlert(err.message || 'Error deleting wish', 'Error');
+    }
+  };
+
+  const handlePostWish = async (e) => {
+    e.preventDefault();
+    if (!newWishMessage.trim()) return;
+    setPostingWish(true);
+    try {
+      const res = await birthdayService.postWish(profileUser._id, newWishMessage.trim());
+      if (res.success) {
+        setWishes(prev => [res.data, ...prev]);
+        setNewWishMessage('');
+        showAlert('Your birthday wish has been posted!', 'Success');
+      }
+    } catch (err) {
+      showAlert(err.response?.data?.error || err.message || 'Failed to post wish', 'Error');
+    } finally {
+      setPostingWish(false);
+    }
+  };
+
+  const handleSendGift = async (giftType, message) => {
+    try {
+      const res = await birthdayService.postGift(profileUser._id, giftType, message);
+      if (res.success) {
+        setGifts(prev => [res.data, ...prev]);
+        showAlert('Your virtual gift has been sent!', 'Success');
+      }
+    } catch (err) {
+      showAlert(err.response?.data?.error || err.message || 'Failed to send gift', 'Error');
+      throw err;
+    }
+  };
 
   // Open edit modal if edit query param is present
   useEffect(() => {
@@ -341,6 +499,7 @@ const Profile = () => {
         formData.append('location', editLocation.trim());
         formData.append('bio', editBio.trim());
         formData.append('birthday', editBirthday);
+        formData.append('birthdayPrivacy', editBirthdayPrivacy);
         formData.append('isPrivate', editIsPrivate);
         if (chosenAvatarFile) formData.append('profilePicture', chosenAvatarFile);
         if (chosenCoverFile) formData.append('coverPhoto', chosenCoverFile);
@@ -355,6 +514,7 @@ const Profile = () => {
           location: editLocation.trim(),
           bio: editBio.trim(),
           birthday: editBirthday,
+          birthdayPrivacy: editBirthdayPrivacy,
           profilePictureUrl: editAvatarUrl.trim(),
           coverPhotoUrl: editCoverUrl.trim(),
           isPrivate: editIsPrivate
@@ -480,7 +640,25 @@ const Profile = () => {
         </div>
 
         <div className="profile-details-section">
-          <h1 className="profile-fullname">{u.fullName}</h1>
+          <h1 className="profile-fullname" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {u.fullName}
+            {isBirthdayToday && (
+              <span style={{
+                backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                color: '#ec4899',
+                fontSize: '0.75rem',
+                padding: '4px 8px',
+                borderRadius: '9999px',
+                border: '1px solid rgba(236, 72, 153, 0.2)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontWeight: 600
+              }}>
+                🎂 Birthday Today
+              </span>
+            )}
+          </h1>
           <div className="profile-username-tag">@{u.username}</div>
           <p className="profile-bio-text">{u.bio || 'No bio yet.'}</p>
 
@@ -495,16 +673,24 @@ const Profile = () => {
               </div>
             )}
             {u.birthday && (
-              <div className="profile-meta-item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#ff2e93' }}>
-                  <polyline points="20 12 20 22 4 22 4 12" />
-                  <rect x="2" y="7" width="20" height="5" />
-                  <line x1="12" y1="22" x2="12" y2="7" />
-                  <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
-                  <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
-                </svg>
-                <span>Born {new Date(u.birthday).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
-              </div>
+              <>
+                <div className="profile-meta-item">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#ff2e93' }}>
+                    <polyline points="20 12 20 22 4 22 4 12" />
+                    <rect x="2" y="7" width="20" height="5" />
+                    <line x1="12" y1="22" x2="12" y2="7" />
+                    <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+                    <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+                  </svg>
+                  <span>Born {new Date(u.birthday).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                </div>
+                {hasBirthdayAccess && (
+                  <div className="profile-meta-item" style={{ fontWeight: 600, color: 'var(--purple)' }}>
+                    <span style={{ fontSize: '1rem' }}>⏳</span>
+                    <span>{getCountdownString()}</span>
+                  </div>
+                )}
+              </>
             )}
             <div className="profile-meta-item">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: '#1d9bf0' }}>
@@ -534,46 +720,309 @@ const Profile = () => {
         </div>
       </div>
 
-      <div className="feed-header">
-        <h2 className="feed-title" id="posts-title">Posts</h2>
-      </div>
+      {/* Profile Tabs */}
+      {hasBirthdayAccess ? (
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', marginBottom: '20px', gap: '20px' }}>
+          <button
+            onClick={() => setActiveTab('posts')}
+            style={{
+              padding: '12px 8px',
+              fontSize: '1rem',
+              fontWeight: 600,
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'posts' ? '3px solid var(--purple)' : '3px solid transparent',
+              color: activeTab === 'posts' ? 'var(--purple)' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Posts ({profilePosts.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('birthday')}
+            style={{
+              padding: '12px 8px',
+              fontSize: '1rem',
+              fontWeight: 600,
+              background: 'none',
+              border: 'none',
+              borderBottom: activeTab === 'birthday' ? '3px solid var(--purple)' : '3px solid transparent',
+              color: activeTab === 'birthday' ? 'var(--purple)' : 'var(--text-muted)',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Birthday Wall 🎂
+          </button>
+        </div>
+      ) : (
+        <div className="feed-header">
+          <h2 className="feed-title" id="posts-title">Posts</h2>
+        </div>
+      )}
 
-      <div id="user-posts-container">
-        {u.isPrivate && !isOwnProfile ? (
-          <div style={{
-            padding: '60px 40px',
-            textAlign: 'center',
-            backgroundColor: 'var(--card-bg)',
-            borderRadius: '16px',
-            border: '1px solid var(--border-color)',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '12px'
-          }}>
-            <div style={{ fontSize: '3rem' }}>🔒</div>
-            <h3 style={{ color: 'var(--text-main)', margin: 0 }}>This Account is Private</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0, maxWidth: '280px' }}>
-              Follow this user to see their posts and stories.
-            </p>
+      {activeTab === 'posts' ? (
+        <div id="user-posts-container">
+          {u.isPrivate && !isOwnProfile ? (
+            <div style={{
+              padding: '60px 40px',
+              textAlign: 'center',
+              backgroundColor: 'var(--card-bg)',
+              borderRadius: '16px',
+              border: '1px solid var(--border-color)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <div style={{ fontSize: '3rem' }}>🔒</div>
+              <h3 style={{ color: 'var(--text-main)', margin: 0 }}>This Account is Private</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0, maxWidth: '280px' }}>
+                Follow this user to see their posts and stories.
+              </p>
+            </div>
+          ) : loadingPosts ? (
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              <Spinner />
+            </div>
+          ) : profilePosts.length === 0 ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', backgroundColor: 'var(--card-bg)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+              No posts from this user yet.
+            </div>
+          ) : (
+            profilePosts.map((post) => (
+              <PostCard
+                key={post._id}
+                post={{ ...post, author: u }} // Ensure author object matches profile lookup details
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        /* Birthday Wall View */
+        <div id="user-birthday-wall-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '20px' }}>
+          {/* Virtual Gifts Display */}
+          {gifts.length > 0 && (
+            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border-color)', borderRadius: '16px', padding: '16px' }}>
+              <h4 style={{ margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)', fontSize: '0.95rem' }}>
+                🎁 Received Gifts ({gifts.length})
+              </h4>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                {gifts.map(g => (
+                  <div
+                    key={g._id}
+                    style={{
+                      background: 'var(--input-bg)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '10px',
+                      padding: '8px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      boxShadow: 'var(--shadow-sm)'
+                    }}
+                    title={`Sent by ${g.sender?.fullName} - "${g.message || 'Happy Birthday!'}"`}
+                  >
+                    <span style={{ fontSize: '1.4rem' }}>
+                      {g.giftType === 'Cake' ? '🎂' :
+                       g.giftType === 'Gift Box' ? '🎁' :
+                       g.giftType === 'Flowers' ? '🌹' :
+                       g.giftType === 'Balloons' ? '🎈' :
+                       g.giftType === 'Chocolate' ? '🍫' : '☕'}
+                    </span>
+                    <div style={{ lineHeight: 1.2 }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>{g.giftType}</div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>From {g.sender?.fullName.split(' ')[0]}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Action Panel: Wish Message and Send Gift */}
+          <div className="card" style={{ padding: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+              <h4 style={{ margin: 0, color: 'var(--text-main)' }}>Write a Birthday Wish</h4>
+              {!isOwnProfile && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setGiftModalOpen(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '6px 12px' }}
+                >
+                  <span>🎁</span> Send Virtual Gift
+                </button>
+              )}
+            </div>
+
+            <form onSubmit={handlePostWish}>
+              <textarea
+                className="form-input form-textarea"
+                placeholder={isOwnProfile ? "Write a birthday note to yourself..." : `Wish ${u.fullName} a Happy Birthday! Add emojis...`}
+                value={newWishMessage}
+                onChange={(e) => setNewWishMessage(e.target.value)}
+                rows="3"
+                required
+                maxLength="300"
+                style={{ marginBottom: '12px' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  {['🎉', '🎂', '🎁', '🎈', '❤️', '🌹'].map(emoji => (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => setNewWishMessage(prev => prev + emoji)}
+                      style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', padding: '2px' }}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+                <button type="submit" className="btn btn-primary" style={{ padding: '6px 16px', fontSize: '0.85rem' }} disabled={postingWish || !newWishMessage.trim()}>
+                  {postingWish ? 'Posting...' : 'Post Wish 🎂'}
+                </button>
+              </div>
+            </form>
           </div>
-        ) : loadingPosts ? (
-          <div style={{ textAlign: 'center', padding: '20px' }}>
-            <Spinner />
+
+          {/* Birthday Wall Wishes List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {loadingWishes ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                <Spinner />
+              </div>
+            ) : wishes.length === 0 ? (
+              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', backgroundColor: 'var(--card-bg)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                No wishes on the wall yet. Be the first to wish them!
+              </div>
+            ) : (
+              wishes.map((wish) => {
+                const isWishSender = wish.sender?._id === currentUser?._id;
+                const isWishRecipient = wish.recipient === currentUser?._id;
+                const hasLiked = wish.likes.includes(currentUser?._id);
+
+                return (
+                  <div key={wish._id} className="card" style={{ padding: '16px' }}>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <img
+                        src={getUploadUrl(wish.sender?.profilePicture || '/uploads/default-avatar.png')}
+                        alt={wish.sender?.fullName}
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{wish.sender?.fullName}</span>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>@{wish.sender?.username}</span>
+                          </div>
+                          {(isWishSender || isWishRecipient) && (
+                            <button
+                              onClick={() => handleDeleteWish(wish._id)}
+                              style={{ background: 'none', border: 'none', color: 'var(--danger)', fontSize: '0.75rem', cursor: 'pointer' }}
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                        <p style={{ margin: '8px 0', fontSize: '0.9rem', color: 'var(--text-main)', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>
+                          {wish.message}
+                        </p>
+
+                        {/* Actions row: Like and Reply toggler */}
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginTop: '12px' }}>
+                          <button
+                            onClick={() => handleLikeWish(wish._id)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: hasLiked ? 'var(--pink)' : 'var(--text-muted)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              cursor: 'pointer',
+                              fontSize: '0.75rem',
+                              fontWeight: 600
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill={hasLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5">
+                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                            </svg>
+                            {wish.likes.length} {wish.likes.length === 1 ? 'Like' : 'Likes'}
+                          </button>
+
+                          <button
+                            onClick={() => setReplyInputWishId(replyInputWishId === wish._id ? null : wish._id)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--text-muted)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              cursor: 'pointer',
+                              fontSize: '0.75rem',
+                              fontWeight: 600
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                            </svg>
+                            {wish.replies.length} {wish.replies.length === 1 ? 'Reply' : 'Replies'}
+                          </button>
+                        </div>
+
+                        {/* Replies List */}
+                        {wish.replies.length > 0 && (
+                          <div style={{ marginTop: '12px', borderLeft: '2px solid var(--border-color)', paddingLeft: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {wish.replies.map(rep => (
+                              <div key={rep._id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                <img
+                                  src={getUploadUrl(rep.sender?.profilePicture || '/uploads/default-avatar.png')}
+                                  alt=""
+                                  style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', marginTop: '2px' }}
+                                />
+                                <div style={{ flex: 1, background: 'var(--input-bg)', padding: '6px 10px', borderRadius: '8px', fontSize: '0.8rem' }}>
+                                  <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{rep.sender?.fullName}</span>
+                                  <p style={{ margin: '2px 0 0 0', color: 'var(--text-main)', lineHeight: '1.3' }}>{rep.message}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Reply Input Form */}
+                        {replyInputWishId === wish._id && (
+                          <div style={{ display: 'flex', gap: '8px', marginTop: '12px', alignItems: 'center' }}>
+                            <input
+                              type="text"
+                              placeholder="Write a reply..."
+                              className="form-input"
+                              value={replyMessage}
+                              onChange={(e) => setReplyMessage(e.target.value)}
+                              style={{ flex: 1, padding: '6px 12px', fontSize: '0.8rem', height: 'auto' }}
+                            />
+                            <button
+                              onClick={() => handleReplyWish(wish._id)}
+                              className="btn btn-primary"
+                              disabled={postingReply || !replyMessage.trim()}
+                              style={{ padding: '6px 12px', fontSize: '0.75rem' }}
+                            >
+                              Reply
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
-        ) : profilePosts.length === 0 ? (
-          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)', backgroundColor: 'var(--card-bg)', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
-            No posts from this user yet.
-          </div>
-        ) : (
-          profilePosts.map((post) => (
-            <PostCard
-              key={post._id}
-              post={{ ...post, author: u }} // Ensure author object matches profile lookup details
-            />
-          ))
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Followers/Following Modal */}
       <Modal isOpen={followListModalOpen} onClose={() => setFollowListModalOpen(false)} title={followListType === 'followers' ? 'Followers' : 'Following'}>
@@ -714,6 +1163,20 @@ const Profile = () => {
               <input type="date" id="edit-birthday" className="form-input" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} />
             </div>
 
+            <div className="form-group">
+              <label className="form-label" htmlFor="edit-birthdayPrivacy">Birthday Privacy</label>
+              <select
+                id="edit-birthdayPrivacy"
+                className="form-input"
+                value={editBirthdayPrivacy}
+                onChange={(e) => setEditBirthdayPrivacy(e.target.value)}
+              >
+                <option value="Public">Public</option>
+                <option value="Friends Only">Friends Only</option>
+                <option value="Only Me">Only Me</option>
+              </select>
+            </div>
+
             <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '16px', marginBottom: '16px' }}>
               <input
                 type="checkbox"
@@ -759,6 +1222,15 @@ const Profile = () => {
         onClose={handleCropCancel}
         title={cropperTarget === 'avatar' ? "Crop Profile Picture" : "Crop Cover Photo"}
       />
+
+      {giftModalOpen && (
+        <GiftModal
+          isOpen={giftModalOpen}
+          onClose={() => setGiftModalOpen(false)}
+          recipientName={u.fullName}
+          onSendGift={handleSendGift}
+        />
+      )}
     </Layout>
   );
 };

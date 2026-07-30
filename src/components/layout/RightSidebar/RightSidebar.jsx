@@ -4,6 +4,7 @@ import userService from '../../../services/userService';
 import { useAuth } from '../../../context/AuthContext';
 import { usePosts } from '../../../context/PostsContext';
 import { getUploadUrl } from '../../../utils/mediaHelper';
+import BirthdayWidget from '../../Birthday/BirthdayWidget';
 
 const RightSidebar = ({ onFollowChange }) => {
   const navigate = useNavigate();
@@ -57,6 +58,7 @@ const RightSidebar = ({ onFollowChange }) => {
 
   return (
     <aside className="sidebar-right">
+      <BirthdayWidget />
       <div className="card" style={{ padding: '16px' }}>
         <h3 className="section-card-title">Who to follow</h3>
         <div className="suggested-users-list">

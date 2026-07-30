@@ -12,6 +12,9 @@ import Modal from '../../components/Modal/Modal';
 import ImageCropperModal from '../../components/Modal/ImageCropperModal';
 import userService from '../../services/userService';
 import Stories from '../../components/Stories/Stories';
+import BirthdayReminderCard from '../../components/Birthday/BirthdayReminderCard';
+import BirthdayConfetti from '../../components/Birthday/BirthdayConfetti';
+import BirthdayModal from '../../components/Birthday/BirthdayModal';
 
 const Home = () => {
   const { currentUser } = useAuth();
@@ -32,6 +35,10 @@ const Home = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
+  // Birthday modal and confetti state
+  const [birthdayModalOpen, setBirthdayModalOpen] = useState(false);
+  const [showBirthdayConfetti, setShowBirthdayConfetti] = useState(false);
+
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
@@ -39,6 +46,26 @@ const Home = () => {
   useEffect(() => {
     fetchFeed(1, false);
   }, [fetchFeed]);
+
+  // Trigger birthday celebration once a day
+  useEffect(() => {
+    if (currentUser && currentUser.birthday) {
+      const today = new Date();
+      const birthDate = new Date(currentUser.birthday);
+      
+      if (birthDate.getMonth() === today.getMonth() && birthDate.getDate() === today.getDate()) {
+        const dateString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+        const storageKey = `seenBirthdayConfetti_${currentUser._id}_${dateString}`;
+        const hasSeen = localStorage.getItem(storageKey);
+        
+        if (!hasSeen) {
+          setShowBirthdayConfetti(true);
+          setBirthdayModalOpen(true);
+          localStorage.setItem(storageKey, 'true');
+        }
+      }
+    }
+  }, [currentUser]);
 
   // Fetch suggestions when the feed is empty
   useEffect(() => {
@@ -287,6 +314,7 @@ const Home = () => {
   return (
     <Layout>
       <Stories />
+      <BirthdayReminderCard />
       {/* Create Post Creator Card */}
       <div className="card">
         <div className="creator-container">
@@ -471,6 +499,15 @@ const Home = () => {
         fileType={cropperFileType}
         fileName={cropperFileName}
       />
+
+      {showBirthdayConfetti && <BirthdayConfetti />}
+      {birthdayModalOpen && (
+        <BirthdayModal
+          isOpen={birthdayModalOpen}
+          onClose={() => setBirthdayModalOpen(false)}
+          userName={currentUser?.fullName}
+        />
+      )}
     </Layout>
   );
 };
