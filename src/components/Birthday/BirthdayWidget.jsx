@@ -128,51 +128,56 @@ const BirthdayWidget = () => {
                     )}
                   </div>
                   {wishInputUserId === user._id && (
-                    <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
                       <input
                         type="text"
                         placeholder={`Wish ${user.fullName.split(' ')[0]}...`}
                         value={wishMessage}
                         onChange={(e) => setWishMessage(e.target.value)}
                         style={{
-                          flex: 1,
-                          padding: '6px 10px',
+                          width: '100%',
+                          padding: '8px 10px',
                           fontSize: '0.8rem',
                           borderRadius: '6px',
                           border: '1px solid var(--border-color)',
                           background: 'var(--input-bg)',
-                          color: 'var(--text-main)'
+                          color: 'var(--text-main)',
+                          boxSizing: 'border-box'
                         }}
                       />
-                      <button
-                        onClick={() => handleSendWish(user._id)}
-                        disabled={sendingWish || !wishMessage.trim()}
-                        style={{
-                          padding: '6px 10px',
-                          fontSize: '0.8rem',
-                          borderRadius: '6px',
-                          background: 'var(--purple)',
-                          color: '#fff',
-                          border: 'none',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {sendingWish ? '...' : 'Send'}
-                      </button>
-                      <button
-                        onClick={() => { setWishInputUserId(null); setWishMessage(''); }}
-                        style={{
-                          padding: '6px 10px',
-                          fontSize: '0.8rem',
-                          borderRadius: '6px',
-                          background: 'var(--card-bg)',
-                          border: '1px solid var(--border-color)',
-                          color: 'var(--text-main)',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Cancel
-                      </button>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                        <button
+                          onClick={() => { setWishInputUserId(null); setWishMessage(''); }}
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '0.75rem',
+                            borderRadius: '6px',
+                            background: 'var(--card-bg)',
+                            border: '1px solid var(--border-color)',
+                            color: 'var(--text-main)',
+                            cursor: 'pointer',
+                            fontWeight: 600
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => handleSendWish(user._id)}
+                          disabled={sendingWish || !wishMessage.trim()}
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '0.75rem',
+                            borderRadius: '6px',
+                            background: 'var(--purple)',
+                            color: '#fff',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontWeight: 600
+                          }}
+                        >
+                          {sendingWish ? '...' : 'Send'}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
