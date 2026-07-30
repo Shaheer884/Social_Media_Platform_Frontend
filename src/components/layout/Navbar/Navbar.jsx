@@ -146,6 +146,16 @@ const Navbar = () => {
                       actionText = n.sender?.relationshipStatus === 'friends'
                         ? 'is now your friend!'
                         : 'started following you';
+                    } else if (n.type === 'birthday') {
+                      const recipientId = n.recipient?._id || n.recipient;
+                      const isSelf = n.sender?._id?.toString() === recipientId?.toString() || n.sender?.toString() === recipientId?.toString();
+                      actionText = isSelf
+                        ? '- Happy Birthday! Have a wonderful day! 🎉'
+                        : 'celebrates their birthday today. Wish them a Happy Birthday! 🎂';
+                    } else if (n.type === 'birthday-wish') {
+                      actionText = 'wished you a Happy Birthday! 🎂';
+                    } else if (n.type === 'birthday-gift') {
+                      actionText = 'sent you a virtual birthday gift! 🎁';
                     }
 
                     const postText = n.post ? ` "${(n.post.content || '').substring(0, 15)}..."` : '';
