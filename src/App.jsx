@@ -28,6 +28,31 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword/ForgotPassword'
 const VerifyResetCode = lazy(() => import('./pages/VerifyResetCode/VerifyResetCode'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword/ResetPassword'));
 
+// Admin Pages
+const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin'));
+const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard/AdminDashboard'));
+const AdminUsers = lazy(() => import('./pages/Admin/Users/AdminUsers'));
+const AdminPosts = lazy(() => import('./pages/Admin/Posts/AdminPosts'));
+const AdminComments = lazy(() => import('./pages/Admin/Comments/AdminComments'));
+const AdminReports = lazy(() => import('./pages/Admin/Reports/AdminReports'));
+const AdminNotifications = lazy(() => import('./pages/Admin/Notifications/AdminNotifications'));
+const AdminActivityLogs = lazy(() => import('./pages/Admin/ActivityLogs/AdminActivityLogs'));
+const AdminRecycleBin = lazy(() => import('./pages/Admin/RecycleBin/AdminRecycleBin'));
+const AdminPlatformSettings = lazy(() => import('./pages/Admin/PlatformSettings/AdminPlatformSettings'));
+const AdminTrending = lazy(() => import('./pages/Admin/Trending/AdminTrending'));
+
+// Admin Route wrapper
+const AdminRoute = ({ children }) => {
+  const adminToken = sessionStorage.getItem('adminToken');
+  const adminUserStr = sessionStorage.getItem('adminUser');
+  const adminUser = adminUserStr ? JSON.parse(adminUserStr) : null;
+
+  if (!adminToken || !adminUser || adminUser.role !== 'admin') {
+    return <Navigate to="/admin/login" replace />;
+  }
+  return children;
+};
+
 // Protected Routes wrapper
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading, currentUser } = useAuth();
@@ -178,6 +203,19 @@ const AppContent = () => {
           <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
           <Route path="/saved" element={<ProtectedRoute><Saved /></ProtectedRoute>} />
           <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
+
+          {/* Admin Routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+          <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+          <Route path="/admin/posts" element={<AdminRoute><AdminPosts /></AdminRoute>} />
+          <Route path="/admin/comments" element={<AdminRoute><AdminComments /></AdminRoute>} />
+          <Route path="/admin/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
+          <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
+          <Route path="/admin/activity-logs" element={<AdminRoute><AdminActivityLogs /></AdminRoute>} />
+          <Route path="/admin/recycle-bin" element={<AdminRoute><AdminRecycleBin /></AdminRoute>} />
+          <Route path="/admin/platform-settings" element={<AdminRoute><AdminPlatformSettings /></AdminRoute>} />
+          <Route path="/admin/trending" element={<AdminRoute><AdminTrending /></AdminRoute>} />
 
           {/* Catch-all Fallback */}
           <Route path="*" element={<NotFound />} />
