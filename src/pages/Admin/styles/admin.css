@@ -26,6 +26,91 @@ body.dark-theme {
   --admin-primary-light: #2e1065;
 }
 
+/* --- Admin Panel Themes --- */
+
+/* Theme: Emerald Mint */
+.admin-container.theme-emerald {
+  --admin-primary: #10b981;
+  --admin-primary-dark: #059669;
+  --admin-primary-light: #e6fbf4;
+  --admin-secondary: #064f3d;
+  --admin-bg: #f2fbf7;
+  --admin-card-bg: #ffffff;
+  --admin-text: #0f2d24;
+  --admin-text-muted: #4b6f64;
+  --admin-border: #d2f4e8;
+}
+
+/* Theme: Ocean Breeze */
+.admin-container.theme-ocean {
+  --admin-primary: #06b6d4;
+  --admin-primary-dark: #0891b2;
+  --admin-primary-light: #ecfeff;
+  --admin-secondary: #0f172a;
+  --admin-bg: #f0fafd;
+  --admin-card-bg: #ffffff;
+  --admin-text: #0f2d37;
+  --admin-text-muted: #4b6e7a;
+  --admin-border: #d2f4f8;
+}
+
+/* Theme: Crimson Midnight (Dark Theme) */
+.admin-container.theme-crimson {
+  --admin-primary: #f43f5e;
+  --admin-primary-dark: #fda4af;
+  --admin-primary-light: #4c0519;
+  --admin-secondary: #0f172a;
+  --admin-bg: #090d16;
+  --admin-card-bg: #131924;
+  --admin-text: #f1f5f9;
+  --admin-text-muted: #94a3b8;
+  --admin-border: #1e293b;
+}
+
+/* Theme: Cyberpunk Neon (Dark Theme) */
+.admin-container.theme-cyberpunk {
+  --admin-primary: #ec4899;
+  --admin-primary-dark: #fbcfe8;
+  --admin-primary-light: #3f0724;
+  --admin-secondary: #0f051d;
+  --admin-bg: #030008;
+  --admin-card-bg: #0c0514;
+  --admin-text: #39ffd0;
+  --admin-text-muted: #c084fc;
+  --admin-border: #220739;
+}
+.admin-container.theme-cyberpunk .admin-sidebar-link:hover,
+.admin-container.theme-cyberpunk .admin-sidebar-link.active {
+  background-color: var(--admin-primary);
+  color: #030008;
+}
+
+/* Theme: Nordic Ice */
+.admin-container.theme-nordic {
+  --admin-primary: #3b82f6;
+  --admin-primary-dark: #2563eb;
+  --admin-primary-light: #eff6ff;
+  --admin-secondary: #1e293b;
+  --admin-bg: #f1f5f9;
+  --admin-card-bg: #ffffff;
+  --admin-text: #0f172a;
+  --admin-text-muted: #475569;
+  --admin-border: #cbd5e1;
+}
+
+/* Theme: Sunset Orange */
+.admin-container.theme-sunset {
+  --admin-primary: #f97316;
+  --admin-primary-dark: #ea580c;
+  --admin-primary-light: #fff7ed;
+  --admin-secondary: #1e1b4b;
+  --admin-bg: #fffbf7;
+  --admin-card-bg: #ffffff;
+  --admin-text: #431407;
+  --admin-text-muted: #7c2d12;
+  --admin-border: #ffedd5;
+}
+
 /* Layout Wrapper */
 .admin-container {
   display: flex;
@@ -145,6 +230,38 @@ body.dark-theme {
   display: flex;
   align-items: center;
   gap: 24px;
+}
+
+/* Theme Dropdown Styles */
+.admin-theme-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.admin-theme-select-dropdown {
+  padding: 8px 14px;
+  padding-right: 30px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  border: 1px solid var(--admin-border);
+  background-color: var(--admin-card-bg);
+  color: var(--admin-text);
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+}
+
+.admin-theme-select-dropdown:hover {
+  border-color: var(--admin-primary);
+  box-shadow: 0 0 0 3px var(--admin-primary-light);
 }
 
 .admin-user-profile {

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import adminService from '../services/adminService';
 import { getUploadUrl } from '../../../utils/mediaHelper';
 
-const Navbar = ({ onToggleSidebar }) => {
+const Navbar = ({ onToggleSidebar, currentTheme, onThemeChange }) => {
   const navigate = useNavigate();
   const [admin, setAdmin] = useState(null);
 
@@ -44,6 +44,24 @@ const Navbar = ({ onToggleSidebar }) => {
       </div>
 
       <div className="admin-nav-right">
+        {/* Admin Theme Selector Dropdown */}
+        <div className="admin-theme-selector">
+          <select 
+            value={currentTheme} 
+            onChange={(e) => onThemeChange(e.target.value)}
+            className="admin-theme-select-dropdown"
+            title="Select Admin Theme"
+          >
+            <option value="default">💜 Default Violet</option>
+            <option value="emerald">💚 Emerald Mint</option>
+            <option value="ocean">💙 Ocean Breeze</option>
+            <option value="crimson">❤️ Crimson Midnight</option>
+            <option value="cyberpunk">💖 Cyberpunk Neon</option>
+            <option value="nordic">❄️ Nordic Ice</option>
+            <option value="sunset">🧡 Sunset Orange</option>
+          </select>
+        </div>
+
         <div className="admin-user-profile">
           <img src={avatarUrl} alt="Admin Avatar" />
           <div className="admin-user-info">
