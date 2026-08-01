@@ -612,6 +612,8 @@ body.dark-theme {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .admin-modal-title {

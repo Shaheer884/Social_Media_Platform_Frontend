@@ -252,36 +252,36 @@ const AdminPosts = () => {
               {selectedPost.media && selectedPost.media.length > 0 ? (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
                   {selectedPost.media.map((med, mIdx) => (
-                    <div key={mIdx} style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
+                    <div key={mIdx} style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
                       {med.resourceType === 'video' ? (
                         <video 
                           src={getUploadUrl(med.url)} 
                           controls 
-                          style={{ maxWidth: '100%', maxHeight: '300px' }} 
+                          style={{ maxWidth: '100%', maxHeight: '200px' }} 
                         />
                       ) : (
                         <img 
                           src={getUploadUrl(med.url)} 
                           alt="Post Media" 
-                          style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain' }} 
+                          style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }} 
                         />
                       )}
                     </div>
                   ))}
                 </div>
               ) : selectedPost.imageUrl ? (
-                <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)', textAlign: 'center' }}>
+                <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)', textAlign: 'center', display: 'flex', justifyContent: 'center' }}>
                   {selectedPost.mediaType === 'video' ? (
                     <video 
                       src={getUploadUrl(selectedPost.imageUrl)} 
                       controls 
-                      style={{ maxWidth: '100%', maxHeight: '300px' }} 
+                      style={{ maxWidth: '100%', maxHeight: '200px' }} 
                     />
                   ) : (
                     <img 
                       src={getUploadUrl(selectedPost.imageUrl)} 
                       alt="Post Image" 
-                      style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain' }} 
+                      style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }} 
                     />
                   )}
                 </div>
