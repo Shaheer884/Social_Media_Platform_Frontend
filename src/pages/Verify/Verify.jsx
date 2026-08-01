@@ -61,7 +61,11 @@ const Verify = () => {
       if (res.success) {
         setSuccess('Verification successful! Redirecting...');
         setTimeout(() => {
-          navigate('/');
+          if (res.data?.role === 'admin') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/');
+          }
         }, 1500);
       }
     } catch (err) {

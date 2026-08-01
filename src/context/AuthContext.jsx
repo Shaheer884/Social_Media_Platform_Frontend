@@ -15,8 +15,17 @@ export const AuthProvider = ({ children }) => {
     const savedToken = sessionStorage.getItem('token');
     const savedUser = sessionStorage.getItem('user');
     if (savedToken && savedUser) {
+      const userObj = JSON.parse(savedUser);
       setToken(savedToken);
-      setCurrentUser(JSON.parse(savedUser));
+      setCurrentUser(userObj);
+      if (userObj && userObj.role === 'admin') {
+        if (!sessionStorage.getItem('adminToken')) {
+          sessionStorage.setItem('adminToken', savedToken);
+        }
+        if (!sessionStorage.getItem('adminUser')) {
+          sessionStorage.setItem('adminUser', savedUser);
+        }
+      }
     }
     setLoading(false);
   }, []);
@@ -29,6 +38,10 @@ export const AuthProvider = ({ children }) => {
       sessionStorage.setItem('user', JSON.stringify(userData));
       setToken(userToken);
       setCurrentUser(userData);
+      if (userData.role === 'admin') {
+        sessionStorage.setItem('adminToken', userToken);
+        sessionStorage.setItem('adminUser', JSON.stringify(userData));
+      }
     }
     return res;
   };
@@ -51,6 +64,10 @@ export const AuthProvider = ({ children }) => {
       const userData = res.data;
       sessionStorage.setItem('user', JSON.stringify(userData));
       setCurrentUser(userData);
+      if (userData.role === 'admin') {
+        sessionStorage.setItem('adminToken', token || sessionStorage.getItem('token'));
+        sessionStorage.setItem('adminUser', JSON.stringify(userData));
+      }
     }
     return res;
   };

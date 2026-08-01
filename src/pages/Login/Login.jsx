@@ -6,7 +6,7 @@ import authBg from '../../assets/connecthub_auth_bg.png';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, currentUser } = useAuth();
 
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -32,9 +32,13 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      if (currentUser?.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, currentUser, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,8 +59,12 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await login({ emailOrUsername: trimmedIdent, password });
-      navigate('/');
+      const res = await login({ emailOrUsername: trimmedIdent, password });
+      if (res.success && res.data && res.data.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       setError(err.message || 'Invalid credentials. Please try again.');
       setLoading(false);

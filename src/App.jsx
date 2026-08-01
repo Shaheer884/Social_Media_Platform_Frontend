@@ -66,6 +66,9 @@ const ProtectedRoute = ({ children }) => {
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
+  if (currentUser && currentUser.role === 'admin') {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
   if (currentUser && currentUser.isVerified === false) {
     return <Navigate to="/verify" replace />;
   }
@@ -74,7 +77,7 @@ const ProtectedRoute = ({ children }) => {
 
 // Public Routes wrapper
 const PublicRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, currentUser } = useAuth();
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -82,7 +85,11 @@ const PublicRoute = ({ children }) => {
       </div>
     );
   }
-  return !isAuthenticated ? children : <Navigate to="/" replace />;
+  return !isAuthenticated ? children : (
+    currentUser?.role === 'admin'
+      ? <Navigate to="/admin/dashboard" replace />
+      : <Navigate to="/" replace />
+  );
 };
 
 // Verification Route wrapper
@@ -99,7 +106,9 @@ const VerificationRoute = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
   if (currentUser && currentUser.isVerified !== false) {
-    return <Navigate to="/" replace />;
+    return currentUser.role === 'admin'
+      ? <Navigate to="/admin/dashboard" replace />
+      : <Navigate to="/" replace />;
   }
   return children;
 };
