@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../layout/AdminLayout';
 import DataTable from '../components/DataTable';
 import Filters from '../components/Filters';
+import LoadingSkeleton from '../components/LoadingSkeleton';
 import adminService from '../services/adminService';
 import { getUploadUrl } from '../../../utils/mediaHelper';
 
