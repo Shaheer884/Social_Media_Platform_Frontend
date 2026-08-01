@@ -40,6 +40,8 @@ const AdminActivityLogs = lazy(() => import('./pages/Admin/ActivityLogs/AdminAct
 const AdminRecycleBin = lazy(() => import('./pages/Admin/RecycleBin/AdminRecycleBin'));
 const AdminPlatformSettings = lazy(() => import('./pages/Admin/PlatformSettings/AdminPlatformSettings'));
 const AdminTrending = lazy(() => import('./pages/Admin/Trending/AdminTrending'));
+const AdminProfile = lazy(() => import('./pages/Admin/Profile/AdminProfile'));
+
 
 // Admin Route wrapper
 const AdminRoute = ({ children }) => {
@@ -225,6 +227,8 @@ const AppContent = () => {
           <Route path="/admin/recycle-bin" element={<AdminRoute><AdminRecycleBin /></AdminRoute>} />
           <Route path="/admin/platform-settings" element={<AdminRoute><AdminPlatformSettings /></AdminRoute>} />
           <Route path="/admin/trending" element={<AdminRoute><AdminTrending /></AdminRoute>} />
+          <Route path="/admin/profile" element={<AdminRoute><AdminProfile /></AdminRoute>} />
+
 
           {/* Catch-all Fallback */}
           <Route path="*" element={<NotFound />} />

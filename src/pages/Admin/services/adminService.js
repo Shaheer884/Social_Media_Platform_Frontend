@@ -97,7 +97,14 @@ const adminService = {
     return res.data;
   },
   
-  getTrending: () => adminApi.get('/trending')
+  getTrending: () => adminApi.get('/trending'),
+  updateProfile: (formData) => {
+    return adminApi.put('/profile', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  }
 };
 
 export default adminService;

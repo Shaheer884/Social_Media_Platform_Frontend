@@ -7,11 +7,19 @@ const Navbar = ({ onToggleSidebar }) => {
   const navigate = useNavigate();
   const [admin, setAdmin] = useState(null);
 
-  useEffect(() => {
+  const updateAdminDetails = () => {
     const savedAdmin = sessionStorage.getItem('adminUser');
     if (savedAdmin) {
       setAdmin(JSON.parse(savedAdmin));
     }
+  };
+
+  useEffect(() => {
+    updateAdminDetails();
+    window.addEventListener('adminProfileUpdated', updateAdminDetails);
+    return () => {
+      window.removeEventListener('adminProfileUpdated', updateAdminDetails);
+    };
   }, []);
 
   const handleLogout = () => {
