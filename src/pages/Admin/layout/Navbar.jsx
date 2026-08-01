@@ -62,7 +62,7 @@ const Navbar = ({ onToggleSidebar, currentTheme, onThemeChange }) => {
           </select>
         </div>
 
-        <div className="admin-user-profile">
+        <div className="admin-user-profile" onClick={() => navigate('/admin/profile')} title="Go to Admin Profile Settings">
           <img src={avatarUrl} alt="Admin Avatar" />
           <div className="admin-user-info">
             <span className="admin-user-name">{fullName}</span>
