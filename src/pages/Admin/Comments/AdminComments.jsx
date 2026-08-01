@@ -16,6 +16,7 @@ const AdminComments = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState('');
   const [filterHidden, setFilterHidden] = useState(''); // true, false, ''
+  const [selectedComment, setSelectedComment] = useState(null); // Detail Modal
 
   // Confirmation Modal state
   const [confirmState, setConfirmState] = useState({ isOpen: false, commentId: null, action: '', message: '' });
@@ -79,7 +80,11 @@ const AdminComments = () => {
 
   const renderRow = (comment) => {
     const avatar = getUploadUrl(comment.author?.profilePicture || '/uploads/default-avatar.png');
-    const postContext = comment.post ? comment.post.content : 'Deleted Post';
+    const postAuthor = comment.post?.author?.username;
+    const postContent = comment.post?.content || (comment.post?.media?.length > 0 || comment.post?.imageUrl ? '(Media Post)' : '');
+    const postContext = comment.post 
+      ? `By @${postAuthor || 'deleted'}: ${postContent || 'No text'}` 
+      : 'Deleted Post';
 
     return (
       <tr key={comment._id}>
@@ -101,7 +106,7 @@ const AdminComments = () => {
             {comment.content}
           </div>
         </td>
-        <td style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <td style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={postContext}>
           <span style={{ color: 'var(--admin-text-muted)', fontSize: '0.85rem' }}>
             {postContext}
           </span>
@@ -116,6 +121,12 @@ const AdminComments = () => {
         </td>
         <td>
           <div className="admin-action-group">
+            <button 
+              className="admin-btn admin-btn-secondary admin-btn-sm" 
+              onClick={() => setSelectedComment(comment)}
+            >
+              View
+            </button>
             {comment.isHidden ? (
               <button 
                 className="admin-btn admin-btn-primary admin-btn-sm" 
@@ -195,6 +206,123 @@ const AdminComments = () => {
         confirmText={confirmState.action === 'unhide' ? 'Restore Visibility' : 'Confirm Action'} 
         type={confirmState.action === 'unhide' ? 'primary' : 'danger'} 
       />
+
+      {/* Comment Detail Modal */}
+      {selectedComment && (
+        <div className="admin-modal-overlay" onClick={() => setSelectedComment(null)}>
+          <div className="admin-modal" style={{ maxWidth: '650px' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--admin-border)', paddingBottom: '12px' }}>
+              <div className="admin-modal-title">Comment Moderation & Context</div>
+              <button 
+                onClick={() => setSelectedComment(null)} 
+                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--admin-text)' }}
+              >
+                &times;
+              </button>
+            </div>
+            
+            {/* Comment Section */}
+            <div style={{ padding: '8px 0' }}>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
+                <img 
+                  src={getUploadUrl(selectedComment.author?.profilePicture || '/uploads/default-avatar.png')} 
+                  alt="" 
+                  style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} 
+                />
+                <div>
+                  <h5 style={{ margin: 0, fontSize: '0.95rem' }}>Comment Author: {selectedComment.author?.fullName || 'Deleted User'}</h5>
+                  <p style={{ margin: 0, color: 'var(--admin-text-muted)', fontSize: '0.8rem' }}>
+                    @{selectedComment.author?.username || 'deleted'} &bull; {new Date(selectedComment.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+              <div style={{ padding: '12px', borderRadius: '8px', backgroundColor: 'var(--admin-bg)', border: '1px solid var(--admin-border)', fontSize: '1rem', fontStyle: 'italic' }}>
+                "{selectedComment.content}"
+              </div>
+            </div>
+
+            {/* Post Context Section */}
+            <div style={{ borderTop: '1px solid var(--admin-border)', paddingTop: '16px', marginTop: '8px' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--admin-text-muted)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Original Post Context
+              </div>
+              
+              {selectedComment.post ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <img 
+                      src={getUploadUrl(selectedComment.post.author?.profilePicture || '/uploads/default-avatar.png')} 
+                      alt="" 
+                      style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} 
+                    />
+                    <div>
+                      <h5 style={{ margin: 0, fontSize: '0.95rem' }}>Post Author: {selectedComment.post.author?.fullName || 'Deleted User'}</h5>
+                      <p style={{ margin: 0, color: 'var(--admin-text-muted)', fontSize: '0.8rem' }}>
+                        @{selectedComment.post.author?.username || 'deleted'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedComment.post.content && (
+                    <div style={{ fontSize: '0.95rem', lineHeight: 1.5, whiteSpace: 'pre-wrap', padding: '4px 0' }}>
+                      {selectedComment.post.content}
+                    </div>
+                  )}
+
+                  {/* Rendering media of the post if present */}
+                  {selectedComment.post.media && selectedComment.post.media.length > 0 ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '4px' }}>
+                      {selectedComment.post.media.map((med, mIdx) => (
+                        <div key={mIdx} style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)' }}>
+                          {med.resourceType === 'video' ? (
+                            <video 
+                              src={getUploadUrl(med.url)} 
+                              controls 
+                              style={{ maxWidth: '100%', maxHeight: '200px' }} 
+                            />
+                          ) : (
+                            <img 
+                              src={getUploadUrl(med.url)} 
+                              alt="Post Media" 
+                              style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }} 
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : selectedComment.post.imageUrl ? (
+                    <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--admin-border)', textAlign: 'center', display: 'flex', justifyContent: 'center', marginTop: '4px' }}>
+                      {selectedComment.post.mediaType === 'video' ? (
+                        <video 
+                          src={getUploadUrl(selectedComment.post.imageUrl)} 
+                          controls 
+                          style={{ maxWidth: '100%', maxHeight: '200px' }} 
+                        />
+                      ) : (
+                        <img 
+                          src={getUploadUrl(selectedComment.post.imageUrl)} 
+                          alt="Post Image" 
+                          style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'contain' }} 
+                        />
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div style={{ fontStyle: 'italic', color: 'var(--admin-text-muted)', fontSize: '0.9rem' }}>
+                  The post this comment belonged to has been deleted or is unavailable.
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px', borderTop: '1px solid var(--admin-border)', paddingTop: '12px' }}>
+              <button className="admin-btn admin-btn-secondary" onClick={() => setSelectedComment(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };
