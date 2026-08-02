@@ -91,14 +91,7 @@ const AdminProfile = () => {
         </div>
       </div>
 
-      <div style={{
-        backgroundColor: 'var(--admin-card-bg)',
-        border: '1px solid var(--admin-border)',
-        borderRadius: '16px',
-        padding: '32px',
-        maxWidth: '700px',
-        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)'
-      }}>
+      <div className="admin-profile-card">
         {success && (
           <div style={{
             padding: '12px',
@@ -130,7 +123,7 @@ const AdminProfile = () => {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           {/* Avatar Edit Section */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', paddingBottom: '20px', borderBottom: '1px solid var(--admin-border)' }}>
+          <div className="admin-profile-avatar-row">
             <div style={{ position: 'relative', width: '90px', height: '90px' }}>
               <img
                 src={avatarPreview}
@@ -178,7 +171,7 @@ const AdminProfile = () => {
           </div>
 
           {/* Text Fields */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div className="admin-profile-fields-grid">
             <div className="admin-form-group">
               <label className="admin-form-label">Full Name</label>
               <input
