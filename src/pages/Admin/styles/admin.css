@@ -927,23 +927,6 @@ body.dark-theme {
   gap: 20px;
 }
 
-@media (max-width: 600px) {
-  .admin-profile-card {
-    padding: 20px;
-  }
-  .admin-profile-avatar-row {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 12px;
-  }
-  .admin-profile-fields-grid {
-    grid-template-columns: 1fr;
-  }
-  .admin-profile-fields-grid > .admin-form-group {
-    grid-column: span 1 !important;
-}
-
 /* Platform Settings Styling */
 .admin-settings-card {
   background-color: var(--admin-card-bg);
@@ -968,7 +951,25 @@ body.dark-theme {
   border-radius: 8px;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  /* Profile Page Responsiveness */
+  .admin-profile-card {
+    padding: 20px;
+  }
+  .admin-profile-avatar-row {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+  .admin-profile-fields-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-profile-fields-grid > .admin-form-group {
+    grid-column: span 1 !important;
+  }
+
+  /* Platform Settings Responsiveness */
   .admin-settings-card {
     padding: 20px;
   }
