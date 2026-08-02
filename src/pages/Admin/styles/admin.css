@@ -226,6 +226,23 @@ body.dark-theme {
   display: none;
 }
 
+.admin-navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+.admin-navbar-title {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.admin-navbar-logo {
+  display: none;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
 .admin-nav-right {
   display: flex;
   align-items: center;
@@ -264,10 +281,14 @@ body.dark-theme {
   box-shadow: 0 0 0 3px var(--admin-primary-light);
 }
 
+.admin-profile-container {
+  position: relative;
+}
+
 .admin-user-profile {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
@@ -297,6 +318,74 @@ body.dark-theme {
 .admin-user-role {
   font-size: 0.75rem;
   color: var(--admin-text-muted);
+}
+
+.admin-profile-arrow {
+  transition: transform 0.2s ease;
+  color: var(--admin-text-muted);
+}
+
+.admin-profile-arrow.open {
+  transform: rotate(180deg);
+}
+
+.admin-profile-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 160px;
+  background-color: var(--admin-card-bg);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: adminDropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes adminDropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: var(--admin-text);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.admin-dropdown-item:hover {
+  background-color: var(--admin-primary-light);
+  color: var(--admin-primary-dark);
+}
+
+.admin-dropdown-item.logout {
+  color: var(--admin-danger);
+}
+
+.admin-dropdown-item.logout:hover {
+  background-color: rgba(239, 68, 68, 0.08);
+  color: var(--admin-danger);
 }
 
 .admin-logout-btn {
@@ -786,6 +875,12 @@ body.dark-theme {
   }
   .admin-navbar {
     padding: 0 16px;
+  }
+  .admin-navbar-title {
+    display: none;
+  }
+  .admin-navbar-logo {
+    display: block;
   }
   .admin-cards-grid {
     grid-template-columns: 1fr 1fr;
