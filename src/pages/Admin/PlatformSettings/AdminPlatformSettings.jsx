@@ -102,7 +102,7 @@ const AdminPlatformSettings = () => {
         </div>
       </div>
 
-      <div style={{ backgroundColor: 'var(--admin-card-bg)', border: '1px solid var(--admin-border)', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }}>
+      <div className="admin-settings-card">
         {success && (
           <div style={{ padding: '12px', backgroundColor: '#d1fae5', borderLeft: '4px solid var(--admin-success)', color: '#065f46', borderRadius: '4px', marginBottom: '20px', fontSize: '0.9rem' }}>
             {success}
@@ -120,7 +120,7 @@ const AdminPlatformSettings = () => {
           {/* Section 1: General Info */}
           <div>
             <h3 style={{ margin: '0 0 16px 0', borderBottom: '1px solid var(--admin-border)', paddingBottom: '8px', color: 'var(--admin-primary)' }}>General Metadata</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="admin-settings-grid">
               <div className="admin-form-group">
                 <label className="admin-form-label">Platform Title</label>
                 <input
@@ -160,7 +160,7 @@ const AdminPlatformSettings = () => {
             <h3 style={{ margin: '0 0 16px 0', borderBottom: '1px solid var(--admin-border)', paddingBottom: '8px', color: 'var(--admin-primary)' }}>Moderation & Toggles</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: 'var(--admin-bg)', borderRadius: '8px' }}>
+              <div className="admin-toggle-row">
                 <div>
                   <div style={{ fontWeight: 600 }}>Maintenance Mode</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>Denies access to the platform for all regular users immediately.</div>
@@ -176,7 +176,7 @@ const AdminPlatformSettings = () => {
                 </label>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: 'var(--admin-bg)', borderRadius: '8px' }}>
+              <div className="admin-toggle-row">
                 <div>
                   <div style={{ fontWeight: 600 }}>Allow User Registrations</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>Disable to pause new user accounts sign-ups.</div>
@@ -192,7 +192,7 @@ const AdminPlatformSettings = () => {
                 </label>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', backgroundColor: 'var(--admin-bg)', borderRadius: '8px' }}>
+              <div className="admin-toggle-row">
                 <div>
                   <div style={{ fontWeight: 600 }}>Require Email OTP Verification</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>Disable to verify user sign-ups immediately without email verification.</div>
@@ -214,7 +214,7 @@ const AdminPlatformSettings = () => {
           {/* Section 3: Upload Constraints */}
           <div>
             <h3 style={{ margin: '0 0 16px 0', borderBottom: '1px solid var(--admin-border)', paddingBottom: '8px', color: 'var(--admin-primary)' }}>File Upload Constraints</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="admin-settings-grid">
               <div className="admin-form-group">
                 <label className="admin-form-label">Maximum Image Upload Size (MB)</label>
                 <input

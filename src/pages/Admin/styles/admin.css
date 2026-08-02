@@ -942,5 +942,48 @@ body.dark-theme {
   }
   .admin-profile-fields-grid > .admin-form-group {
     grid-column: span 1 !important;
+}
+
+/* Platform Settings Styling */
+.admin-settings-card {
+  background-color: var(--admin-card-bg);
+  border: 1px solid var(--admin-border);
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+}
+
+.admin-settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.admin-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background-color: var(--admin-bg);
+  border-radius: 8px;
+}
+
+@media (max-width: 600px) {
+  .admin-settings-card {
+    padding: 20px;
+  }
+  .admin-settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-settings-grid > .admin-form-group {
+    grid-column: span 1 !important;
+  }
+  .admin-toggle-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .admin-toggle-row .admin-switch {
+    align-self: flex-end;
   }
 }
