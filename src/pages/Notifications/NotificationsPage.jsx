@@ -57,6 +57,8 @@ const NotificationsPage = () => {
               actionText = 'wished you a Happy Birthday! 🎂';
             } else if (n.type === 'birthday-gift') {
               actionText = 'sent you a virtual birthday gift! 🎁';
+            } else if (n.type === 'mention') {
+              actionText = n.message || 'mentioned you';
             }
 
             const postText = n.post ? ` "${(n.post.content || '').substring(0, 20)}..."` : '';

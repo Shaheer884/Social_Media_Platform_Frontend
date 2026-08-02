@@ -3,6 +3,7 @@ import Modal from './Modal';
 import Spinner from '../Loader/Spinner';
 import postService from '../../services/postService';
 import { getUploadUrl } from '../../utils/mediaHelper';
+import MentionSuggestions from '../MentionSuggestions/MentionSuggestions';
 
 const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
   const [postText, setPostText] = useState('');
@@ -13,6 +14,7 @@ const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
   const [errorMsg, setErrorMsg] = useState('');
 
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
     if (post) {
@@ -149,9 +151,10 @@ const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
           </div>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', position: 'relative' }}>
           <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>Post Content</label>
           <textarea
+            ref={textareaRef}
             className="creator-textarea"
             style={{ width: '100%', minHeight: '100px', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--input-bg)', color: 'var(--text-main)', resize: 'vertical' }}
             value={postText}
@@ -159,6 +162,7 @@ const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
             maxLength={280}
             placeholder="Edit your post..."
           />
+          <MentionSuggestions text={postText} setText={setPostText} targetInputRef={textareaRef} />
           <div style={{ alignSelf: 'flex-end', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             {postText.length}/280
           </div>

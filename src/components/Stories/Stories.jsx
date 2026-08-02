@@ -5,6 +5,7 @@ import storyService from '../../services/storyService';
 import { getUploadUrl } from '../../utils/mediaHelper';
 import Modal from '../Modal/Modal';
 import Spinner from '../Loader/Spinner';
+import MentionSuggestions from '../MentionSuggestions/MentionSuggestions';
 
 const GRADIENTS = [
   'linear-gradient(135deg, #8b5cf6, #ec4899)', // Purple -> Pink (Default)
@@ -18,6 +19,10 @@ const GRADIENTS = [
 const Stories = () => {
   const { currentUser } = useAuth();
   const { showAlert, showConfirm } = useDialog();
+
+  const storyInputRef = useRef(null);
+  const editStoryInputRef = useRef(null);
+  const storyCommentInputRef = useRef(null);
 
   const [storyGroups, setStoryGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -755,11 +760,12 @@ const Stories = () => {
               </div>
             )}
 
-            <div className="form-group">
+            <div className="form-group" style={{ position: 'relative' }}>
               <label className="form-label" htmlFor="story-text">
                 {storyCreatorTab === 'image' ? 'Caption text (optional)' : 'Story text'}
               </label>
               <input
+                ref={storyInputRef}
                 type="text"
                 id="story-text"
                 className="form-input"
@@ -769,6 +775,7 @@ const Stories = () => {
                 maxLength={100}
                 required={storyCreatorTab === 'text'}
               />
+              <MentionSuggestions text={storyText} setText={setStoryText} targetInputRef={storyInputRef} />
               <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginTop: '4px', textAlign: 'right' }}>
                 {storyText.length}/100
               </small>
@@ -910,7 +917,7 @@ const Stories = () => {
               )}
 
               {/* Comment Overlay (opposite to Like Button) */}
-              <div className="story-view-comment-container">
+              <div className="story-view-comment-container" style={{ position: 'relative' }}>
                 <div className="story-comments-list" key={activeStory._id} ref={commentsListRef}>
                   {activeStory.comments && activeStory.comments.map((c, index) => (
                     <div
@@ -924,6 +931,7 @@ const Stories = () => {
                   ))}
                 </div>
                 <input
+                  ref={storyCommentInputRef}
                   type="text"
                   placeholder="Reply to story..."
                   value={storyCommentText}
@@ -934,6 +942,7 @@ const Stories = () => {
                   className="story-comment-input"
                   onClick={(e) => e.stopPropagation()}
                 />
+                <MentionSuggestions text={storyCommentText} setText={setStoryCommentText} targetInputRef={storyCommentInputRef} />
               </div>
 
               {/* Heart/Like Button Overlay */}
@@ -1009,11 +1018,12 @@ const Stories = () => {
                 </div>
               )}
 
-              <div className="form-group">
+              <div className="form-group" style={{ position: 'relative' }}>
                 <label className="form-label" htmlFor="edit-story-text">
                   Story text / Caption
                 </label>
                 <input
+                  ref={editStoryInputRef}
                   type="text"
                   id="edit-story-text"
                   className="form-input"
@@ -1022,6 +1032,7 @@ const Stories = () => {
                   maxLength={100}
                   required={!activeStory.imageUrl}
                 />
+                <MentionSuggestions text={editText} setText={setEditText} targetInputRef={editStoryInputRef} />
                 <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', display: 'block', marginTop: '4px', textAlign: 'right' }}>
                   {editText.length}/100
                 </small>

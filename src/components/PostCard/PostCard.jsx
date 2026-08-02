@@ -9,6 +9,7 @@ import CommentCard from '../CommentCard/CommentCard';
 import Spinner from '../Loader/Spinner';
 import { getUploadUrl } from '../../utils/mediaHelper';
 import EditPostModal from '../Modal/EditPostModal';
+import MentionSuggestions from '../MentionSuggestions/MentionSuggestions';
 
 const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
   const [commentText, setCommentText] = useState('');
+  const commentInputRef = useRef(null);
 
   const videoRef = useRef(null);
 
@@ -335,8 +337,9 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
             style={{ width: isDetailPage ? '32px' : '28px', height: isDetailPage ? '32px' : '28px', borderRadius: '50%', objectFit: 'cover' }}
             alt="My avatar"
           />
-          <div className="comment-composer-input-wrapper">
+          <div className="comment-composer-input-wrapper" style={{ position: 'relative' }}>
             <input
+              ref={commentInputRef}
               type="text"
               placeholder="Write a comment..."
               className="comment-composer-input"
@@ -346,6 +349,7 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
               onKeyDown={handleCommentSubmit}
               style={isDetailPage ? { padding: '10px 16px' } : {}}
             />
+            <MentionSuggestions text={commentText} setText={setCommentText} targetInputRef={commentInputRef} />
             <span className="comment-char-counter">{commentText.length}/200</span>
           </div>
         </div>

@@ -15,6 +15,7 @@ import Stories from '../../components/Stories/Stories';
 import BirthdayReminderCard from '../../components/Birthday/BirthdayReminderCard';
 import BirthdayConfetti from '../../components/Birthday/BirthdayConfetti';
 import BirthdayModal from '../../components/Birthday/BirthdayModal';
+import MentionSuggestions from '../../components/MentionSuggestions/MentionSuggestions';
 
 const Home = () => {
   const { currentUser } = useAuth();
@@ -23,6 +24,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   const [postText, setPostText] = useState('');
+  const textareaRef = useRef(null);
   const [chosenFiles, setChosenFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [publishLoading, setPublishLoading] = useState(false);
@@ -319,14 +321,16 @@ const Home = () => {
       <div className="card">
         <div className="creator-container">
           <img src={getUploadUrl(currentUser?.profilePicture || '/uploads/default-avatar.png')} className="creator-avatar" alt="My Avatar" />
-          <div className="creator-content">
+          <div className="creator-content" style={{ position: 'relative' }}>
             <textarea
+              ref={textareaRef}
               className="creator-textarea"
               placeholder="What's happening, ConnectHub?"
               value={postText}
               onChange={handleTextChange}
               maxLength={280}
             />
+            <MentionSuggestions text={postText} setText={setPostText} targetInputRef={textareaRef} />
 
              {imagePreviews.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '12px', marginBottom: '12px' }}>
