@@ -34,6 +34,9 @@ const postService = {
   },
   getSavedPosts() {
     return api.get(`/posts/saved`);
+  },
+  getPostsByLocation(placeId) {
+    return api.get(`/posts/location/${placeId}`);
   }
 };
 

@@ -16,6 +16,7 @@ import BirthdayReminderCard from '../../components/Birthday/BirthdayReminderCard
 import BirthdayConfetti from '../../components/Birthday/BirthdayConfetti';
 import BirthdayModal from '../../components/Birthday/BirthdayModal';
 import MentionSuggestions from '../../components/MentionSuggestions/MentionSuggestions';
+import LocationSelector from '../../components/Location/LocationSelector';
 
 const Home = () => {
   const { currentUser } = useAuth();
@@ -25,6 +26,7 @@ const Home = () => {
 
   const [postText, setPostText] = useState('');
   const textareaRef = useRef(null);
+  const [location, setLocation] = useState(null);
   const [chosenFiles, setChosenFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [publishLoading, setPublishLoading] = useState(false);
@@ -287,16 +289,21 @@ const Home = () => {
         chosenFiles.forEach((file) => {
           formData.append('postImages', file);
         });
+        if (location) {
+          formData.append('location', JSON.stringify(location));
+        }
         res = await publishPost(formData);
       } else {
         res = await publishPost({
-          content: postText.trim()
+          content: postText.trim(),
+          location: location ? JSON.stringify(location) : undefined
         });
       }
 
       if (res.success) {
         setPostText('');
         clearSelectedMedia();
+        setLocation(null);
       }
     } catch (err) {
       showAlert(err.message || 'Error publishing post', 'Error');
@@ -331,6 +338,7 @@ const Home = () => {
               maxLength={280}
             />
             <MentionSuggestions text={postText} setText={setPostText} targetInputRef={textareaRef} />
+            <LocationSelector location={location} setLocation={setLocation} />
 
              {imagePreviews.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '12px', marginBottom: '12px' }}>

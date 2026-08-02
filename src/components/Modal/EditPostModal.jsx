@@ -4,9 +4,11 @@ import Spinner from '../Loader/Spinner';
 import postService from '../../services/postService';
 import { getUploadUrl } from '../../utils/mediaHelper';
 import MentionSuggestions from '../MentionSuggestions/MentionSuggestions';
+import LocationSelector from '../Location/LocationSelector';
 
 const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
   const [postText, setPostText] = useState('');
+  const [location, setLocation] = useState(null);
   const [existingMedia, setExistingMedia] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
   const [newPreviews, setNewPreviews] = useState([]);
@@ -19,6 +21,7 @@ const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
   useEffect(() => {
     if (post) {
       setPostText(post.content || '');
+      setLocation(post.location || null);
       // Handle legacy or structure format
       if (post.media && post.media.length > 0) {
         setExistingMedia([...post.media]);
@@ -120,6 +123,7 @@ const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
       const formData = new FormData();
       formData.append('content', postText.trim());
       formData.append('existingMedia', JSON.stringify(existingMedia));
+      formData.append('location', location ? JSON.stringify(location) : '');
 
       newFiles.forEach((file) => {
         formData.append('postImages', file);
@@ -163,6 +167,7 @@ const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
             placeholder="Edit your post..."
           />
           <MentionSuggestions text={postText} setText={setPostText} targetInputRef={textareaRef} />
+          <LocationSelector location={location} setLocation={setLocation} />
           <div style={{ alignSelf: 'flex-end', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             {postText.length}/280
           </div>

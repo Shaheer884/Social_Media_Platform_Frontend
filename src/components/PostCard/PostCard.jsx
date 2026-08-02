@@ -172,6 +172,18 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
           <div>
             <div className="post-author-name">{post.author?.fullName}</div>
             <div className="post-author-username">@{post.author?.username}</div>
+            {post.location && (
+              <div 
+                className="post-location-tag" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/location/${post.location.placeId}`, { state: { location: post.location } });
+                }}
+                style={{ fontSize: '0.75rem', color: 'var(--admin-primary, #8b5cf6)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px', cursor: 'pointer' }}
+              >
+                📍 {post.location.name}{post.location.city ? `, ${post.location.city}` : ''}
+              </div>
+            )}
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
