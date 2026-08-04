@@ -228,42 +228,58 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
           {post.content}
         </div>
         {post.media && post.media.length > 0 ? (
-          <div className={`post-media-grid items-${Math.min(post.media.length, 4)}`} onClick={(e) => e.stopPropagation()}>
-            {post.media.slice(0, 4).map((item, idx) => {
-              const isLast = idx === 3 && post.media.length > 4;
-              const optimizedUrl = item.url.replace('/upload/', '/upload/q_auto,f_auto/');
-              return (
-                <div 
-                  key={item.publicId || idx} 
-                  className="media-grid-item" 
-                  onClick={() => {
-                    setActiveMediaIndex(idx);
-                    setLightboxOpen(true);
-                  }}
-                >
-                  {item.resourceType === 'video' ? (
-                    <video
-                      src={item.url}
-                      className="grid-media-element"
-                      style={{ pointerEvents: 'none' }}
-                    />
-                  ) : (
-                    <img 
-                      src={optimizedUrl} 
-                      alt={`Post media ${idx}`} 
-                      className="grid-media-element" 
-                      loading="lazy" 
-                    />
-                  )}
-                  {isLast && (
-                    <div className="media-grid-overlay">
-                      <span>+{post.media.length - 4}</span>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          post.media.length === 1 && post.media[0].resourceType === 'video' ? (
+            <div className="post-image-wrapper" style={isDetailPage ? { marginTop: '16px' } : {}} onClick={(e) => {
+              e.stopPropagation();
+              setActiveMediaIndex(0);
+              setLightboxOpen(true);
+            }}>
+              <video
+                ref={videoRef}
+                src={getUploadUrl(post.media[0].url)}
+                controls
+                onClick={(e) => e.stopPropagation()}
+                style={{ width: '100%', maxHeight: '450px', objectFit: 'contain', borderRadius: '8px', backgroundColor: '#000' }}
+              />
+            </div>
+          ) : (
+            <div className={`post-media-grid items-${Math.min(post.media.length, 4)}`} onClick={(e) => e.stopPropagation()}>
+              {post.media.slice(0, 4).map((item, idx) => {
+                const isLast = idx === 3 && post.media.length > 4;
+                const optimizedUrl = item.url.replace('/upload/', '/upload/q_auto,f_auto/');
+                return (
+                  <div 
+                    key={item.publicId || idx} 
+                    className="media-grid-item" 
+                    onClick={() => {
+                      setActiveMediaIndex(idx);
+                      setLightboxOpen(true);
+                    }}
+                  >
+                    {item.resourceType === 'video' ? (
+                      <video
+                        src={item.url}
+                        className="grid-media-element"
+                        style={{ pointerEvents: 'none' }}
+                      />
+                    ) : (
+                      <img 
+                        src={optimizedUrl} 
+                        alt={`Post media ${idx}`} 
+                        className="grid-media-element" 
+                        loading="lazy" 
+                      />
+                    )}
+                    {isLast && (
+                      <div className="media-grid-overlay">
+                        <span>+{post.media.length - 4}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
         ) : (post.mediaUrl || post.imageUrl) && (
           <div className="post-image-wrapper" style={isDetailPage ? { marginTop: '16px' } : {}} onClick={(e) => {
             e.stopPropagation();
