@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import { useAuth } from '../../context/AuthContext';
@@ -8,43 +8,27 @@ import PostCard from '../../components/PostCard/PostCard';
 import PostSkeleton from '../../components/Loader/PostSkeleton';
 import { getUploadUrl } from '../../utils/mediaHelper';
 import Spinner from '../../components/Loader/Spinner';
-import Modal from '../../components/Modal/Modal';
-import ImageCropperModal from '../../components/Modal/ImageCropperModal';
 import userService from '../../services/userService';
 import Stories from '../../components/Stories/Stories';
 import BirthdayReminderCard from '../../components/Birthday/BirthdayReminderCard';
 import BirthdayConfetti from '../../components/Birthday/BirthdayConfetti';
 import BirthdayModal from '../../components/Birthday/BirthdayModal';
-import MentionSuggestions from '../../components/MentionSuggestions/MentionSuggestions';
-import LocationSelector from '../../components/Location/LocationSelector';
+import CreatePostModal from '../../components/Modal/CreatePostModal';
 
 const Home = () => {
   const { currentUser } = useAuth();
-  const { posts, loading, page, totalPages, fetchFeed, publishPost } = usePosts();
+  const { posts, loading, page, totalPages, fetchFeed } = usePosts();
   const { showAlert } = useDialog();
   const navigate = useNavigate();
 
-  const [postText, setPostText] = useState('');
-  const textareaRef = useRef(null);
-  const [location, setLocation] = useState(null);
-  const [chosenFiles, setChosenFiles] = useState([]);
-  const [imagePreviews, setImagePreviews] = useState([]);
-  const [publishLoading, setPublishLoading] = useState(false);
-  const [cropperOpen, setCropperOpen] = useState(false);
-  const [cropperSrc, setCropperSrc] = useState('');
-  const [cropperFileType, setCropperFileType] = useState('image/jpeg');
-  const [cropperFileName, setCropperFileName] = useState('image.jpg');
-  const [croppingIndex, setCroppingIndex] = useState(null);
-  const [tempOriginalFile, setTempOriginalFile] = useState(null);
+  const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
+  const [initialModalScreen, setInitialModalScreen] = useState('main');
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   // Birthday modal and confetti state
   const [birthdayModalOpen, setBirthdayModalOpen] = useState(false);
   const [showBirthdayConfetti, setShowBirthdayConfetti] = useState(false);
-
-  const fileInputRef = useRef(null);
-  const cameraInputRef = useRef(null);
 
   // Initial feed fetching
   useEffect(() => {
@@ -123,310 +107,77 @@ const Home = () => {
     }
   };
 
-  const handleTextChange = (e) => {
-    setPostText(e.target.value);
-  };
-
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-
-    const validFiles = [];
-    const validPreviews = [];
-
-    for (const file of files) {
-      const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
-
-      if (!isVideo && !isImage) {
-        showAlert('Please select valid image or video files', 'Invalid File Type');
-        return;
-      }
-
-      if (isImage && file.size > 5 * 1024 * 1024) {
-        showAlert(`Image ${file.name} is too large. Maximum size is 5MB.`, 'File Too Large');
-        return;
-      }
-
-      if (isVideo && file.size > 100 * 1024 * 1024) {
-        showAlert(`Video ${file.name} is too large. Maximum size is 100MB.`, 'File Too Large');
-        return;
-      }
-
-      validFiles.push(file);
-      validPreviews.push({
-        url: URL.createObjectURL(file),
-        type: isVideo ? 'video' : 'image',
-        name: file.name,
-        originalFile: isVideo ? null : file
-      });
-    }
-
-    if (validFiles.length === 1 && validFiles[0].type.startsWith('image/')) {
-      const file = validFiles[0];
-      setTempOriginalFile(file);
-      setCropperFileType(file.type);
-      setCropperFileName(file.name);
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setCropperSrc(ev.target.result);
-        setCropperOpen(true);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setChosenFiles((prev) => [...prev, ...validFiles]);
-      setImagePreviews((prev) => [...prev, ...validPreviews]);
-    }
-  };
-
-  const handleStartCrop = (idx) => {
-    const preview = imagePreviews[idx];
-    if (!preview || preview.type !== 'image') return;
-
-    const fileToCrop = preview.originalFile || chosenFiles[idx];
-    if (!fileToCrop) return;
-
-    setCropperFileType(fileToCrop.type);
-    setCropperFileName(fileToCrop.name);
-
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      setCropperSrc(ev.target.result);
-      setCroppingIndex(idx);
-      setCropperOpen(true);
-    };
-    reader.readAsDataURL(fileToCrop);
-  };
-
-  const handleCropComplete = (croppedFile, previewUrl) => {
-    if (croppingIndex !== null) {
-      setChosenFiles((prev) => {
-        const next = [...prev];
-        next[croppingIndex] = croppedFile;
-        return next;
-      });
-      setImagePreviews((prev) => {
-        const next = [...prev];
-        if (next[croppingIndex]?.url?.startsWith('blob:')) {
-          URL.revokeObjectURL(next[croppingIndex].url);
-        }
-        next[croppingIndex] = {
-          ...next[croppingIndex],
-          url: previewUrl,
-          name: croppedFile.name
-        };
-        return next;
-      });
-      setCroppingIndex(null);
-    } else {
-      setChosenFiles((prev) => [...prev, croppedFile]);
-      setImagePreviews((prev) => [
-        ...prev,
-        {
-          url: previewUrl,
-          type: 'image',
-          name: croppedFile.name,
-          originalFile: tempOriginalFile
-        }
-      ]);
-      setTempOriginalFile(null);
-    }
-    setCropperOpen(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = '';
-    }
-  };
-
-  const handleCropCancel = () => {
-    setCropperOpen(false);
-    setCroppingIndex(null);
-    setTempOriginalFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = '';
-    }
-  };
-
-  const removeSelectedFile = (index) => {
-    const preview = imagePreviews[index];
-    if (preview && preview.url.startsWith('blob:')) {
-      URL.revokeObjectURL(preview.url);
-    }
-    setChosenFiles((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const clearSelectedMedia = () => {
-    imagePreviews.forEach((p) => {
-      if (p.url.startsWith('blob:')) {
-        URL.revokeObjectURL(p.url);
-      }
-    });
-    setChosenFiles([]);
-    setImagePreviews([]);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = '';
-    }
-  };
-
-  const handlePublish = async () => {
-    if (!postText.trim() && chosenFiles.length === 0) return;
-
-    setPublishLoading(true);
-    try {
-      let res;
-      if (chosenFiles.length > 0) {
-        const formData = new FormData();
-        formData.append('content', postText.trim());
-        chosenFiles.forEach((file) => {
-          formData.append('postImages', file);
-        });
-        if (location) {
-          formData.append('location', JSON.stringify(location));
-        }
-        res = await publishPost(formData);
-      } else {
-        res = await publishPost({
-          content: postText.trim(),
-          location: location ? JSON.stringify(location) : undefined
-        });
-      }
-
-      if (res.success) {
-        setPostText('');
-        clearSelectedMedia();
-        setLocation(null);
-      }
-    } catch (err) {
-      showAlert(err.message || 'Error publishing post', 'Error');
-    } finally {
-      setPublishLoading(false);
-    }
-  };
-
   const handleLoadMore = () => {
     if (page < totalPages) {
       fetchFeed(page + 1, true);
     }
   };
 
-  const canPublish = (postText.trim().length > 0 || chosenFiles.length > 0) && postText.length <= 280;
-
   return (
     <Layout>
       <Stories />
       <BirthdayReminderCard />
-      {/* Create Post Creator Card */}
-      <div className="card">
-        <div className="creator-container">
-          <img src={getUploadUrl(currentUser?.profilePicture || '/uploads/default-avatar.png')} className="creator-avatar" alt="My Avatar" />
-          <div className="creator-content" style={{ position: 'relative' }}>
-            <textarea
-              ref={textareaRef}
-              className="creator-textarea"
-              placeholder="What's happening, ConnectHub?"
-              value={postText}
-              onChange={handleTextChange}
-              maxLength={280}
-            />
-            <MentionSuggestions text={postText} setText={setPostText} targetInputRef={textareaRef} />
-            <LocationSelector location={location} setLocation={setLocation} />
+      {/* Quick Post Card Design */}
+      <div className="quick-post-card">
+        <img
+          src={getUploadUrl(currentUser?.profilePicture || '/uploads/default-avatar.png')}
+          className="quick-post-avatar"
+          alt="My Avatar"
+        />
+        <button
+          className="quick-post-trigger-btn"
+          onClick={() => {
+            setInitialModalScreen('main');
+            setCreatePostModalOpen(true);
+          }}
+        >
+          What's on your mind, {currentUser?.fullName?.split(' ')[0] || 'User'}?
+        </button>
+        <div className="quick-post-actions-list">
+          {/* Video Icon */}
+          <button
+            className="quick-post-action-item"
+            onClick={() => {
+              setInitialModalScreen('main');
+              setCreatePostModalOpen(true);
+            }}
+            title="Photo/Video"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#f02849">
+              <path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l5 3v-9l-5 3z"/>
+            </svg>
+          </button>
+          
+          {/* Photo/Video Icon */}
+          <button
+            className="quick-post-action-item"
+            onClick={() => {
+              setInitialModalScreen('main');
+              setCreatePostModalOpen(true);
+            }}
+            title="Photo/Video"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#45bd62">
+              <path d="M22 16V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14a2 2 0 0 0 2 2h14v-2H4V6H2z"/>
+            </svg>
+          </button>
 
-             {imagePreviews.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '12px', marginBottom: '12px' }}>
-                {imagePreviews.map((p, idx) => (
-                  <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                    <button
-                      type="button"
-                      onClick={() => removeSelectedFile(idx)}
-                      style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', cursor: 'pointer', zIndex: 3 }}
-                    >
-                      &times;
-                    </button>
-                    {p.type === 'video' ? (
-                      <video
-                        src={p.url}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div
-                        onClick={() => handleStartCrop(idx)}
-                        className="preview-image-container"
-                        title="Click to crop image"
-                      >
-                        <img
-                          src={p.url}
-                          alt="upload preview"
-                        />
-                        <div className="crop-overlay">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M6.13 1L6 16a2 2 0 0 0 2 2h15" />
-                            <path d="M1 6.13L16 6a2 2 0 0 1 2 2v15" />
-                          </svg>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="creator-actions">
-              <div className="creator-buttons">
-                {/* File Upload Trigger */}
-                <button className="icon-label-btn" type="button" onClick={() => fileInputRef.current.click()} title="Add Photo/Video">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                  <span>Photo/Video</span>
-                </button>
-                 <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden-file-input"
-                  accept="image/*,video/*"
-                  multiple
-                  onChange={handleFileChange}
-                />
-
-                {/* Camera Trigger */}
-                <button className="icon-label-btn" type="button" onClick={() => cameraInputRef.current.click()} title="Open Camera">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                    <circle cx="12" cy="13" r="4" />
-                  </svg>
-                  <span>Camera</span>
-                </button>
-                <input
-                  type="file"
-                  ref={cameraInputRef}
-                  className="hidden-file-input"
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleFileChange}
-                />
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <span className={`character-counter ${postText.length > 260 ? 'warning' : ''}`}>
-                  {postText.length}/280
-                </span>
-                <button className="btn btn-primary" onClick={handlePublish} disabled={!canPublish || publishLoading}>
-                  {publishLoading ? <Spinner size="16px" style={{ borderColor: 'transparent', borderTopColor: '#fff' }} /> : 'Publish'}
-                </button>
-              </div>
-            </div>
-          </div>
+          {/* Feeling/Activity Icon */}
+          <button
+            className="quick-post-action-item"
+            onClick={() => {
+              setInitialModalScreen('feeling');
+              setCreatePostModalOpen(true);
+            }}
+            title="Feeling/Activity"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f7b928" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M8 14s1.5 2 4 2 4-2 4-2" strokeLinecap="round" />
+              <circle cx="9" cy="9.5" r="1.5" fill="#f7b928" />
+              <circle cx="15" cy="9.5" r="1.5" fill="#f7b928" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -499,17 +250,10 @@ const Home = () => {
         </div>
       )}
 
-
-
-      <ImageCropperModal
-        isOpen={cropperOpen}
-        imageSrc={cropperSrc}
-        aspectRatio={1.6}
-        onCrop={handleCropComplete}
-        onClose={handleCropCancel}
-        title="Crop Post Image"
-        fileType={cropperFileType}
-        fileName={cropperFileName}
+      <CreatePostModal
+        isOpen={createPostModalOpen}
+        onClose={() => setCreatePostModalOpen(false)}
+        initialScreen={initialModalScreen}
       />
 
       {showBirthdayConfetti && <BirthdayConfetti />}

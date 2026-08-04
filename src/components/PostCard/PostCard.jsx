@@ -170,7 +170,14 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
         >
           <img src={postAvatar} className="post-author-avatar" alt="Avatar" />
           <div>
-            <div className="post-author-name">{post.author?.fullName}</div>
+            <div className="post-author-name" style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+              <span>{post.author?.fullName}</span>
+              {post.feeling && (
+                <span style={{ fontWeight: 'normal', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  is feeling {post.feeling}
+                </span>
+              )}
+            </div>
             <div className="post-author-username">@{post.author?.username}</div>
             {post.location && (
               <div 
