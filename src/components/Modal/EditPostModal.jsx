@@ -74,13 +74,13 @@ const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
         return;
       }
 
-      if (isImage && file.size > 5 * 1024 * 1024) {
-        setErrorMsg(`Image ${file.name} exceeds the 5MB limit.`);
+      if (isImage && file.size > 15 * 1024 * 1024) {
+        setErrorMsg(`Image ${file.name} exceeds the 15MB limit.`);
         return;
       }
 
-      if (isVideo && file.size > 100 * 1024 * 1024) {
-        setErrorMsg(`Video ${file.name} exceeds the 100MB limit.`);
+      if (isVideo && file.size > 200 * 1024 * 1024) {
+        setErrorMsg(`Video ${file.name} exceeds the 200MB limit.`);
         return;
       }
 
