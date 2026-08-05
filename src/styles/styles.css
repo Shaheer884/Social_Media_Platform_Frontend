@@ -3231,3 +3231,20 @@ textarea {
   font-size: 0.75rem;
   color: var(--text-muted);
 }
+
+/* Mobile responsiveness for quick post card */
+@media (max-width: 768px) {
+  .quick-post-card {
+    flex-wrap: wrap;
+    gap: 12px 8px;
+  }
+
+  .quick-post-actions-list {
+    width: 100%;
+    justify-content: space-around;
+    border-top: 1px solid var(--border-color);
+    padding-top: 10px;
+    margin-top: 4px;
+    padding-left: 0;
+  }
+}
