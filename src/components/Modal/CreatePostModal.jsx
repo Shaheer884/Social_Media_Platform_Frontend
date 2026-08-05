@@ -7,6 +7,7 @@ import { usePosts } from '../../context/PostsContext';
 import { useDialog } from '../../context/CustomDialogContext';
 import { getUploadUrl } from '../../utils/mediaHelper';
 import MentionSuggestions from '../MentionSuggestions/MentionSuggestions';
+import userService from '../../services/userService';
 
 const FEELINGS = [
   { name: 'happy', emoji: '🙂' },
@@ -72,6 +73,11 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
   
+  // Tag friends states
+  const [friends, setFriends] = useState([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+  const [friendSearch, setFriendSearch] = useState('');
+  
   // File upload states
   const [chosenFiles, setChosenFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -102,8 +108,29 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
       setImagePreviews([]);
       setAudienceOpen(false);
       setAiLabelOpen(false);
+      setFriendSearch('');
     }
   }, [isOpen, initialScreen]);
+
+  // Fetch friends list for tagging
+  useEffect(() => {
+    if (!isOpen || !currentUser) return;
+    const fetchFriends = async () => {
+      setFriendsLoading(true);
+      try {
+        const res = await userService.getFollowers(currentUser._id);
+        if (res.success) {
+          const mutual = res.data.filter(u => u.relationshipStatus === 'friends');
+          setFriends(mutual);
+        }
+      } catch (err) {
+        console.error('Error fetching friends for tagging:', err);
+      } finally {
+        setFriendsLoading(false);
+      }
+    };
+    fetchFriends();
+  }, [isOpen, currentUser]);
 
   // Debounce Location Autocomplete search
   useEffect(() => {
@@ -377,6 +404,17 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
     setLocationSearch('');
   };
 
+  const handleTagFriend = (friend) => {
+    const tagString = `@${friend.username}`;
+    if (!postText.includes(tagString)) {
+      setPostText((prev) => {
+        const trimmed = prev.trim();
+        return trimmed ? `${trimmed} ${tagString} ` : `${tagString} `;
+      });
+    }
+    setCurrentScreen('main');
+  };
+
   const handlePublishClick = async () => {
     if (!postText.trim() && chosenFiles.length === 0) return;
 
@@ -601,7 +639,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
                   type="button"
                   className="add-to-post-btn-item"
                   data-tooltip="Tag people"
-                  onClick={() => showAlert('Tagging feature coming soon!', 'Tag People')}
+                  onClick={() => setCurrentScreen('tag')}
                 >
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="#1877f2">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -808,6 +846,71 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {currentScreen === 'tag' && (
+          <div className="sub-screen-container">
+            {/* Header */}
+            <div className="sub-screen-header">
+              <button className="sub-screen-back-btn" onClick={() => setCurrentScreen('main')}>
+                ←
+              </button>
+              <h3 className="sub-screen-title">Tag friends</h3>
+            </div>
+
+            {/* Search Input */}
+            <div className="sub-screen-search-box">
+              <span className="sub-screen-search-icon">🔍</span>
+              <input
+                type="text"
+                placeholder="Search friends"
+                className="sub-screen-search-input"
+                value={friendSearch}
+                onChange={(e) => setFriendSearch(e.target.value)}
+              />
+            </div>
+
+            {/* Friends list */}
+            <div className="location-list">
+              {friendsLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+                  <Spinner size="24px" />
+                </div>
+              ) : (
+                <>
+                  {friends.filter(friend => 
+                    friend.username.toLowerCase().includes(friendSearch.toLowerCase()) ||
+                    friend.fullName.toLowerCase().includes(friendSearch.toLowerCase())
+                  ).length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                      No friends found.
+                    </div>
+                  ) : (
+                    friends.filter(friend => 
+                      friend.username.toLowerCase().includes(friendSearch.toLowerCase()) ||
+                      friend.fullName.toLowerCase().includes(friendSearch.toLowerCase())
+                    ).map((friend) => (
+                      <div
+                        key={friend._id}
+                        className="location-item"
+                        onClick={() => handleTagFriend(friend)}
+                      >
+                        <img
+                          src={getUploadUrl(friend.profilePicture || '/uploads/default-avatar.png')}
+                          style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', marginRight: '12px' }}
+                          alt={friend.fullName}
+                        />
+                        <div className="location-details">
+                          <div className="location-name-text">{friend.fullName}</div>
+                          <div className="location-addr-text">@{friend.username}</div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}
