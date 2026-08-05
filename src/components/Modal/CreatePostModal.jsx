@@ -49,6 +49,16 @@ const PRESET_LOCATIONS = [
   { name: 'Main Bazaar Jauharabad', address: 'Main Bazaar, Jauharabad, Khushab, Pakistan', type: 'landmark' }
 ];
 
+const BG_PRESETS = [
+  { name: 'none', background: 'transparent', color: 'var(--text-main)' },
+  { name: 'purple-red', background: 'linear-gradient(135deg, #7117ea 0%, #ea6060 100%)', color: '#ffffff' },
+  { name: 'sunrise', background: 'linear-gradient(135deg, #ff9900 0%, #ff5e62 100%)', color: '#ffffff' },
+  { name: 'neon', background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', color: '#ffffff' },
+  { name: 'ocean', background: 'linear-gradient(135deg, #00c6ff 0%, #0072ff 100%)', color: '#ffffff' },
+  { name: 'sunset', background: 'linear-gradient(135deg, #ee0979 0%, #ff6a00 100%)', color: '#ffffff' },
+  { name: 'midnight', background: 'linear-gradient(135deg, #0f2027 0%, #2c5364 100%)', color: '#ffffff' }
+];
+
 const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
   const { currentUser } = useAuth();
   const { publishPost } = usePosts();
@@ -77,6 +87,10 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
   const [friends, setFriends] = useState([]);
   const [friendsLoading, setFriendsLoading] = useState(false);
   const [friendSearch, setFriendSearch] = useState('');
+
+  // Background states
+  const [selectedBg, setSelectedBg] = useState(BG_PRESETS[0]);
+  const [showBgSelector, setShowBgSelector] = useState(false);
   
   // File upload states
   const [chosenFiles, setChosenFiles] = useState([]);
@@ -110,8 +124,18 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
       setAudienceOpen(false);
       setAiLabelOpen(false);
       setFriendSearch('');
+      setSelectedBg(BG_PRESETS[0]);
+      setShowBgSelector(false);
     }
   }, [isOpen, initialScreen]);
+
+  // Reset background if media is added
+  useEffect(() => {
+    if (chosenFiles.length > 0) {
+      setSelectedBg(BG_PRESETS[0]);
+      setShowBgSelector(false);
+    }
+  }, [chosenFiles]);
 
   // Fetch friends list for tagging
   useEffect(() => {
@@ -470,7 +494,8 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
         res = await publishPost({
           content: postText.trim(),
           location: location ? JSON.stringify(location) : undefined,
-          feeling: feelingValue || undefined
+          feeling: feelingValue || undefined,
+          bgColor: selectedBg.background !== 'transparent' ? selectedBg.background : undefined
         });
       }
 
@@ -577,7 +602,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
             </div>
 
             {/* Input Text Area Container */}
-            <div className="create-post-textarea-container">
+            <div className="create-post-textarea-container" style={{ position: 'relative' }}>
               <textarea
                 ref={textareaRef}
                 className="create-post-textarea"
@@ -585,11 +610,85 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
                 value={postText}
                 onChange={(e) => setPostText(e.target.value)}
                 maxLength={280}
+                style={selectedBg.background !== 'transparent' ? {
+                  background: selectedBg.background,
+                  color: selectedBg.color,
+                  textAlign: 'center',
+                  fontSize: '1.4rem',
+                  fontWeight: '700',
+                  minHeight: '220px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '12px',
+                  padding: '50px 20px',
+                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+                  transition: 'all 0.3s ease',
+                  border: 'none',
+                  outline: 'none',
+                  resize: 'none'
+                } : {}}
               />
               <MentionSuggestions text={postText} setText={setPostText} targetInputRef={textareaRef} />
 
-              <div className="create-post-textarea-footer">
-                <button type="button" className="create-post-aa-btn">Aa</button>
+              <div className="create-post-textarea-footer" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {chosenFiles.length === 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <button 
+                      type="button" 
+                      className={`create-post-aa-btn ${showBgSelector ? 'active' : ''}`}
+                      onClick={() => setShowBgSelector(!showBgSelector)}
+                      style={{
+                        background: 'linear-gradient(135deg, #7117ea 0%, #ea6060 100%)',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        width: '32px',
+                        height: '32px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.9rem'
+                      }}
+                    >
+                      Aa
+                    </button>
+
+                    {showBgSelector && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', animation: 'fadeIn 0.2s ease-in-out' }}>
+                        {BG_PRESETS.map((preset) => (
+                          <button
+                            key={preset.name}
+                            type="button"
+                            onClick={() => setSelectedBg(preset)}
+                            style={{
+                              background: preset.background === 'transparent' ? 'var(--input-bg)' : preset.background,
+                              border: selectedBg.name === preset.name ? '2px solid var(--text-main)' : '1px solid var(--border-color)',
+                              borderRadius: '50%',
+                              width: '24px',
+                              height: '24px',
+                              cursor: 'pointer',
+                              boxShadow: selectedBg.name === preset.name ? '0 0 4px rgba(0,0,0,0.2)' : 'none',
+                              transform: selectedBg.name === preset.name ? 'scale(1.1)' : 'none',
+                              transition: 'all 0.1s ease',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            title={preset.name}
+                          >
+                            {preset.background === 'transparent' && (
+                              <div style={{ width: '10px', height: '10px', border: '1px solid var(--text-muted)', borderRadius: '50%' }}></div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <button 
                   type="button" 
                   className="create-post-emoji-btn"
@@ -597,6 +696,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
                     // Quick inject smiley face if feeling is not chosen
                     setSelectedFeeling({ emoji: '🙂', name: 'happy', type: 'feeling' });
                   }}
+                  style={{ marginLeft: 'auto' }}
                 >
                   🙂
                 </button>

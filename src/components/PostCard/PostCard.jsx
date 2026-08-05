@@ -230,8 +230,41 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
         </div>
       </div>
 
-      <div className="post-body" onClick={() => !isDetailPage && navigate(`/post/${post._id}`)} style={{ cursor: !isDetailPage ? 'pointer' : 'default' }}>
-        <div className="post-text" style={isDetailPage ? { fontSize: '1.1rem', lineHeight: '1.6' } : {}}>
+      <div 
+        className="post-body" 
+        onClick={() => !isDetailPage && navigate(`/post/${post._id}`)} 
+        style={{ 
+          cursor: !isDetailPage ? 'pointer' : 'default',
+          ...(post.bgColor && (!post.media || post.media.length === 0) && !post.mediaUrl && !post.imageUrl ? {
+            background: post.bgColor,
+            color: '#ffffff',
+            minHeight: '200px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '12px',
+            padding: '40px 20px',
+            textAlign: 'center',
+            boxShadow: 'inset 0 0 40px rgba(0, 0, 0, 0.1)',
+            marginTop: '8px',
+            marginBottom: '8px'
+          } : {})
+        }}
+      >
+        <div 
+          className="post-text" 
+          style={{
+            ...(isDetailPage ? { fontSize: '1.1rem', lineHeight: '1.6' } : {}),
+            ...(post.bgColor && (!post.media || post.media.length === 0) && !post.mediaUrl && !post.imageUrl ? {
+              fontSize: '1.5rem',
+              fontWeight: '700',
+              textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+              color: '#ffffff',
+              width: '100%',
+              lineHeight: '1.4'
+            } : {})
+          }}
+        >
           {post.content}
         </div>
         {post.media && post.media.length > 0 ? (
