@@ -141,7 +141,7 @@ const Home = () => {
               setInitialModalScreen('main');
               setCreatePostModalOpen(true);
             }}
-            title="Photo/Video"
+            title="Camera"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="#f02849">
               <path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l5 3v-9l-5 3z"/>
