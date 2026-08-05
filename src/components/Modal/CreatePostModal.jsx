@@ -93,6 +93,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
 
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   // Auto-set screen if triggered from outside buttons
   useEffect(() => {
@@ -214,6 +215,35 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
     } else {
       setChosenFiles((prev) => [...prev, ...validFiles]);
       setImagePreviews((prev) => [...prev, ...validPreviews]);
+    }
+  };
+
+  const handleCameraCapture = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showAlert('Please capture a valid image', 'Invalid File Type');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showAlert('Captured image is too large. Maximum size is 5MB.', 'File Too Large');
+      return;
+    }
+
+    setTempOriginalFile(file);
+    setCropperFileType(file.type);
+    setCropperFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setCropperSrc(ev.target.result);
+      setCropperOpen(true);
+    };
+    reader.readAsDataURL(file);
+
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
     }
   };
 
@@ -632,6 +662,26 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
                   accept="image/*,video/*"
                   multiple
                   onChange={handleFileChange}
+                />
+
+                {/* Camera capture trigger */}
+                <button
+                  type="button"
+                  className="add-to-post-btn-item"
+                  onClick={() => cameraInputRef.current.click()}
+                  data-tooltip="Camera"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="#9c27b0">
+                    <path d="M12 12c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm0-8.5c-4.14 0-7.5 3.36-7.5 7.5s3.36 7.5 7.5 7.5 7.5-3.36 7.5-7.5-3.36-7.5-7.5-7.5zM20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z"/>
+                  </svg>
+                </button>
+                <input
+                  type="file"
+                  ref={cameraInputRef}
+                  style={{ display: 'none' }}
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleCameraCapture}
                 />
 
                 {/* Tag friends trigger */}
