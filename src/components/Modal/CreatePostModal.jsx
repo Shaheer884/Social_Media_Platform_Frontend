@@ -41,13 +41,7 @@ const ACTIVITIES = [
   { name: 'playing', emoji: '🎮', placeholder: 'What are you playing?' }
 ];
 
-const PRESET_LOCATIONS = [
-  { name: 'Al Usmania Restaurant, Jauharabad', address: 'Mianwali Road Near punjab college , Jauharabad, Pakistan-41200', type: 'restaurant' },
-  { name: 'Jauharabad', address: 'Jauharabad, Khushab, Punjab, Pakistan', type: 'city' },
-  { name: 'River of Jhelum Bridge Khushab', address: 'Khushab Bypass, Khushab, Punjab, Pakistan', type: 'landmark' },
-  { name: 'Grand Castle Marriage Hall Jauharabad', address: 'Jauharabad Road, Jauharabad, Khushab, Pakistan', type: 'landmark' },
-  { name: 'Main Bazaar Jauharabad', address: 'Main Bazaar, Jauharabad, Khushab, Pakistan', type: 'landmark' }
-];
+
 
 const BG_PRESETS = [
   { name: 'none', background: 'transparent', color: 'var(--text-main)' },
@@ -82,6 +76,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
   const [locationSuggestions, setLocationSuggestions] = useState([]);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState('');
+  const [locationHistory, setLocationHistory] = useState([]);
   
   // Tag friends states
   const [friends, setFriends] = useState([]);
@@ -156,6 +151,36 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
     };
     fetchFriends();
   }, [isOpen, currentUser]);
+
+  // Load location history for this specific user from localStorage
+  useEffect(() => {
+    if (isOpen && currentUser) {
+      const storageKey = `location_history_${currentUser._id}`;
+      try {
+        const history = JSON.parse(localStorage.getItem(storageKey)) || [];
+        setLocationHistory(history);
+      } catch (err) {
+        console.error('Error loading location history:', err);
+      }
+    }
+  }, [isOpen, currentUser]);
+
+  const saveLocationToHistory = (loc) => {
+    if (!currentUser || !loc) return;
+    const storageKey = `location_history_${currentUser._id}`;
+    try {
+      const existingHistory = JSON.parse(localStorage.getItem(storageKey)) || [];
+      const filteredHistory = existingHistory.filter(item => 
+        (item.placeId !== loc.placeId) && 
+        (item.name !== loc.name || item.address !== loc.address)
+      );
+      const newHistory = [loc, ...filteredHistory].slice(0, 10);
+      localStorage.setItem(storageKey, JSON.stringify(newHistory));
+      setLocationHistory(newHistory);
+    } catch (err) {
+      console.error('Error saving location to history:', err);
+    }
+  };
 
   // Debounce Location Autocomplete search
   useEffect(() => {
@@ -391,7 +416,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
           const country = addr.country || '';
           const placeId = data.place_id ? data.place_id.toString() : `place_${Date.now()}`;
 
-          setLocation({
+          const locData = {
             name,
             address: data.display_name,
             city,
@@ -400,7 +425,9 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
             latitude,
             longitude,
             placeId
-          });
+          };
+          setLocation(locData);
+          saveLocationToHistory(locData);
           setCurrentScreen('main');
           setLocationSearch('');
         } catch (err) {
@@ -419,17 +446,9 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
     );
   };
 
-  const handleSelectPresetLocation = (preset) => {
-    setLocation({
-      name: preset.name,
-      address: preset.address,
-      city: '',
-      state: '',
-      country: '',
-      latitude: 0,
-      longitude: 0,
-      placeId: `preset_${Date.now()}`
-    });
+  const handleSelectHistoryLocation = (historyLoc) => {
+    setLocation(historyLoc);
+    saveLocationToHistory(historyLoc);
     setCurrentScreen('main');
     setLocationSearch('');
   };
@@ -444,7 +463,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
     const longitude = parseFloat(place.lon);
     const placeId = place.place_id ? place.place_id.toString() : `place_${Date.now()}`;
 
-    setLocation({
+    const locData = {
       name,
       address: place.display_name,
       city,
@@ -453,7 +472,9 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
       latitude,
       longitude,
       placeId
-    });
+    };
+    setLocation(locData);
+    saveLocationToHistory(locData);
     setCurrentScreen('main');
     setLocationSearch('');
   };
@@ -980,22 +1001,30 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
                 </div>
               ))}
 
-              {/* Show default preset Jauharabad suggestions if search box is empty */}
-              {!locationSearch && PRESET_LOCATIONS.map((preset, idx) => (
+              {/* Show user's specific location history if search box is empty */}
+              {!locationSearch && locationHistory.length > 0 && (
+                <div style={{ padding: '8px 12px 4px 12px', fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 600, borderBottom: '1px solid var(--border-color)', marginBottom: '8px' }}>
+                  Recent Locations
+                </div>
+              )}
+              {!locationSearch && locationHistory.map((historyLoc, idx) => (
                 <div
-                  key={idx}
+                  key={historyLoc.placeId || idx}
                   className="location-item"
-                  onClick={() => handleSelectPresetLocation(preset)}
+                  onClick={() => handleSelectHistoryLocation(historyLoc)}
                 >
-                  <div className="location-icon-wrapper">
-                    {preset.type === 'restaurant' ? '🍴' : preset.type === 'city' ? '🏙️' : '📍'}
-                  </div>
+                  <div className="location-icon-wrapper">📍</div>
                   <div className="location-details">
-                    <div className="location-name-text">{preset.name}</div>
-                    <div className="location-addr-text">{preset.address}</div>
+                    <div className="location-name-text">{historyLoc.name}</div>
+                    <div className="location-addr-text">{historyLoc.address}</div>
                   </div>
                 </div>
               ))}
+              {!locationSearch && locationHistory.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '30px 15px', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                  No recent locations found. Search above or use your current location to add one.
+                </div>
+              )}
             </div>
           </div>
         )}
