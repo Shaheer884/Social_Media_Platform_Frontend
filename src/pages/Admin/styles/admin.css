@@ -241,6 +241,7 @@ body.dark-theme {
   width: 32px;
   height: 32px;
   object-fit: contain;
+  border-radius: 20px;
 }
 
 .admin-nav-right {
