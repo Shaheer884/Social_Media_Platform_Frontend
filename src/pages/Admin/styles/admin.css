@@ -79,6 +79,7 @@ body.dark-theme {
   --admin-text-muted: #c084fc;
   --admin-border: #220739;
 }
+
 .admin-container.theme-cyberpunk .admin-sidebar-link:hover,
 .admin-container.theme-cyberpunk .admin-sidebar-link.active {
   background-color: var(--admin-primary);
@@ -241,7 +242,7 @@ body.dark-theme {
   width: 32px;
   height: 32px;
   object-fit: contain;
-  border-radius: 20px;
+  border-radius: 10px;
 }
 
 .admin-nav-right {
@@ -352,6 +353,7 @@ body.dark-theme {
     opacity: 0;
     transform: translateY(-8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -598,11 +600,30 @@ body.dark-theme {
   letter-spacing: 0.5px;
 }
 
-.admin-badge-success { background-color: #d1fae5; color: #065f46; }
-.admin-badge-danger { background-color: #fee2e2; color: #991b1b; }
-.admin-badge-warning { background-color: #fef3c7; color: #92400e; }
-.admin-badge-info { background-color: #dbeafe; color: #1e40af; }
-.admin-badge-neutral { background-color: #f1f5f9; color: #334155; }
+.admin-badge-success {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.admin-badge-danger {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.admin-badge-warning {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.admin-badge-info {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.admin-badge-neutral {
+  background-color: #f1f5f9;
+  color: #334155;
+}
 
 /* Buttons */
 .admin-btn {
@@ -783,11 +804,11 @@ body.dark-theme {
   transition: transform 0.2s ease;
 }
 
-.admin-switch-input:checked + .admin-switch-slider {
+.admin-switch-input:checked+.admin-switch-slider {
   background-color: var(--admin-primary);
 }
 
-.admin-switch-input:checked + .admin-switch-slider::before {
+.admin-switch-input:checked+.admin-switch-slider::before {
   transform: translateX(24px);
 }
 
@@ -820,8 +841,13 @@ body.dark-theme {
 }
 
 @keyframes loading-skeleton {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 /* Custom SVG Charts Elements */
@@ -829,25 +855,31 @@ body.dark-theme {
   fill: var(--admin-primary);
   transition: fill 0.2s ease;
 }
+
 .chart-bar:hover {
   fill: var(--admin-primary-dark);
 }
+
 .chart-line {
   stroke: var(--admin-primary);
   stroke-width: 3;
   fill: none;
 }
+
 .chart-line-area {
   fill: url(#chart-gradient);
 }
+
 .chart-grid-line {
   stroke: var(--admin-border);
-  stroke-dasharray: 4,4;
+  stroke-dasharray: 4, 4;
 }
+
 .chart-axis {
   stroke: var(--admin-text-muted);
   stroke-width: 1;
 }
+
 .chart-text {
   fill: var(--admin-text-muted);
   font-size: 11px;
@@ -858,12 +890,15 @@ body.dark-theme {
   .admin-sidebar {
     transform: translateX(-100%);
   }
+
   .admin-sidebar.open {
     transform: translateX(0);
   }
+
   .admin-main {
     margin-left: 0;
   }
+
   .admin-menu-toggle {
     display: block;
   }
@@ -874,21 +909,27 @@ body.dark-theme {
     padding: 16px;
     gap: 20px;
   }
+
   .admin-navbar {
     padding: 0 16px;
   }
+
   .admin-navbar-title {
     display: none;
   }
+
   .admin-navbar-logo {
     display: block;
   }
+
   .admin-cards-grid {
     grid-template-columns: 1fr 1fr;
   }
+
   .admin-charts-grid {
     grid-template-columns: 1fr;
   }
+
   .admin-page-header {
     flex-direction: column;
     align-items: flex-start;
@@ -899,6 +940,7 @@ body.dark-theme {
   .admin-cards-grid {
     grid-template-columns: 1fr;
   }
+
   .admin-user-info {
     display: none;
   }
@@ -953,20 +995,24 @@ body.dark-theme {
 }
 
 @media (max-width: 768px) {
+
   /* Profile Page Responsiveness */
   .admin-profile-card {
     padding: 20px;
   }
+
   .admin-profile-avatar-row {
     flex-direction: column;
     align-items: center;
     text-align: center;
     gap: 12px;
   }
+
   .admin-profile-fields-grid {
     grid-template-columns: 1fr;
   }
-  .admin-profile-fields-grid > .admin-form-group {
+
+  .admin-profile-fields-grid>.admin-form-group {
     grid-column: span 1 !important;
   }
 
@@ -974,17 +1020,21 @@ body.dark-theme {
   .admin-settings-card {
     padding: 20px;
   }
+
   .admin-settings-grid {
     grid-template-columns: 1fr;
   }
-  .admin-settings-grid > .admin-form-group {
+
+  .admin-settings-grid>.admin-form-group {
     grid-column: span 1 !important;
   }
+
   .admin-toggle-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
   }
+
   .admin-toggle-row .admin-switch {
     align-self: flex-end;
   }
