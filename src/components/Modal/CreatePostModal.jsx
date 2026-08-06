@@ -510,13 +510,15 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
         if (feelingValue) {
           formData.append('feeling', feelingValue);
         }
+        formData.append('audience', audience);
         res = await publishPost(formData);
       } else {
         res = await publishPost({
           content: postText.trim(),
           location: location ? JSON.stringify(location) : undefined,
           feeling: feelingValue || undefined,
-          bgColor: selectedBg.background !== 'transparent' ? selectedBg.background : undefined
+          bgColor: selectedBg.background !== 'transparent' ? selectedBg.background : undefined,
+          audience: audience
         });
       }
 
