@@ -2877,6 +2877,7 @@ textarea {
   display: flex;
   flex-direction: column;
   min-height: 150px;
+  flex-shrink: 0;
 }
 
 .create-post-textarea {
@@ -2949,6 +2950,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   background-color: var(--card-bg);
+  flex-shrink: 0;
 }
 
 .add-to-post-title {
