@@ -66,8 +66,6 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
   // Custom dropdown states
   const [audience, setAudience] = useState('Public'); // 'Public' | 'Friends' | 'Only me'
   const [audienceOpen, setAudienceOpen] = useState(false);
-  const [aiLabel, setAiLabel] = useState(false);
-  const [aiLabelOpen, setAiLabelOpen] = useState(false);
 
   // Post editor states
   const [postText, setPostText] = useState('');
@@ -117,7 +115,6 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
       setChosenFiles([]);
       setImagePreviews([]);
       setAudienceOpen(false);
-      setAiLabelOpen(false);
       setFriendSearch('');
       setSelectedBg(BG_PRESETS[0]);
       setShowBgSelector(false);
@@ -549,19 +546,11 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
   const toggleAudience = (e) => {
     e.stopPropagation();
     setAudienceOpen(!audienceOpen);
-    setAiLabelOpen(false);
-  };
-
-  const toggleAiLabel = (e) => {
-    e.stopPropagation();
-    setAiLabelOpen(!aiLabelOpen);
-    setAudienceOpen(false);
   };
 
   useEffect(() => {
     const closeDropdowns = () => {
       setAudienceOpen(false);
-      setAiLabelOpen(false);
     };
     document.addEventListener('click', closeDropdowns);
     return () => document.removeEventListener('click', closeDropdowns);
@@ -605,18 +594,6 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
                         <div className="dropdown-item" onClick={() => setAudience('Public')}>Public</div>
                         <div className="dropdown-item" onClick={() => setAudience('Friends')}>Friends</div>
                         <div className="dropdown-item" onClick={() => setAudience('Only me')}>Only me</div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{ position: 'relative' }}>
-                    <button className="create-post-dropdown-pill" onClick={toggleAiLabel}>
-                      🤖 AI label: {aiLabel ? 'On' : 'Off'} ▾
-                    </button>
-                    {aiLabelOpen && (
-                      <div className="post-options-dropdown active" style={{ top: '24px', left: 0, minWidth: '120px' }}>
-                        <div className="dropdown-item" onClick={() => setAiLabel(true)}>AI label on</div>
-                        <div className="dropdown-item" onClick={() => setAiLabel(false)}>AI label off</div>
                       </div>
                     )}
                   </div>
