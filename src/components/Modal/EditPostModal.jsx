@@ -148,7 +148,7 @@ const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Edit Post">
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '320px', maxWidth: '500px', width: '100%', padding: '8px 4px' }}>
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px', minWidth: '320px', maxWidth: '500px', width: '100%', padding: '8px 20px 20px 20px' }}>
         {errorMsg && (
           <div style={{ color: 'var(--danger)', fontSize: '0.85rem', backgroundColor: 'var(--accent-light)', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid var(--danger)' }}>
             {errorMsg}

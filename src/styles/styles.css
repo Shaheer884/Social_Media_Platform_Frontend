@@ -2806,7 +2806,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 8px 0;
+  padding: 8px 20px 20px 20px;
   max-height: 80vh;
   overflow-y: auto;
 }
@@ -3043,6 +3043,7 @@ textarea {
   flex-direction: column;
   gap: 16px;
   min-height: 350px;
+  padding: 8px 20px 20px 20px;
 }
 
 .sub-screen-header {
