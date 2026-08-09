@@ -11,7 +11,7 @@ export default defineConfig({
         name: 'ConnectHub',
         short_name: 'ConnectHub',
         description: 'Modern MERN Social Media Platform',
-        theme_color: '#1877F2',
+        theme_color: '#8b5cf6',
         background_color: '#ffffff',
         start_url: '/',
         scope: '/',
