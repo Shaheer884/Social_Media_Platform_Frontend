@@ -20,8 +20,8 @@ def generate_icons():
         # 1. Standard icon (any purpose) - Apply rounded corners (18% of size)
         std_img = img.resize((size, size), Image.Resampling.LANCZOS).convert("RGBA")
         
-        # Create rounded corner mask
-        radius = int(size * 0.18)
+        # Create rounded corner mask (25% of size to match the 20px border-radius on 80px image)
+        radius = int(size * 0.25)
         mask = Image.new("L", (size, size), 0)
         draw = ImageDraw.Draw(mask)
         draw.rounded_rectangle((0, 0, size, size), radius=radius, fill=255)
