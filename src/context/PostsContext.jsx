@@ -8,27 +8,60 @@ export const PostsProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isCachedData, setIsCachedData] = useState(false);
 
   const fetchFeed = useCallback(async (pageNum = 1, append = false) => {
     setLoading(true);
     try {
       const res = await postService.getFeed(pageNum, 5);
       if (res.success) {
-        setPosts((prev) => (append ? [...prev, ...res.data] : res.data));
+        setPosts((prev) => {
+          const newPosts = append ? [...prev, ...res.data] : res.data;
+          // Cache the first page of feed (non-sensitive information)
+          if (pageNum === 1) {
+            localStorage.setItem('connecthub_cached_feed', JSON.stringify(newPosts.slice(0, 15)));
+          }
+          return newPosts;
+        });
         setPage(res.pagination.page);
         setTotalPages(res.pagination.totalPages);
+        setIsCachedData(false);
       }
     } catch (err) {
       console.error(err);
+      // Offline fallback: load cached feed if requesting page 1
+      if (pageNum === 1) {
+        const cached = localStorage.getItem('connecthub_cached_feed');
+        if (cached) {
+          try {
+            const cachedPosts = JSON.parse(cached);
+            setPosts(cachedPosts);
+            setPage(1);
+            setTotalPages(1);
+            setIsCachedData(true);
+            console.log('Loaded offline cached feed');
+            return;
+          } catch (e) {
+            // Ignore parse errors
+          }
+        }
+      }
+      
+      // If offline and request failed, dispatch the offline error to trigger fallback page
+      if (!navigator.onLine && err.message !== 'OFFLINE_QUEUED') {
+        window.dispatchEvent(new Event('api-offline-error'));
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
   const publishPost = async (postData) => {
+    // If offline, creating a post can queue, but since postData might contain images/videos
+    // that are too large or require multipart upload, we run it normally.
+    // If offline, the api interceptor will throw OFFLINE_QUEUED for simple requests.
     const res = await postService.createPost(postData);
     if (res.success) {
-      // Prepend newly created post
       setPosts((prev) => [res.data, ...prev]);
     }
     return res;
@@ -43,48 +76,56 @@ export const PostsProvider = ({ children }) => {
   };
 
   const toggleLike = async (postId, isLiked) => {
+    // Optimistic UI Update
+    const originalPosts = [...posts];
+    setPosts((prev) =>
+      prev.map((p) =>
+        p._id === postId
+          ? { ...p, isLiked: !isLiked, likesCount: isLiked ? Math.max(0, p.likesCount - 1) : p.likesCount + 1 }
+          : p
+      )
+    );
+
     try {
       if (isLiked) {
         await postService.unlikePost(postId);
-        setPosts((prev) =>
-          prev.map((p) =>
-            p._id === postId
-              ? { ...p, isLiked: false, likesCount: Math.max(0, p.likesCount - 1) }
-              : p
-          )
-        );
       } else {
         await postService.likePost(postId);
-        setPosts((prev) =>
-          prev.map((p) =>
-            p._id === postId ? { ...p, isLiked: true, likesCount: p.likesCount + 1 } : p
-          )
-        );
       }
     } catch (err) {
+      if (err.message === 'OFFLINE_QUEUED') {
+        console.log('Like operation queued offline.');
+        return; // Retain optimistic state
+      }
       console.error(err);
+      // Rollback if request failed for other reasons
+      setPosts(originalPosts);
     }
   };
 
   const toggleSave = async (postId, isSaved) => {
+    // Optimistic UI Update
+    const originalPosts = [...posts];
+    setPosts((prev) =>
+      prev.map((p) =>
+        p._id === postId ? { ...p, isSaved: !isSaved } : p
+      )
+    );
+
     try {
       if (isSaved) {
         await postService.unsavePost(postId);
-        setPosts((prev) =>
-          prev.map((p) =>
-            p._id === postId ? { ...p, isSaved: false } : p
-          )
-        );
       } else {
         await postService.savePost(postId);
-        setPosts((prev) =>
-          prev.map((p) =>
-            p._id === postId ? { ...p, isSaved: true } : p
-          )
-        );
       }
     } catch (err) {
+      if (err.message === 'OFFLINE_QUEUED') {
+        console.log('Save operation queued offline.');
+        return; // Retain optimistic state
+      }
       console.error(err);
+      // Rollback
+      setPosts(originalPosts);
     }
   };
 
@@ -110,6 +151,7 @@ export const PostsProvider = ({ children }) => {
         loading,
         page,
         totalPages,
+        isCachedData,
         fetchFeed,
         publishPost,
         removePost,

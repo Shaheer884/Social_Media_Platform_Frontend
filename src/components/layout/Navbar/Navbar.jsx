@@ -4,6 +4,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useNotifications } from '../../../context/NotificationsContext';
 import { timeAgo } from '../../../utils/formatters';
 import { getUploadUrl } from '../../../utils/mediaHelper';
+import PWAInstallButton from '../../PWA/PWAInstallButton';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -97,6 +98,7 @@ const Navbar = () => {
         </div>
 
         <div className="nav-actions">
+          <PWAInstallButton />
           <button className="nav-btn" onClick={toggleTheme} title="Toggle Theme">
             {theme === 'dark' ? (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

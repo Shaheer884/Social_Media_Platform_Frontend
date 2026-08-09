@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomDialogProvider } from './context/CustomDialogContext';
@@ -8,6 +8,14 @@ import Spinner from './components/Loader/Spinner';
 import { getUploadUrl } from './utils/mediaHelper';
 
 import './styles/styles.css';
+import './styles/pwa.css';
+
+// PWA Components
+import OfflineStatusBanner from './components/PWA/OfflineStatusBanner';
+import UpdatePrompt from './components/PWA/UpdatePrompt';
+import PWAInstallPrompt from './components/PWA/PWAInstallPrompt';
+import Offline from './pages/Offline/Offline';
+
 
 // Lazy load pages
 const Home = lazy(() => import('./pages/Home/Home'));
@@ -187,8 +195,52 @@ const NotificationToast = () => {
 };
 
 const AppContent = () => {
+  const [isOfflineError, setIsOfflineError] = useState(false);
+
+  useEffect(() => {
+    // 1. Listen for api-offline-error event
+    const handleOfflineError = () => {
+      setIsOfflineError(true);
+    };
+    
+    // 2. Listen for online event to clear error
+    const handleOnline = () => {
+      setIsOfflineError(false);
+    };
+
+    // 3. Listen for beforeinstallprompt event to capture install prompt
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      window.deferredPrompt = e;
+      window.dispatchEvent(new CustomEvent('pwa-prompt-changed', { detail: { available: true } }));
+    };
+
+    window.addEventListener('api-offline-error', handleOfflineError);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Initial check (if already offline on start)
+    if (!navigator.onLine) {
+      // Check if we already failed a request or if we start completely offline with no cache
+      // We do not immediately trigger full offline page, only when a request fails
+    }
+
+    return () => {
+      window.removeEventListener('api-offline-error', handleOfflineError);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  if (isOfflineError) {
+    return <Offline onRetry={() => { setIsOfflineError(false); window.location.reload(); }} />;
+  }
+
   return (
     <>
+      <OfflineStatusBanner />
+      <UpdatePrompt />
+      <PWAInstallPrompt />
       <NotificationToast />
       <Suspense fallback={
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -239,6 +291,7 @@ const AppContent = () => {
     </>
   );
 };
+
 
 const App = () => {
   return (

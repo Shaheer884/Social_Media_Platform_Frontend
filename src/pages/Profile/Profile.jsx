@@ -14,6 +14,8 @@ import { getUploadUrl } from '../../utils/mediaHelper';
 import ImageCropperModal from '../../components/Modal/ImageCropperModal';
 import birthdayService from '../../services/birthdayService';
 import GiftModal from '../../components/Birthday/GiftModal';
+import { getCacheSize, clearAppCache } from '../../utils/cacheManager';
+
 
 const Profile = () => {
   const { username } = useParams();
@@ -70,6 +72,23 @@ const Profile = () => {
   const [editingWishId, setEditingWishId] = useState(null);
   const [editingWishText, setEditingWishText] = useState('');
 
+  const [cacheSize, setCacheSize] = useState(0);
+  const [isCachedProfileData, setIsCachedProfileData] = useState(false);
+
+  useEffect(() => {
+    if (editModalOpen) {
+      getCacheSize().then(setCacheSize).catch(() => setCacheSize(0));
+    }
+  }, [editModalOpen]);
+
+  const handleClearCache = async () => {
+    if (window.confirm("Are you sure you want to clear the app cache? This will reload the app.")) {
+      await clearAppCache();
+      window.location.reload();
+    }
+  };
+
+
   const avatarInputRef = useRef(null);
   const coverInputRef = useRef(null);
 
@@ -87,6 +106,10 @@ const Profile = () => {
       const res = await userService.getProfile(profileIdOrUsername);
       if (res.success) {
         setProfileUser(res.data);
+        setIsCachedProfileData(false);
+        // Cache this profile user
+        localStorage.setItem('connecthub_cached_profile_user', JSON.stringify(res.data));
+
         // Pre-fill edit fields
         setEditFullName(res.data.fullName);
         setEditUsername(res.data.username || '');
@@ -100,6 +123,39 @@ const Profile = () => {
       }
     } catch (err) {
       console.error(err);
+
+      // Attempt to load from offline cache
+      const cachedUserStr = localStorage.getItem('connecthub_cached_profile_user');
+      if (cachedUserStr) {
+        try {
+          const cachedUser = JSON.parse(cachedUserStr);
+          // Check if the requested user is the cached user
+          const isMatch = cachedUser._id === profileIdOrUsername || 
+                          cachedUser.username === profileIdOrUsername || 
+                          (!profileIdOrUsername && cachedUser._id === currentUser?._id);
+          
+          if (isMatch) {
+            setProfileUser(cachedUser);
+            setIsCachedProfileData(true);
+
+            setEditFullName(cachedUser.fullName);
+            setEditUsername(cachedUser.username || '');
+            setEditLocation(cachedUser.location || '');
+            setEditBio(cachedUser.bio || '');
+            setAvatarPreview(getUploadUrl(cachedUser.profilePicture || '/uploads/default-avatar.png'));
+            setCoverPreview(getUploadUrl(cachedUser.coverPhoto || '/uploads/default-cover.png'));
+            console.log('Loaded profile from offline cache');
+            return;
+          }
+        } catch (e) {
+          // Ignore
+        }
+      }
+
+      // If offline and request failed, dispatch the offline error to trigger fallback page
+      if (!navigator.onLine && err.message !== 'OFFLINE_QUEUED') {
+        window.dispatchEvent(new Event('api-offline-error'));
+      }
     } finally {
       setLoading(false);
     }
@@ -112,9 +168,35 @@ const Profile = () => {
       const res = await postService.getUserPosts(profileUser._id);
       if (res.success) {
         setProfilePosts(res.data);
+        // Cache posts if they belong to our cached user
+        const cachedUserStr = localStorage.getItem('connecthub_cached_profile_user');
+        if (cachedUserStr) {
+          try {
+            const cachedUser = JSON.parse(cachedUserStr);
+            if (cachedUser._id === profileUser._id) {
+              localStorage.setItem('connecthub_cached_profile_posts', JSON.stringify(res.data));
+            }
+          } catch (e) {
+            // Ignore
+          }
+        }
       }
     } catch (err) {
       console.error(err);
+
+      // Load posts from cache if offline and viewing the cached user
+      if (isCachedProfileData) {
+        const cachedPostsStr = localStorage.getItem('connecthub_cached_profile_posts');
+        if (cachedPostsStr) {
+          try {
+            const cachedPosts = JSON.parse(cachedPostsStr);
+            setProfilePosts(cachedPosts);
+            console.log('Loaded profile posts from offline cache');
+          } catch (e) {
+            // Ignore
+          }
+        }
+      }
     } finally {
       setLoadingPosts(false);
     }
@@ -629,6 +711,16 @@ const Profile = () => {
 
   return (
     <Layout onFollowChange={fetchProfile}>
+      {isCachedProfileData && (
+        <div className="cached-data-indicator" style={{ marginBottom: '16px' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+          <span>Offline Mode: Showing cached profile details.</span>
+        </div>
+      )}
       <div className="card profile-header-card">
         <div className="profile-cover-photo-wrapper">
           <img src={cover} className="profile-cover-photo" alt="Cover" />
@@ -1264,6 +1356,34 @@ const Profile = () => {
               >
                 Delete Account
               </button>
+            </div>
+
+            <div className="pwa-settings-section" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+              <h4 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600 }}>App Settings & Storage</h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', marginBottom: '12px' }}>
+                <div>
+                  <strong style={{ display: 'block', fontWeight: 600 }}>ConnectHub PWA</strong>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Version 1.0.0 | Build 2026.08.09</span>
+                </div>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', backgroundColor: 'var(--input-bg)', padding: '4px 8px', borderRadius: '4px' }}>
+                  Standalone: {window.matchMedia('(display-mode: standalone)').matches ? 'Yes' : 'No'}
+                </span>
+              </div>
+              
+              <div className="settings-storage-section" style={{ margin: 0 }}>
+                <div className="settings-storage-details">
+                  <span>Cached Files (Offline Data)</span>
+                  <span style={{ fontWeight: 'bold' }}>{cacheSize} MB</span>
+                </div>
+                <button
+                  type="button"
+                  className="settings-storage-btn"
+                  onClick={handleClearCache}
+                  style={{ marginTop: '10px', width: '100%' }}
+                >
+                  Clear Cache & Refresh App
+                </button>
+              </div>
             </div>
           </div>
 
