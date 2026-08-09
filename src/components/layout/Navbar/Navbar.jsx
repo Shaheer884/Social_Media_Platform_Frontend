@@ -76,7 +76,8 @@ const Navbar = () => {
   const defaultAvatar = '/uploads/default-avatar.png';
 
   return (
-    <header id="main-header" class="main-header">
+    <header id="main-header" className="main-header">
+      <div className="navbar-gradient-line"></div>
       <nav className="navbar">
         <div className="logo-container" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <img src="/favicon.png" className="logo-icon" alt="Logo" />
