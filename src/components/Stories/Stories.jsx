@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useDialog } from '../../context/CustomDialogContext';
 import storyService from '../../services/storyService';
+import userService from '../../services/userService';
 import { getUploadUrl } from '../../utils/mediaHelper';
+import { timeAgo } from '../../utils/formatters';
+import { useLocation } from 'react-router-dom';
 import Modal from '../Modal/Modal';
 import Spinner from '../Loader/Spinner';
 import MentionSuggestions from '../MentionSuggestions/MentionSuggestions';
@@ -19,10 +22,12 @@ const GRADIENTS = [
 const Stories = () => {
   const { currentUser } = useAuth();
   const { showAlert, showConfirm } = useDialog();
+  const location = useLocation();
 
   const storyInputRef = useRef(null);
   const editStoryInputRef = useRef(null);
   const storyCommentInputRef = useRef(null);
+  const storyReplyInputRef = useRef(null);
 
   const [storyGroups, setStoryGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,12 +41,32 @@ const Stories = () => {
   const [imagePreview, setImagePreview] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
 
+  // Privacy Selection States
+  const [privacy, setPrivacy] = useState('public');
+  const [privacySearchQuery, setPrivacySearchQuery] = useState('');
+  const [privacySelectedUsers, setPrivacySelectedUsers] = useState([]);
+  const [friendsList, setFriendsList] = useState([]);
+
   // Viewer Modal States
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [storyDuration, setStoryDuration] = useState(5000);
+
+  // Insights Modal States
+  const [insightsOpen, setInsightsOpen] = useState(false);
+  const [insightsTab, setInsightsTab] = useState('views');
+  const [insightsData, setInsightsData] = useState({ views: [], likes: [], replies: [] });
+  const [loadingInsights, setLoadingInsights] = useState(false);
+
+  // Private Replies States
+  const [storyReplyText, setStoryReplyText] = useState('');
+  const [replyInputFocused, setReplyInputFocused] = useState(false);
+
+  // Heart Tap States
+  const [showHeartAnimation, setShowHeartAnimation] = useState(false);
+  const lastTapRef = useRef(0);
 
   // Edit Story States
   const [editModeOpen, setEditModeOpen] = useState(false);
@@ -162,17 +187,17 @@ const Stories = () => {
     const video = viewerVideoRef.current;
     if (!video) return;
 
-    const shouldPlay = viewerOpen && !editModeOpen && !commentInputFocused;
+    const shouldPlay = viewerOpen && !editModeOpen && !commentInputFocused && !replyInputFocused;
     if (shouldPlay) {
       video.play().catch((err) => console.log('Story video autoplay blocked:', err));
     } else {
       video.pause();
     }
-  }, [viewerOpen, editModeOpen, commentInputFocused, selectedStoryIndex, selectedGroupIndex]);
+  }, [viewerOpen, editModeOpen, commentInputFocused, replyInputFocused, selectedStoryIndex, selectedGroupIndex]);
 
   // Autoplay Logic
   useEffect(() => {
-    if (!viewerOpen || editModeOpen || commentInputFocused) {
+    if (!viewerOpen || editModeOpen || commentInputFocused || replyInputFocused) {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
       return;
     }
@@ -198,6 +223,109 @@ const Stories = () => {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
     };
   }, [viewerOpen, selectedGroupIndex, selectedStoryIndex, editModeOpen, commentInputFocused, storyDuration]);
+
+  // Auto-open story from URL param
+  useEffect(() => {
+    if (storyGroups.length === 0) return;
+    const params = new URLSearchParams(location.search);
+    const storyId = params.get('storyId');
+    if (storyId) {
+      let foundGroupIdx = -1;
+      let foundStoryIdx = -1;
+      for (let gIdx = 0; gIdx < storyGroups.length; gIdx++) {
+        const stories = storyGroups[gIdx].stories;
+        const sIdx = stories.findIndex(s => s._id === storyId);
+        if (sIdx !== -1) {
+          foundGroupIdx = gIdx;
+          foundStoryIdx = sIdx;
+          break;
+        }
+      }
+
+      if (foundGroupIdx !== -1 && foundStoryIdx !== -1) {
+        setSelectedGroupIndex(foundGroupIdx);
+        setSelectedStoryIndex(foundStoryIdx);
+        setViewerOpen(true);
+        // Clear query param so it doesn't reopen
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [location.search, storyGroups]);
+
+  // Load friends/followers for custom privacy selections
+  useEffect(() => {
+    if (createModalOpen && currentUser) {
+      const fetchFriends = async () => {
+        try {
+          const res = await userService.getFollowers(currentUser._id);
+          if (res.success) {
+            setFriendsList(res.data);
+          }
+        } catch (err) {
+          console.error('Error fetching friends for privacy list:', err);
+        }
+      };
+      fetchFriends();
+    }
+  }, [createModalOpen, currentUser]);
+
+  // Record story view when someone opens a story
+  useEffect(() => {
+    if (viewerOpen && activeStory && activeStory.user._id !== currentUser?._id) {
+      const recordView = async () => {
+        try {
+          await storyService.viewStory(activeStory._id);
+          
+          // Optimistic local update
+          const alreadyViewed = activeStory.views && activeStory.views.some(v => (v.user?._id || v.user) === currentUser?._id);
+          if (!alreadyViewed) {
+            const updatedGroups = storyGroups.map((group, gIdx) => {
+              if (gIdx !== selectedGroupIndex) return group;
+              const updatedStories = group.stories.map((story, sIdx) => {
+                if (sIdx !== selectedStoryIndex) return story;
+                const currentViews = story.views || [];
+                return {
+                  ...story,
+                  views: [...currentViews, { user: currentUser, viewedAt: new Date() }]
+                };
+              });
+              return { ...group, stories: updatedStories };
+            });
+            setStoryGroups(updatedGroups);
+          }
+        } catch (err) {
+          console.error('Failed to record story view:', err);
+        }
+      };
+      recordView();
+    }
+  }, [viewerOpen, selectedStoryIndex, selectedGroupIndex]);
+
+  // Load insights data
+  useEffect(() => {
+    if (insightsOpen && activeStory) {
+      const fetchInsights = async () => {
+        setLoadingInsights(true);
+        try {
+          const viewsRes = await storyService.getStoryViews(activeStory._id);
+          const likesRes = await storyService.getStoryLikes(activeStory._id);
+          const repliesRes = await storyService.getStoryReplies(activeStory._id);
+          if (viewsRes.success && likesRes.success && repliesRes.success) {
+            setInsightsData({
+              views: viewsRes.views,
+              likes: likesRes.likes,
+              replies: repliesRes.data
+            });
+          }
+        } catch (err) {
+          console.error('Failed to load story insights:', err);
+        } finally {
+          setLoadingInsights(false);
+        }
+      };
+      fetchInsights();
+    }
+  }, [insightsOpen, activeStory]);
 
   const handleVideoLoadedMetadata = (e) => {
     const durationSec = e.target.duration;
@@ -311,6 +439,9 @@ const Stories = () => {
     setImagePreview('');
     setStoryText('');
     setChosenGradient(GRADIENTS[0]);
+    setPrivacy('public');
+    setPrivacySearchQuery('');
+    setPrivacySelectedUsers([]);
   };
 
   const triggerFileSelect = () => {
@@ -335,12 +466,25 @@ const Stories = () => {
         const formData = new FormData();
         formData.append('text', storyText.trim());
         formData.append('storyImage', chosenFile);
+        formData.append('privacy', privacy);
+        if (privacy === 'custom') {
+          formData.append('allowedUsers', JSON.stringify(privacySelectedUsers));
+        } else if (privacy === 'hide') {
+          formData.append('hiddenUsers', JSON.stringify(privacySelectedUsers));
+        }
         res = await storyService.createStory(formData);
       } else {
-        res = await storyService.createStory({
+        const payload = {
           text: storyText.trim(),
-          backgroundColor: chosenGradient
-        });
+          backgroundColor: chosenGradient,
+          privacy
+        };
+        if (privacy === 'custom') {
+          payload.allowedUsers = privacySelectedUsers;
+        } else if (privacy === 'hide') {
+          payload.hiddenUsers = privacySelectedUsers;
+        }
+        res = await storyService.createStory(payload);
       }
 
       if (res.success) {
@@ -553,9 +697,35 @@ const Stories = () => {
     }
   };
 
+  const handleReplySubmit = async (e) => {
+    if (e) e.preventDefault();
+    const val = storyReplyText.trim();
+    if (!val || !activeStory) return;
+
+    try {
+      setStoryReplyText('');
+      const res = await storyService.replyStory(activeStory._id, val);
+      if (res.success) {
+        showAlert('Private reply sent successfully!', 'Success');
+      }
+    } catch (err) {
+      showAlert('Could not send reply', 'Error');
+    }
+  };
+
+  const handleShareStory = () => {
+    if (!activeStory) return;
+    const url = `${window.location.origin}/?storyId=${activeStory._id}`;
+    navigator.clipboard.writeText(url)
+      .then(() => showAlert('Story link copied to clipboard!', 'Success'))
+      .catch(() => showAlert('Failed to copy link', 'Error'));
+  };
+
   useEffect(() => {
     setStoryCommentText('');
     setCommentInputFocused(false);
+    setStoryReplyText('');
+    setReplyInputFocused(false);
   }, [selectedStoryIndex, selectedGroupIndex, viewerOpen]);
 
   if (loading) {
@@ -780,6 +950,73 @@ const Stories = () => {
                 {storyText.length}/100
               </small>
             </div>
+
+            {/* Privacy Selector */}
+            <div className="form-group" style={{ marginTop: '16px' }}>
+              <label className="form-label" htmlFor="story-privacy">Story Privacy</label>
+              <select
+                id="story-privacy"
+                className="form-input"
+                value={privacy}
+                onChange={(e) => { setPrivacy(e.target.value); setPrivacySelectedUsers([]); }}
+              >
+                <option value="public">Public (Everyone)</option>
+                <option value="friends">Friends Only (Mutual Follows)</option>
+                <option value="followers">Followers Only</option>
+                <option value="me">Only Me</option>
+                <option value="custom">Custom (Share With...)</option>
+                <option value="hide">Hide Story From...</option>
+              </select>
+            </div>
+
+            {(privacy === 'custom' || privacy === 'hide') && (
+              <div className="form-group" style={{ marginTop: '12px' }}>
+                <label className="form-label">
+                  {privacy === 'custom' ? 'Select friends to share with:' : 'Select friends to hide from:'}
+                </label>
+                <input
+                  type="text"
+                  placeholder="Search friends..."
+                  className="form-input"
+                  value={privacySearchQuery}
+                  onChange={(e) => setPrivacySearchQuery(e.target.value)}
+                  style={{ marginBottom: '8px' }}
+                />
+                <div className="friends-list-selection">
+                  {friendsList
+                    .filter(f => f.fullName.toLowerCase().includes(privacySearchQuery.toLowerCase()) || f.username.toLowerCase().includes(privacySearchQuery.toLowerCase()))
+                    .map(friend => {
+                      const isChecked = privacySelectedUsers.includes(friend._id);
+                      return (
+                        <div
+                          key={friend._id}
+                          className="friend-select-item"
+                          onClick={() => {
+                            if (isChecked) {
+                              setPrivacySelectedUsers(prev => prev.filter(id => id !== friend._id));
+                            } else {
+                              setPrivacySelectedUsers(prev => [...prev, friend._id]);
+                            }
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            readOnly
+                            className="friend-select-checkbox"
+                          />
+                          <img
+                            src={getUploadUrl(friend.profilePicture || '/uploads/default-avatar.png')}
+                            className="friend-select-avatar"
+                            alt=""
+                          />
+                          <span className="friend-select-name">{friend.fullName} (@{friend.username})</span>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="modal-footer">
@@ -881,6 +1118,22 @@ const Stories = () => {
                   </div>
                 )}
               </div>
+
+              {/* Stats & Insights */}
+              <div className="story-view-stats-row" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '8px 16px', color: '#fff', fontSize: '0.85rem', background: 'rgba(0, 0, 0, 0.2)', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <span title="Views" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>👁 {activeStory.views ? activeStory.views.length : 0}</span>
+                <span title="Likes" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>❤️ {likeCount}</span>
+                {isOwnActiveStory && (
+                  <button 
+                    type="button"
+                    className="btn" 
+                    onClick={() => setInsightsOpen(true)}
+                    style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', border: '1px solid #fff', background: 'transparent', color: '#fff', cursor: 'pointer', marginLeft: 'auto' }}
+                  >
+                    View Insights
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Navigation buttons */}
@@ -891,7 +1144,9 @@ const Stories = () => {
               &#8250;
             </button>
 
-            <div className="story-view-body">
+            <div className="story-view-body" onClick={handleDoubleTap}>
+              {showHeartAnimation && <div className="story-double-tap-heart">❤️</div>}
+
               {activeStory.imageUrl ? (
                 <>
                   {activeStory.mediaType === 'video' ? (
@@ -933,7 +1188,7 @@ const Stories = () => {
                 <input
                   ref={storyCommentInputRef}
                   type="text"
-                  placeholder="Reply to story..."
+                  placeholder="Comment publicly..."
                   value={storyCommentText}
                   onChange={(e) => setStoryCommentText(e.target.value)}
                   onKeyDown={handleCommentSubmit}
@@ -945,7 +1200,7 @@ const Stories = () => {
                 <MentionSuggestions text={storyCommentText} setText={setStoryCommentText} targetInputRef={storyCommentInputRef} />
               </div>
 
-              {/* Heart/Like Button Overlay */}
+              {/* Heart/Like Button Overlay & Share Button */}
               <div className="story-view-like-container">
                 <button
                   className={`story-like-btn ${isLiked ? 'liked' : ''}`}
@@ -967,8 +1222,48 @@ const Stories = () => {
                   </svg>
                 </button>
                 {likeCount > 0 && <span className="story-like-count">{likeCount}</span>}
+
+                <button
+                  className="story-like-btn"
+                  onClick={handleShareStory}
+                  type="button"
+                  title="Copy Share Link"
+                  style={{ marginTop: '12px' }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                </button>
               </div>
             </div>
+
+            {/* Private Reply Box (bottom) */}
+            {!isOwnActiveStory && (
+              <div className="story-view-reply-box">
+                <input
+                  ref={storyReplyInputRef}
+                  type="text"
+                  placeholder="Reply privately..."
+                  value={storyReplyText}
+                  onChange={(e) => setStoryReplyText(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleReplySubmit(); }}
+                  onFocus={() => setReplyInputFocused(true)}
+                  onBlur={() => setReplyInputFocused(false)}
+                  className="story-view-reply-input"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <button
+                  onClick={handleReplySubmit}
+                  className="story-view-reply-send-btn"
+                >
+                  Send
+                </button>
+              </div>
+            )}
           </div>
         </Modal>
       )}
@@ -1048,6 +1343,116 @@ const Stories = () => {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Story Insights Modal */}
+      {insightsOpen && activeStory && (
+        <Modal isOpen={insightsOpen} onClose={() => setInsightsOpen(false)} title="Story Insights">
+          <div className="modal-body" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            {loadingInsights ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
+                <Spinner size="24px" />
+              </div>
+            ) : (
+              <div>
+                {/* Stats Summary cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center', backgroundColor: 'var(--input-bg)' }}>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{insightsData.views.length}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Views</div>
+                  </div>
+                  <div style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center', backgroundColor: 'var(--input-bg)' }}>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{insightsData.likes.length}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Likes</div>
+                  </div>
+                  <div style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center', backgroundColor: 'var(--input-bg)' }}>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{insightsData.replies ? insightsData.replies.length : 0}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Replies</div>
+                  </div>
+                </div>
+
+                {/* Tabs */}
+                <div className="story-creator-option-tabs" style={{ marginBottom: '12px' }}>
+                  <div className={`story-creator-tab ${insightsTab === 'views' ? 'active' : ''}`} onClick={() => setInsightsTab('views')}>
+                    Viewers ({insightsData.views.length})
+                  </div>
+                  <div className={`story-creator-tab ${insightsTab === 'likes' ? 'active' : ''}`} onClick={() => setInsightsTab('likes')}>
+                    Likes ({insightsData.likes.length})
+                  </div>
+                  <div className={`story-creator-tab ${insightsTab === 'replies' ? 'active' : ''}`} onClick={() => setInsightsTab('replies')}>
+                    Replies ({insightsData.replies ? insightsData.replies.length : 0})
+                  </div>
+                </div>
+
+                {/* Tab content */}
+                {insightsTab === 'views' && (
+                  <div>
+                    {insightsData.views.length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No views yet</p>
+                    ) : (
+                      insightsData.views.map((v, i) => (
+                        <div key={v._id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <img src={getUploadUrl(v.user?.profilePicture || '/uploads/default-avatar.png')} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{v.user?.fullName}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>@{v.user?.username}</div>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {timeAgo(v.viewedAt)}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {insightsTab === 'likes' && (
+                  <div>
+                    {insightsData.likes.length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No likes yet</p>
+                    ) : (
+                      insightsData.likes.map((u, i) => (
+                        <div key={u._id || i} style={{ display: 'flex', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border-color)', gap: '10px' }}>
+                          <img src={getUploadUrl(u.profilePicture || '/uploads/default-avatar.png')} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{u.fullName}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>@{u.username}</div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+
+                {insightsTab === 'replies' && (
+                  <div>
+                    {!insightsData.replies || insightsData.replies.length === 0 ? (
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No replies yet</p>
+                    ) : (
+                      insightsData.replies.map((r, i) => (
+                        <div key={r._id || i} style={{ padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <img src={getUploadUrl(r.sender?.profilePicture || '/uploads/default-avatar.png')} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
+                              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{r.sender?.fullName}</span>
+                            </div>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{timeAgo(r.createdAt)}</span>
+                          </div>
+                          <div style={{ paddingLeft: '32px', fontSize: '0.85rem', color: 'var(--text-main)' }}>{r.message}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-primary" onClick={() => setInsightsOpen(false)}>Close</button>
+          </div>
         </Modal>
       )}
     </div>

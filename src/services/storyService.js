@@ -26,6 +26,21 @@ const storyService = {
   },
   commentStory(id, text) {
     return api.post(`/stories/${id}/comment`, { text });
+  },
+  viewStory(id) {
+    return api.post(`/stories/${id}/view`);
+  },
+  getStoryViews(id) {
+    return api.get(`/stories/${id}/views`);
+  },
+  getStoryLikes(id) {
+    return api.get(`/stories/${id}/likes`);
+  },
+  replyStory(id, message) {
+    return api.post(`/stories/${id}/reply`, { message });
+  },
+  getStoryReplies(id) {
+    return api.get(`/stories/${id}/replies`);
   }
 };
 
