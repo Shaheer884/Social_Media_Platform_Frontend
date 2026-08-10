@@ -97,6 +97,54 @@ const Stories = () => {
   const isLiked = activeStory && activeStory.likes && activeStory.likes.includes(currentUser?._id);
   const likeCount = activeStory && activeStory.likes ? activeStory.likes.length : 0;
 
+  // Playback state refs for Insights Modal
+  const pausedProgressRefVal = useRef(0);
+  const pausedVideoTimeRef = useRef(0);
+  const remainingImageTimeRef = useRef(0);
+  const touchStartRef = useRef(null);
+
+  const handleOpenInsights = () => {
+    if (!activeStory) return;
+    setIsStoryPaused(true);
+    pausedProgressRefVal.current = progressRef.current;
+    if (activeStory.mediaType === 'video' && viewerVideoRef.current) {
+      pausedVideoTimeRef.current = viewerVideoRef.current.currentTime;
+    } else {
+      remainingImageTimeRef.current = storyDuration - (storyDuration * progressRef.current / 100);
+    }
+    setInsightsOpen(true);
+  };
+
+  const handleCloseInsights = () => {
+    setInsightsOpen(false);
+    progressRef.current = pausedProgressRefVal.current;
+    setProgress(pausedProgressRefVal.current);
+    if (activeStory && activeStory.mediaType === 'video' && viewerVideoRef.current) {
+      viewerVideoRef.current.currentTime = pausedVideoTimeRef.current;
+    }
+    setIsStoryPaused(false);
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches[0]) {
+      touchStartRef.current = e.touches[0].clientY;
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartRef.current === null) return;
+    if (e.changedTouches && e.changedTouches[0]) {
+      const touchEndY = e.changedTouches[0].clientY;
+      const diffY = touchEndY - touchStartRef.current;
+      const modalBody = e.currentTarget.querySelector('.modal-body');
+      const isAtTop = modalBody ? modalBody.scrollTop <= 0 : true;
+      if (diffY > 120 && isAtTop) {
+        handleCloseInsights();
+      }
+    }
+    touchStartRef.current = null;
+  };
+
   // Auto-scroll comments in story viewer (TikTok style)
   useEffect(() => {
     const container = commentsListRef.current;
@@ -213,17 +261,17 @@ const Stories = () => {
     const video = viewerVideoRef.current;
     if (!video) return;
 
-    const shouldPlay = viewerOpen && !editModeOpen && !commentInputFocused && !isStoryPaused;
+    const shouldPlay = viewerOpen && !editModeOpen && !commentInputFocused && !isStoryPaused && !insightsOpen;
     if (shouldPlay) {
       video.play().catch((err) => console.log('Story video autoplay blocked:', err));
     } else {
       video.pause();
     }
-  }, [viewerOpen, editModeOpen, commentInputFocused, isStoryPaused, selectedStoryIndex, selectedGroupIndex]);
+  }, [viewerOpen, editModeOpen, commentInputFocused, isStoryPaused, insightsOpen, selectedStoryIndex, selectedGroupIndex]);
 
   // Autoplay Logic with Pause/Resume capability
   useEffect(() => {
-    if (!viewerOpen || editModeOpen || commentInputFocused || isStoryPaused) {
+    if (!viewerOpen || editModeOpen || commentInputFocused || isStoryPaused || insightsOpen) {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
       return;
     }
@@ -250,7 +298,7 @@ const Stories = () => {
     return () => {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
     };
-  }, [viewerOpen, selectedGroupIndex, selectedStoryIndex, editModeOpen, commentInputFocused, isStoryPaused, storyDuration]);
+  }, [viewerOpen, selectedGroupIndex, selectedStoryIndex, editModeOpen, commentInputFocused, isStoryPaused, insightsOpen, storyDuration]);
 
   // Auto-open story from URL param
   useEffect(() => {
@@ -280,11 +328,13 @@ const Stories = () => {
     }
   }, [location.search, storyGroups]);
 
-  // Escape key handler for active replies or story viewer
+  // Escape key handler for active replies, insights modal, or story viewer
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        if (replyModeActive) {
+        if (insightsOpen) {
+          handleCloseInsights();
+        } else if (replyModeActive) {
           handleCancelReply();
         } else if (viewerOpen) {
           setViewerOpen(false);
@@ -297,7 +347,7 @@ const Stories = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [viewerOpen, replyModeActive]);
+  }, [viewerOpen, replyModeActive, insightsOpen]);
 
   // Automatically focus reply input when reply mode is activated
   useEffect(() => {
@@ -1222,7 +1272,7 @@ const Stories = () => {
                             </button>
                             <button
                               className="story-viewer-dropdown-item"
-                              onClick={(e) => { e.stopPropagation(); setInsightsOpen(true); setOwnerMenuOpen(false); }}
+                              onClick={(e) => { e.stopPropagation(); handleOpenInsights(); setOwnerMenuOpen(false); }}
                             >
                               📊 Story Insights
                             </button>
@@ -1259,7 +1309,7 @@ const Stories = () => {
               </div>
 
               {/* STORY CONTENT (Centered, clean) */}
-              <div className={`story-viewer-body ${isStoryPaused ? 'story-paused-dim' : ''}`} onClick={(e) => {
+              <div className={`story-viewer-body ${isStoryPaused || insightsOpen ? 'story-paused-dim' : ''}`} onClick={(e) => {
                 if (replyModeActive) {
                   handleCancelReply();
                 } else {
@@ -1397,7 +1447,7 @@ const Stories = () => {
             </div>
 
             {/* STORY STATS (BELOW THE MAIN CARD) */}
-            <div className="story-viewer-stats-below" onClick={() => { if (isOwnActiveStory) setInsightsOpen(true); }}>
+            <div className="story-viewer-stats-below" onClick={() => { if (isOwnActiveStory) handleOpenInsights(); }}>
               <span>👁 {activeStory.views ? activeStory.views.length : 0} Views</span>
               <span>❤️ {likeCount} Likes</span>
               {isOwnActiveStory && <span style={{ color: '#a78bfa', marginLeft: '6px' }}>• View Insights</span>}
@@ -1486,8 +1536,13 @@ const Stories = () => {
 
       {/* Story Insights Modal */}
       {insightsOpen && activeStory && (
-        <Modal isOpen={insightsOpen} onClose={() => setInsightsOpen(false)} title="Story Insights">
-          <div className="modal-body" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+        <Modal isOpen={insightsOpen} onClose={handleCloseInsights} title="Story Insights">
+          <div 
+            onTouchStart={handleTouchStart} 
+            onTouchEnd={handleTouchEnd}
+            style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+          >
+            <div className="modal-body" style={{ maxHeight: '400px', overflowY: 'auto' }}>
             {loadingInsights ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
                 <Spinner size="24px" />
@@ -1632,9 +1687,10 @@ const Stories = () => {
                 )}
               </div>
             )}
-          </div>
-          <div className="modal-footer">
-            <button type="button" className="btn btn-primary" onClick={() => setInsightsOpen(false)}>Close</button>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-primary" onClick={handleCloseInsights}>Close</button>
+            </div>
           </div>
         </Modal>
       )}
