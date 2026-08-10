@@ -1691,9 +1691,19 @@ textarea {
     top: auto;
     z-index: 100;
     background-color: var(--card-bg);
-    border-top: 1px solid var(--border-color);
+    border-top: none;
     box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
-    padding: 8px 16px;
+    padding: 12px 16px 8px;
+  }
+
+  .sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
   }
 
   .sidebar-nav {
