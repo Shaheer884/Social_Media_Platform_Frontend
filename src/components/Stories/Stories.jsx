@@ -5,7 +5,7 @@ import storyService from '../../services/storyService';
 import userService from '../../services/userService';
 import { getUploadUrl } from '../../utils/mediaHelper';
 import { timeAgo } from '../../utils/formatters';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Modal from '../Modal/Modal';
 import Spinner from '../Loader/Spinner';
 import MentionSuggestions from '../MentionSuggestions/MentionSuggestions';
@@ -23,6 +23,7 @@ const Stories = () => {
   const { currentUser } = useAuth();
   const { showAlert, showConfirm } = useDialog();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const storyInputRef = useRef(null);
   const editStoryInputRef = useRef(null);
@@ -53,6 +54,7 @@ const Stories = () => {
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [storyDuration, setStoryDuration] = useState(5000);
+  const [ownerMenuOpen, setOwnerMenuOpen] = useState(false);
 
   // Insights Modal States
   const [insightsOpen, setInsightsOpen] = useState(false);
@@ -63,6 +65,7 @@ const Stories = () => {
   // Private Replies States
   const [storyReplyText, setStoryReplyText] = useState('');
   const [replyInputFocused, setReplyInputFocused] = useState(false);
+  const [publicCommentsOpen, setPublicCommentsOpen] = useState(false);
 
   // Heart Tap States
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
@@ -740,7 +743,41 @@ const Stories = () => {
     setCommentInputFocused(false);
     setStoryReplyText('');
     setReplyInputFocused(false);
+    setOwnerMenuOpen(false);
+    setPublicCommentsOpen(false);
   }, [selectedStoryIndex, selectedGroupIndex, viewerOpen]);
+
+  const renderStoryTextWithMentions = (text) => {
+    if (!text) return '';
+    const mentionRegex = /@([a-zA-Z0-9_]+)/g;
+    const parts = text.split(mentionRegex);
+    const matches = [...text.matchAll(mentionRegex)];
+    
+    if (matches.length === 0) return text;
+    
+    let matchIdx = 0;
+    return parts.map((part, index) => {
+      if (index % 2 === 1) {
+        const username = matches[matchIdx++];
+        const unameStr = username ? username[1] : '';
+        return (
+          <span 
+            key={index}
+            className="story-mention-link"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/profile/${unameStr}`);
+              setViewerOpen(false);
+            }}
+            style={{ color: '#60a5fa', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}
+          >
+            @{unameStr}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
 
   if (loading) {
     return (
@@ -1044,207 +1081,233 @@ const Stories = () => {
         </form>
       </Modal>
 
-      {/* Story Viewer Modal */}
+      {/* Story Viewer Overlay (Immersive Glassmorphism) */}
       {viewerOpen && activeStory && (
-        <Modal
-          isOpen={viewerOpen}
-          onClose={() => setViewerOpen(false)}
-          title={`${activeStory.user.fullName}'s Story`}
-          showFooter={false}
-        >
-          <div className="story-view-wrapper">
-            <div className="story-view-header">
-              {/* Progress Indicators */}
-              <div className="story-view-progress-indicators">
-                {activeGroup.stories.map((s, idx) => {
-                  let fillClass = '';
-                  let fillStyle = {};
-                  if (idx < selectedStoryIndex) {
-                    fillClass = 'completed';
-                  } else if (idx === selectedStoryIndex) {
-                    fillClass = 'active';
-                    fillStyle = { width: `${progress}%` };
-                  }
+        <div className="story-viewer-overlay" onClick={() => setViewerOpen(false)}>
+          {/* Navigation arrow buttons outside card for desktop */}
+          <button className="story-viewer-nav-arrow prev" onClick={(e) => { e.stopPropagation(); handlePrevStory(); }}>
+            &#8249;
+          </button>
+          <button className="story-viewer-nav-arrow next" onClick={(e) => { e.stopPropagation(); handleNextStory(); }}>
+            &#8250;
+          </button>
 
-                  return (
-                    <div key={s._id} className="story-view-progress-bar">
-                      <div className={`story-view-progress-bar-fill ${fillClass}`} style={fillStyle} />
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* User details */}
-              <div className="story-view-user-info">
-                <img
-                  src={getUploadUrl(activeStory.user.profilePicture || '/uploads/default-avatar.png')}
-                  className="story-view-avatar"
-                  alt="User Avatar"
-                />
-                <div>
-                  <div className="story-view-username">{activeStory.user.fullName}</div>
-                  <div className="story-view-time">
-                    {new Date(activeStory.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
+          <div className="story-viewer-container" onClick={(e) => e.stopPropagation()}>
+            <div className="story-viewer-card">
+              
+              {/* TOP HEADER */}
+              <div className="story-viewer-header">
+                {/* Progress Indicators */}
+                <div className="story-viewer-progress-container">
+                  {activeGroup.stories.map((s, idx) => {
+                    let fillClass = '';
+                    let fillStyle = {};
+                    if (idx < selectedStoryIndex) {
+                      fillClass = 'completed';
+                    } else if (idx === selectedStoryIndex) {
+                      fillClass = 'active';
+                      fillStyle = { width: `${progress}%` };
+                    }
+                    return (
+                      <div key={s._id} className="story-viewer-progress-bar">
+                        <div className={`story-viewer-progress-fill ${fillClass}`} style={fillStyle} />
+                      </div>
+                    );
+                  })}
                 </div>
 
-                {/* Edit & Delete for story owner */}
-                {isOwnActiveStory && (
-                  <div className="story-view-owner-actions">
-                    <button
-                      className="story-view-action-icon-btn"
-                      title="Edit Caption/Background"
-                      onClick={() => openEditMode(activeStory)}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                    </button>
-                    <button
-                      className="story-view-action-icon-btn"
-                      title="Delete Story"
-                      onClick={() => handleDeleteStory(activeStory._id)}
-                      style={{ color: '#ef4444' }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="3 6 5 6 21 6" />
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        <line x1="10" y1="11" x2="10" y2="17" />
-                        <line x1="14" y1="11" x2="14" y2="17" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-                {!isOwnActiveStory && (
-                  <div className="story-view-owner-actions">
-                    <button
-                      className="story-view-action-icon-btn"
-                      title="Hide Stories from this user"
-                      onClick={(e) => handleHideUserStories(e, activeStory.user)}
-                      style={{ color: '#ef4444' }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                        <line x1="1" y1="1" x2="23" y2="23" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Stats & Insights */}
-              <div className="story-view-stats-row" style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '8px 16px', color: '#fff', fontSize: '0.85rem', background: 'rgba(0, 0, 0, 0.2)', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                <span title="Views" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>👁 {activeStory.views ? activeStory.views.length : 0}</span>
-                <span title="Likes" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>❤️ {likeCount}</span>
-                {isOwnActiveStory && (
-                  <button 
-                    type="button"
-                    className="btn" 
-                    onClick={() => setInsightsOpen(true)}
-                    style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', border: '1px solid #fff', background: 'transparent', color: '#fff', cursor: 'pointer', marginLeft: 'auto' }}
-                  >
-                    View Insights
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Navigation buttons */}
-            <button className="story-view-nav-btn prev" onClick={handlePrevStory}>
-              &#8249;
-            </button>
-            <button className="story-view-nav-btn next" onClick={handleNextStory}>
-              &#8250;
-            </button>
-
-            <div className="story-view-body" onClick={handleDoubleTap}>
-              {showHeartAnimation && <div className="story-double-tap-heart">❤️</div>}
-
-              {activeStory.imageUrl ? (
-                <>
-                  {activeStory.mediaType === 'video' ? (
-                    <video
-                      ref={viewerVideoRef}
-                      src={getUploadUrl(activeStory.imageUrl)}
-                      className="story-view-bg-image"
-                      style={{ objectFit: 'contain', backgroundColor: '#000' }}
-                      playsInline
-                      onLoadedMetadata={handleVideoLoadedMetadata}
+                {/* Profile Picture, Username, Story Time, Actions, Close Button */}
+                <div className="story-viewer-profile-row">
+                  <div className="story-viewer-user-details" onClick={() => { navigate(`/profile/${activeStory.user.username}`); setViewerOpen(false); }}>
+                    <img
+                      src={getUploadUrl(activeStory.user.profilePicture || '/uploads/default-avatar.png')}
+                      className="story-viewer-avatar"
+                      alt=""
                     />
-                  ) : (
-                    <img src={getUploadUrl(activeStory.imageUrl)} className="story-view-bg-image" alt="Story view" />
-                  )}
-                  {activeStory.text && (
-                    <div className="story-view-text-overlay">{activeStory.text}</div>
-                  )}
-                </>
-              ) : (
-                <div className="story-view-text-story" style={{ background: activeStory.backgroundColor }}>
-                  {activeStory.text}
-                </div>
-              )}
-
-              {/* Comment Overlay (opposite to Like Button) */}
-              <div className="story-view-comment-container" style={{ position: 'relative' }}>
-                <div className="story-comments-list" key={activeStory._id} ref={commentsListRef}>
-                  {activeStory.comments && activeStory.comments.map((c, index) => (
-                    <div
-                      key={c._id || c.createdAt || index}
-                      className="story-comment-bubble animate-comment-bubble"
-                      style={{ animationDelay: `${Math.min(index, 4) * 0.1}s` }}
-                    >
-                      <span className="story-comment-user">{c.user?.fullName || 'User'}:</span>
-                      {c.text}
+                    <div>
+                      <div className="story-viewer-username">{activeStory.user.fullName}</div>
+                      <div className="story-viewer-time">
+                        {timeAgo(activeStory.createdAt)}
+                      </div>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="story-viewer-actions-right">
+                    {/* Owner Dropdown Menu */}
+                    {isOwnActiveStory && (
+                      <>
+                        <button
+                          className="story-viewer-menu-btn"
+                          title="Story Options"
+                          onClick={(e) => { e.stopPropagation(); setOwnerMenuOpen(prev => !prev); }}
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <circle cx="12" cy="12" r="1" />
+                            <circle cx="19" cy="12" r="1" />
+                            <circle cx="5" cy="12" r="1" />
+                          </svg>
+                        </button>
+                        
+                        {ownerMenuOpen && (
+                          <div className="story-viewer-dropdown">
+                            <button
+                              className="story-viewer-dropdown-item"
+                              onClick={(e) => { e.stopPropagation(); openEditMode(activeStory); setOwnerMenuOpen(false); }}
+                            >
+                              ✏ Edit Story
+                            </button>
+                            <button
+                              className="story-viewer-dropdown-item"
+                              onClick={(e) => { e.stopPropagation(); setInsightsOpen(true); setOwnerMenuOpen(false); }}
+                            >
+                              📊 Story Insights
+                            </button>
+                            <button
+                              className="story-viewer-dropdown-item delete"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteStory(activeStory._id); setOwnerMenuOpen(false); }}
+                            >
+                              🗑 Delete Story
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {!isOwnActiveStory && (
+                      <button
+                        className="story-viewer-menu-btn"
+                        title="Hide User Stories"
+                        onClick={(e) => { e.stopPropagation(); handleHideUserStories(e, activeStory.user); }}
+                        style={{ color: '#ef4444' }}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      </button>
+                    )}
+
+                    <button className="story-viewer-close-btn" onClick={() => setViewerOpen(false)} title="Close">
+                      &times;
+                    </button>
+                  </div>
                 </div>
-                <input
-                  ref={storyCommentInputRef}
-                  type="text"
-                  placeholder="Comment publicly..."
-                  value={storyCommentText}
-                  onChange={(e) => setStoryCommentText(e.target.value)}
-                  onKeyDown={handleCommentSubmit}
-                  onFocus={() => setCommentInputFocused(true)}
-                  onBlur={() => setCommentInputFocused(false)}
-                  className="story-comment-input"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <MentionSuggestions text={storyCommentText} setText={setStoryCommentText} targetInputRef={storyCommentInputRef} />
               </div>
 
-              {/* Heart/Like Button Overlay & Share Button */}
-              <div className="story-view-like-container">
+              {/* STORY CONTENT (Centered, clean) */}
+              <div className="story-viewer-body" onClick={handleDoubleTap}>
+                {showHeartAnimation && <div className="story-double-tap-heart">❤️</div>}
+
+                {activeStory.imageUrl ? (
+                  <>
+                    {activeStory.mediaType === 'video' ? (
+                      <video
+                        ref={viewerVideoRef}
+                        src={getUploadUrl(activeStory.imageUrl)}
+                        className="story-viewer-media"
+                        playsInline
+                        onLoadedMetadata={handleVideoLoadedMetadata}
+                      />
+                    ) : (
+                      <img src={getUploadUrl(activeStory.imageUrl)} className="story-viewer-media" alt="" />
+                    )}
+                    {activeStory.text && (
+                      <div className="story-viewer-caption">
+                        {renderStoryTextWithMentions(activeStory.text)}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="story-viewer-text-only" style={{ background: activeStory.backgroundColor }}>
+                    {renderStoryTextWithMentions(activeStory.text)}
+                  </div>
+                )}
+
+                {/* Floating Public Comments Side Drawer overlay (responsive) */}
+                <div className={`story-comments-drawer ${publicCommentsOpen ? 'open' : ''}`} onClick={(e) => e.stopPropagation()}>
+                  <div className="story-comments-drawer-header">
+                    <span className="story-comments-drawer-title">Public Comments ({activeStory.comments ? activeStory.comments.length : 0})</span>
+                    <button className="story-comments-drawer-close" onClick={() => setPublicCommentsOpen(false)}>&times;</button>
+                  </div>
+                  <div className="story-comments-drawer-list" ref={commentsListRef}>
+                    {activeStory.comments && activeStory.comments.map((c, index) => (
+                      <div key={c._id || index} className="story-comments-drawer-bubble">
+                        <span className="story-comments-drawer-user">{c.user?.fullName || 'User'}:</span>
+                        {renderStoryTextWithMentions(c.text)}
+                      </div>
+                    ))}
+                    {(!activeStory.comments || activeStory.comments.length === 0) && (
+                      <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: '20px' }}>No comments yet. Be the first to comment!</div>
+                    )}
+                  </div>
+                  <div className="story-comments-drawer-input-row">
+                    <input
+                      ref={storyCommentInputRef}
+                      type="text"
+                      placeholder="Comment publicly..."
+                      value={storyCommentText}
+                      onChange={(e) => setStoryCommentText(e.target.value)}
+                      onKeyDown={handleCommentSubmit}
+                      onFocus={() => setCommentInputFocused(true)}
+                      onBlur={() => setCommentInputFocused(false)}
+                      className="story-comments-drawer-input"
+                    />
+                    <MentionSuggestions text={storyCommentText} setText={setStoryCommentText} targetInputRef={storyCommentInputRef} />
+                  </div>
+                </div>
+              </div>
+
+              {/* BOTTOM ACTION BAR */}
+              <div className="story-viewer-bottom-actions">
+                {/* Private Reply Input (For others' stories) */}
+                {!isOwnActiveStory ? (
+                  <div className="story-viewer-input-wrapper">
+                    <input
+                      ref={storyReplyInputRef}
+                      type="text"
+                      placeholder="Reply to Story..."
+                      value={storyReplyText}
+                      onChange={(e) => setStoryReplyText(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleReplySubmit(); }}
+                      onFocus={() => setReplyInputFocused(true)}
+                      onBlur={() => setReplyInputFocused(false)}
+                      className="story-viewer-reply-input"
+                    />
+                    <button className="story-viewer-reply-submit" onClick={handleReplySubmit}>Send</button>
+                  </div>
+                ) : (
+                  <div style={{ flex: 1 }} /> // Empty spacer for layout alignment
+                )}
+
+                {/* Like Button */}
                 <button
-                  className={`story-like-btn ${isLiked ? 'liked' : ''}`}
+                  className={`story-viewer-icon-btn ${isLiked ? 'liked' : ''}`}
                   onClick={handleLikeStory}
-                  type="button"
                   title={isLiked ? 'Unlike' : 'Like'}
                 >
-                  <svg
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill={isLiked ? '#ef4444' : 'none'}
-                    stroke={isLiked ? '#ef4444' : '#ffffff'}
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                   </svg>
                 </button>
-                {likeCount > 0 && <span className="story-like-count">{likeCount}</span>}
 
+                {/* Public Comments Toggle Button */}
                 <button
-                  className="story-like-btn"
-                  onClick={handleShareStory}
-                  type="button"
-                  title="Copy Share Link"
-                  style={{ marginTop: '12px' }}
+                  className={`story-viewer-icon-btn ${publicCommentsOpen ? 'active' : ''}`}
+                  onClick={() => setPublicCommentsOpen(prev => !prev)}
+                  title="Public Comments"
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                  </svg>
+                </button>
+
+                {/* Share Button */}
+                <button
+                  className="story-viewer-icon-btn"
+                  onClick={handleShareStory}
+                  title="Copy Share Link"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="18" cy="5" r="3" />
                     <circle cx="6" cy="12" r="3" />
                     <circle cx="18" cy="19" r="3" />
@@ -1255,31 +1318,14 @@ const Stories = () => {
               </div>
             </div>
 
-            {/* Private Reply Box (bottom) */}
-            {!isOwnActiveStory && (
-              <div className="story-view-reply-box">
-                <input
-                  ref={storyReplyInputRef}
-                  type="text"
-                  placeholder="Reply privately..."
-                  value={storyReplyText}
-                  onChange={(e) => setStoryReplyText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleReplySubmit(); }}
-                  onFocus={() => setReplyInputFocused(true)}
-                  onBlur={() => setReplyInputFocused(false)}
-                  className="story-view-reply-input"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <button
-                  onClick={handleReplySubmit}
-                  className="story-view-reply-send-btn"
-                >
-                  Send
-                </button>
-              </div>
-            )}
+            {/* STORY STATS (BELOW THE MAIN CARD) */}
+            <div className="story-viewer-stats-below" onClick={() => { if (isOwnActiveStory) setInsightsOpen(true); }}>
+              <span>👁 {activeStory.views ? activeStory.views.length : 0} Views</span>
+              <span>❤️ {likeCount} Likes</span>
+              {isOwnActiveStory && <span style={{ color: '#a78bfa', marginLeft: '6px' }}>• View Insights</span>}
+            </div>
           </div>
-        </Modal>
+        </div>
       )}
 
       {/* Edit Story Inline Modal */}
@@ -1389,13 +1435,24 @@ const Stories = () => {
                 {/* Tabs */}
                 <div className="story-creator-option-tabs" style={{ marginBottom: '12px' }}>
                   <div className={`story-creator-tab ${insightsTab === 'views' ? 'active' : ''}`} onClick={() => setInsightsTab('views')}>
-                    Viewers ({insightsData.views.length})
+                    Recent Viewers ({insightsData.views.length})
+                  </div>
+                  <div className={`story-creator-tab ${insightsTab === 'top' ? 'active' : ''}`} onClick={() => setInsightsTab('top')}>
+                    Top Viewers ({(() => {
+                      const counts = {};
+                      insightsData.views.forEach(v => {
+                        if (!v.user) return;
+                        const uid = v.user._id || v.user;
+                        counts[uid] = true;
+                      });
+                      return Object.keys(counts).length;
+                    })()})
                   </div>
                   <div className={`story-creator-tab ${insightsTab === 'likes' ? 'active' : ''}`} onClick={() => setInsightsTab('likes')}>
-                    Likes ({insightsData.likes.length})
+                    Recent Likes ({insightsData.likes.length})
                   </div>
                   <div className={`story-creator-tab ${insightsTab === 'replies' ? 'active' : ''}`} onClick={() => setInsightsTab('replies')}>
-                    Replies ({insightsData.replies ? insightsData.replies.length : 0})
+                    Recent Replies ({insightsData.replies ? insightsData.replies.length : 0})
                   </div>
                 </div>
 
@@ -1405,7 +1462,7 @@ const Stories = () => {
                     {insightsData.views.length === 0 ? (
                       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No views yet</p>
                     ) : (
-                      insightsData.views.map((v, i) => (
+                      [...insightsData.views].reverse().map((v, i) => (
                         <div key={v._id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <img src={getUploadUrl(v.user?.profilePicture || '/uploads/default-avatar.png')} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
@@ -1423,12 +1480,46 @@ const Stories = () => {
                   </div>
                 )}
 
+                {insightsTab === 'top' && (
+                  <div>
+                    {(() => {
+                      const counts = {};
+                      insightsData.views.forEach(v => {
+                        if (!v.user) return;
+                        const uid = v.user._id || v.user;
+                        if (!counts[uid]) {
+                          counts[uid] = { user: v.user, count: 0 };
+                        }
+                        counts[uid].count++;
+                      });
+                      const sorted = Object.values(counts).sort((a, b) => b.count - a.count);
+                      if (sorted.length === 0) {
+                        return <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No views yet</p>;
+                      }
+                      return sorted.map((tv, i) => (
+                        <div key={tv.user?._id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <img src={getUploadUrl(tv.user?.profilePicture || '/uploads/default-avatar.png')} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{tv.user?.fullName}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>@{tv.user?.username}</div>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#8b5cf6', background: 'rgba(139, 92, 246, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>
+                            {tv.count} {tv.count === 1 ? 'view' : 'views'}
+                          </span>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                )}
+
                 {insightsTab === 'likes' && (
                   <div>
                     {insightsData.likes.length === 0 ? (
                       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No likes yet</p>
                     ) : (
-                      insightsData.likes.map((u, i) => (
+                      [...insightsData.likes].reverse().map((u, i) => (
                         <div key={u._id || i} style={{ display: 'flex', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border-color)', gap: '10px' }}>
                           <img src={getUploadUrl(u.profilePicture || '/uploads/default-avatar.png')} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
                           <div>
@@ -1446,7 +1537,7 @@ const Stories = () => {
                     {!insightsData.replies || insightsData.replies.length === 0 ? (
                       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No replies yet</p>
                     ) : (
-                      insightsData.replies.map((r, i) => (
+                      [...insightsData.replies].reverse().map((r, i) => (
                         <div key={r._id || i} style={{ padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
