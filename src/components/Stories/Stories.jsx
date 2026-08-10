@@ -66,6 +66,9 @@ const Stories = () => {
   const [storyReplyText, setStoryReplyText] = useState('');
   const [replyInputFocused, setReplyInputFocused] = useState(false);
   const [publicCommentsOpen, setPublicCommentsOpen] = useState(false);
+  const [isStoryPaused, setIsStoryPaused] = useState(false);
+  const [replyModeActive, setReplyModeActive] = useState(false);
+  const progressRef = useRef(0);
 
   // Heart Tap States
   const [showHeartAnimation, setShowHeartAnimation] = useState(false);
@@ -180,43 +183,65 @@ const Stories = () => {
     }
   }, [loading]);
 
-  // Reset story duration on story change
+  // Reset story progress and set duration on story change
   useEffect(() => {
-    setStoryDuration(5000);
-  }, [selectedStoryIndex, selectedGroupIndex]);
+    setProgress(0);
+    progressRef.current = 0;
+    setIsStoryPaused(false);
+    setReplyModeActive(false);
+
+    if (!activeStory) {
+      setStoryDuration(5000);
+      return;
+    }
+
+    if (activeStory.imageUrl) {
+      if (activeStory.mediaType === 'video') {
+        setStoryDuration(5000); // Temporary fallback, handles by video metadata loaded later
+      } else {
+        // Image story -> 15 Seconds
+        setStoryDuration(15000);
+      }
+    } else {
+      // Text story -> 30 Seconds
+      setStoryDuration(30000);
+    }
+  }, [selectedStoryIndex, selectedGroupIndex, activeStory]);
 
   // Sync play/pause for video stories in viewer
   useEffect(() => {
     const video = viewerVideoRef.current;
     if (!video) return;
 
-    const shouldPlay = viewerOpen && !editModeOpen && !commentInputFocused && !replyInputFocused;
+    const shouldPlay = viewerOpen && !editModeOpen && !commentInputFocused && !isStoryPaused;
     if (shouldPlay) {
       video.play().catch((err) => console.log('Story video autoplay blocked:', err));
     } else {
       video.pause();
     }
-  }, [viewerOpen, editModeOpen, commentInputFocused, replyInputFocused, selectedStoryIndex, selectedGroupIndex]);
+  }, [viewerOpen, editModeOpen, commentInputFocused, isStoryPaused, selectedStoryIndex, selectedGroupIndex]);
 
-  // Autoplay Logic
+  // Autoplay Logic with Pause/Resume capability
   useEffect(() => {
-    if (!viewerOpen || editModeOpen || commentInputFocused || replyInputFocused) {
+    if (!viewerOpen || editModeOpen || commentInputFocused || isStoryPaused) {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
       return;
     }
 
-    setProgress(0);
     const duration = storyDuration;
     const step = 50; // Update progress every 50ms
     const totalSteps = duration / step;
-    let currentStep = 0;
+    
+    // Calculate initial step from current progressRef.current
+    let currentStep = Math.round((progressRef.current / 100) * totalSteps);
 
     progressTimerRef.current = setInterval(() => {
       currentStep++;
-      const val = (currentStep / totalSteps) * 100;
+      const val = Math.min(100, (currentStep / totalSteps) * 100);
+      progressRef.current = val;
       setProgress(val);
 
-      if (currentStep >= totalSteps) {
+      if (val >= 100) {
         clearInterval(progressTimerRef.current);
         handleNextStory();
       }
@@ -225,7 +250,7 @@ const Stories = () => {
     return () => {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
     };
-  }, [viewerOpen, selectedGroupIndex, selectedStoryIndex, editModeOpen, commentInputFocused, storyDuration]);
+  }, [viewerOpen, selectedGroupIndex, selectedStoryIndex, editModeOpen, commentInputFocused, isStoryPaused, storyDuration]);
 
   // Auto-open story from URL param
   useEffect(() => {
@@ -254,6 +279,32 @@ const Stories = () => {
       }
     }
   }, [location.search, storyGroups]);
+
+  // Escape key handler for active replies or story viewer
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (replyModeActive) {
+          handleCancelReply();
+        } else if (viewerOpen) {
+          setViewerOpen(false);
+        }
+      }
+    };
+    if (viewerOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [viewerOpen, replyModeActive]);
+
+  // Automatically focus reply input when reply mode is activated
+  useEffect(() => {
+    if (replyModeActive && storyReplyInputRef.current) {
+      storyReplyInputRef.current.focus();
+    }
+  }, [replyModeActive]);
 
   // Load friends/followers for custom privacy selections
   useEffect(() => {
@@ -700,6 +751,17 @@ const Stories = () => {
     }
   };
 
+  const handleStartReply = () => {
+    setReplyModeActive(true);
+    setIsStoryPaused(true);
+  };
+
+  const handleCancelReply = () => {
+    setStoryReplyText('');
+    setReplyModeActive(false);
+    setIsStoryPaused(false);
+  };
+
   const handleReplySubmit = async (e) => {
     if (e) e.preventDefault();
     const val = storyReplyText.trim();
@@ -707,6 +769,8 @@ const Stories = () => {
 
     try {
       setStoryReplyText('');
+      setReplyModeActive(false);
+      setIsStoryPaused(false);
       const res = await storyService.replyStory(activeStory._id, val);
       if (res.success) {
         showAlert('Private reply sent successfully!', 'Success');
@@ -1195,7 +1259,13 @@ const Stories = () => {
               </div>
 
               {/* STORY CONTENT (Centered, clean) */}
-              <div className="story-viewer-body" onClick={handleDoubleTap}>
+              <div className={`story-viewer-body ${isStoryPaused ? 'story-paused-dim' : ''}`} onClick={(e) => {
+                if (replyModeActive) {
+                  handleCancelReply();
+                } else {
+                  handleDoubleTap(e);
+                }
+              }}>
                 {showHeartAnimation && <div className="story-double-tap-heart">❤️</div>}
 
                 {activeStory.imageUrl ? (
@@ -1269,10 +1339,18 @@ const Stories = () => {
                       value={storyReplyText}
                       onChange={(e) => setStoryReplyText(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') handleReplySubmit(); }}
-                      onFocus={() => setReplyInputFocused(true)}
-                      onBlur={() => setReplyInputFocused(false)}
+                      onFocus={handleStartReply}
                       className="story-viewer-reply-input"
                     />
+                    {replyModeActive && (
+                      <button 
+                        className="story-viewer-reply-cancel-btn" 
+                        onClick={(e) => { e.stopPropagation(); handleCancelReply(); }}
+                        style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '18px', padding: '6px 14px', fontSize: '0.8rem', marginRight: '6px', cursor: 'pointer' }}
+                      >
+                        Cancel
+                      </button>
+                    )}
                     <button className="story-viewer-reply-submit" onClick={handleReplySubmit}>Send</button>
                   </div>
                 ) : (

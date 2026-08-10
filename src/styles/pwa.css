@@ -1042,3 +1042,17 @@
   border-color: #8b5cf6;
   background-color: rgba(255, 255, 255, 0.15);
 }
+
+/* Dim story content when paused/replying */
+.story-viewer-body.story-paused-dim::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  z-index: 5;
+  transition: background 0.3s ease;
+}
