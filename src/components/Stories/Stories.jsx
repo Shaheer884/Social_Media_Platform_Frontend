@@ -721,6 +721,20 @@ const Stories = () => {
       .catch(() => showAlert('Failed to copy link', 'Error'));
   };
 
+  const handleDoubleTap = (e) => {
+    const now = Date.now();
+    const DOUBLE_PRESS_DELAY = 300;
+    if (now - lastTapRef.current < DOUBLE_PRESS_DELAY) {
+      if (!isLiked) {
+        handleLikeStory();
+      }
+      setShowHeartAnimation(true);
+      setTimeout(() => setShowHeartAnimation(false), 800);
+    } else {
+      lastTapRef.current = now;
+    }
+  };
+
   useEffect(() => {
     setStoryCommentText('');
     setCommentInputFocused(false);
