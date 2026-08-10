@@ -5,7 +5,7 @@ const OfflineStatusBanner = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [visible, setVisible] = useState(!navigator.onLine); // Show immediately if offline on mount
   const [bannerText, setBannerText] = useState(
-    !navigator.onLine ? "🔴 You're Offline. Some features may not be available." : ""
+    !navigator.onLine ? "🔴 You're Offline" : ""
   );
 
   useEffect(() => {
@@ -27,7 +27,7 @@ const OfflineStatusBanner = () => {
 
     const handleOffline = () => {
       setIsOnline(false);
-      setBannerText("🔴 You're Offline. Some features may not be available.");
+      setBannerText("🔴 You're Offline");
       setVisible(true);
     };
 
