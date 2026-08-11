@@ -254,7 +254,7 @@ const Stories = () => {
       // Text story -> 30 Seconds
       setStoryDuration(30000);
     }
-  }, [selectedStoryIndex, selectedGroupIndex, activeStory]);
+  }, [selectedStoryIndex, selectedGroupIndex, activeStory, viewerOpen]);
 
   // Sync play/pause for video stories in viewer
   useEffect(() => {
@@ -467,6 +467,7 @@ const Stories = () => {
     } else {
       // Already at the very first story, restart it
       setProgress(0);
+      progressRef.current = 0;
       setSelectedStoryIndex(0);
     }
   };
