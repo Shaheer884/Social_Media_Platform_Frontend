@@ -580,6 +580,21 @@
   .story-viewer-nav-arrow {
     display: none; /* Hide arrow buttons on mobile/tablet, tap screen edges instead */
   }
+  .story-viewer-bottom-actions {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .story-viewer-input-wrapper {
+    padding: 2px 4px 2px 12px;
+  }
+  .story-viewer-reply-input {
+    font-size: 0.85rem;
+    padding: 6px 0;
+  }
+  .story-viewer-icon-btn {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 /* Story Header */
@@ -878,6 +893,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  flex-shrink: 0; /* Prevent shrinking into ovals */
   transition: background-color 0.25s, transform 0.2s, color 0.25s, border-color 0.25s;
 }
 
