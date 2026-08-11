@@ -279,7 +279,7 @@ const Stories = () => {
     const duration = storyDuration;
     const step = 50; // Update progress every 50ms
     const totalSteps = duration / step;
-    
+
     // Calculate initial step from current progressRef.current
     let currentStep = Math.round((progressRef.current / 100) * totalSteps);
 
@@ -379,7 +379,7 @@ const Stories = () => {
       const recordView = async () => {
         try {
           await storyService.viewStory(activeStory._id);
-          
+
           // Optimistic local update
           const alreadyViewed = activeStory.views && activeStory.views.some(v => (v.user?._id || v.user) === currentUser?._id);
           if (!alreadyViewed) {
@@ -631,7 +631,7 @@ const Stories = () => {
 
       // Filter locally
       setStoryGroups((prev) => prev.filter((group) => group.user._id.toString() !== userToHide._id.toString()));
-      
+
       // Close the viewer
       setViewerOpen(false);
       showAlert(`Stories from ${userToHide.fullName} have been hidden.`, 'Success');
@@ -739,16 +739,16 @@ const Stories = () => {
 
   const handleLikeStory = async () => {
     if (!activeStory) return;
-    
+
     const originalGroups = [...storyGroups];
     const isCurrentlyLiked = activeStory.likes && activeStory.likes.includes(currentUser?._id);
-    
+
     // Optimistic Update
     const updatedGroups = storyGroups.map((group, gIdx) => {
       if (gIdx !== selectedGroupIndex) return group;
       const updatedStories = group.stories.map((story, sIdx) => {
         if (sIdx !== selectedStoryIndex) return story;
-        
+
         let newLikes = story.likes || [];
         if (isCurrentlyLiked) {
           newLikes = newLikes.filter((id) => id !== currentUser?._id);
@@ -759,9 +759,9 @@ const Stories = () => {
       });
       return { ...group, stories: updatedStories };
     });
-    
+
     setStoryGroups(updatedGroups);
-    
+
     try {
       if (isCurrentlyLiked) {
         await storyService.unlikeStory(activeStory._id);
@@ -867,16 +867,16 @@ const Stories = () => {
     const mentionRegex = /@([a-zA-Z0-9_]+)/g;
     const parts = text.split(mentionRegex);
     const matches = [...text.matchAll(mentionRegex)];
-    
+
     if (matches.length === 0) return text;
-    
+
     let matchIdx = 0;
     return parts.map((part, index) => {
       if (index % 2 === 1) {
         const username = matches[matchIdx++];
         const unameStr = username ? username[1] : '';
         return (
-          <span 
+          <span
             key={index}
             className="story-mention-link"
             onClick={(e) => {
@@ -1209,7 +1209,7 @@ const Stories = () => {
 
           <div className="story-viewer-container" onClick={(e) => e.stopPropagation()}>
             <div className="story-viewer-card">
-              
+
               {/* TOP HEADER */}
               <div className="story-viewer-header">
                 {/* Progress Indicators */}
@@ -1262,7 +1262,7 @@ const Stories = () => {
                             <circle cx="5" cy="12" r="1" />
                           </svg>
                         </button>
-                        
+
                         {ownerMenuOpen && (
                           <div className="story-viewer-dropdown">
                             <button
@@ -1386,7 +1386,7 @@ const Stories = () => {
                     <input
                       ref={storyReplyInputRef}
                       type="text"
-                      placeholder="Reply to Story..."
+                      placeholder="Reply Story..."
                       value={storyReplyText}
                       onChange={(e) => setStoryReplyText(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') handleReplySubmit(); }}
@@ -1394,8 +1394,8 @@ const Stories = () => {
                       className="story-viewer-reply-input"
                     />
                     {replyModeActive && (
-                      <button 
-                        className="story-viewer-reply-cancel-btn" 
+                      <button
+                        className="story-viewer-reply-cancel-btn"
                         onClick={(e) => { e.stopPropagation(); handleCancelReply(); }}
                         style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '18px', padding: '6px 14px', fontSize: '0.8rem', marginRight: '6px', cursor: 'pointer' }}
                       >
@@ -1543,156 +1543,156 @@ const Stories = () => {
       {/* Story Insights Modal */}
       {insightsOpen && activeStory && (
         <Modal isOpen={insightsOpen} onClose={handleCloseInsights} title="Story Insights">
-          <div 
-            onTouchStart={handleTouchStart} 
+          <div
+            onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
           >
             <div className="modal-body" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-            {loadingInsights ? (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
-                <Spinner size="24px" />
-              </div>
-            ) : (
-              <div>
-                {/* Stats Summary cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-                  <div style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center', backgroundColor: 'var(--input-bg)' }}>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{insightsData.views.length}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Views</div>
-                  </div>
-                  <div style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center', backgroundColor: 'var(--input-bg)' }}>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{insightsData.likes.length}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Likes</div>
-                  </div>
-                  <div style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center', backgroundColor: 'var(--input-bg)' }}>
-                    <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{insightsData.replies ? insightsData.replies.length : 0}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Replies</div>
-                  </div>
+              {loadingInsights ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '24px' }}>
+                  <Spinner size="24px" />
                 </div>
+              ) : (
+                <div>
+                  {/* Stats Summary cards */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                    <div style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center', backgroundColor: 'var(--input-bg)' }}>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{insightsData.views.length}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Views</div>
+                    </div>
+                    <div style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center', backgroundColor: 'var(--input-bg)' }}>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{insightsData.likes.length}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Likes</div>
+                    </div>
+                    <div style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', textAlign: 'center', backgroundColor: 'var(--input-bg)' }}>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{insightsData.replies ? insightsData.replies.length : 0}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Replies</div>
+                    </div>
+                  </div>
 
-                {/* Tabs */}
-                <div className="story-creator-option-tabs" style={{ marginBottom: '12px' }}>
-                  <div className={`story-creator-tab ${insightsTab === 'views' ? 'active' : ''}`} onClick={() => setInsightsTab('views')}>
-                    Recent Viewers ({insightsData.views.length})
+                  {/* Tabs */}
+                  <div className="story-creator-option-tabs" style={{ marginBottom: '12px' }}>
+                    <div className={`story-creator-tab ${insightsTab === 'views' ? 'active' : ''}`} onClick={() => setInsightsTab('views')}>
+                      Recent Viewers ({insightsData.views.length})
+                    </div>
+                    <div className={`story-creator-tab ${insightsTab === 'top' ? 'active' : ''}`} onClick={() => setInsightsTab('top')}>
+                      Top Viewers ({(() => {
+                        const counts = {};
+                        insightsData.views.forEach(v => {
+                          if (!v.user) return;
+                          const uid = v.user._id || v.user;
+                          counts[uid] = true;
+                        });
+                        return Object.keys(counts).length;
+                      })()})
+                    </div>
+                    <div className={`story-creator-tab ${insightsTab === 'likes' ? 'active' : ''}`} onClick={() => setInsightsTab('likes')}>
+                      Recent Likes ({insightsData.likes.length})
+                    </div>
+                    <div className={`story-creator-tab ${insightsTab === 'replies' ? 'active' : ''}`} onClick={() => setInsightsTab('replies')}>
+                      Recent Replies ({insightsData.replies ? insightsData.replies.length : 0})
+                    </div>
                   </div>
-                  <div className={`story-creator-tab ${insightsTab === 'top' ? 'active' : ''}`} onClick={() => setInsightsTab('top')}>
-                    Top Viewers ({(() => {
-                      const counts = {};
-                      insightsData.views.forEach(v => {
-                        if (!v.user) return;
-                        const uid = v.user._id || v.user;
-                        counts[uid] = true;
-                      });
-                      return Object.keys(counts).length;
-                    })()})
-                  </div>
-                  <div className={`story-creator-tab ${insightsTab === 'likes' ? 'active' : ''}`} onClick={() => setInsightsTab('likes')}>
-                    Recent Likes ({insightsData.likes.length})
-                  </div>
-                  <div className={`story-creator-tab ${insightsTab === 'replies' ? 'active' : ''}`} onClick={() => setInsightsTab('replies')}>
-                    Recent Replies ({insightsData.replies ? insightsData.replies.length : 0})
-                  </div>
-                </div>
 
-                {/* Tab content */}
-                {insightsTab === 'views' && (
-                  <div>
-                    {insightsData.views.length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No views yet</p>
-                    ) : (
-                      [...insightsData.views].reverse().map((v, i) => (
-                        <div key={v._id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <img src={getUploadUrl(v.user?.profilePicture || '/uploads/default-avatar.png')} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
-                            <div>
-                              <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{v.user?.fullName}</div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>@{v.user?.username}</div>
+                  {/* Tab content */}
+                  {insightsTab === 'views' && (
+                    <div>
+                      {insightsData.views.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No views yet</p>
+                      ) : (
+                        [...insightsData.views].reverse().map((v, i) => (
+                          <div key={v._id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <img src={getUploadUrl(v.user?.profilePicture || '/uploads/default-avatar.png')} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{v.user?.fullName}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>@{v.user?.username}</div>
+                              </div>
                             </div>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              {timeAgo(v.viewedAt)}
+                            </span>
                           </div>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {timeAgo(v.viewedAt)}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
+                        ))
+                      )}
+                    </div>
+                  )}
 
-                {insightsTab === 'top' && (
-                  <div>
-                    {(() => {
-                      const counts = {};
-                      insightsData.views.forEach(v => {
-                        if (!v.user) return;
-                        const uid = v.user._id || v.user;
-                        if (!counts[uid]) {
-                          counts[uid] = { user: v.user, count: 0 };
+                  {insightsTab === 'top' && (
+                    <div>
+                      {(() => {
+                        const counts = {};
+                        insightsData.views.forEach(v => {
+                          if (!v.user) return;
+                          const uid = v.user._id || v.user;
+                          if (!counts[uid]) {
+                            counts[uid] = { user: v.user, count: 0 };
+                          }
+                          counts[uid].count++;
+                        });
+                        const sorted = Object.values(counts).sort((a, b) => b.count - a.count);
+                        if (sorted.length === 0) {
+                          return <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No views yet</p>;
                         }
-                        counts[uid].count++;
-                      });
-                      const sorted = Object.values(counts).sort((a, b) => b.count - a.count);
-                      if (sorted.length === 0) {
-                        return <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No views yet</p>;
-                      }
-                      return sorted.map((tv, i) => (
-                        <div key={tv.user?._id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <img src={getUploadUrl(tv.user?.profilePicture || '/uploads/default-avatar.png')} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
+                        return sorted.map((tv, i) => (
+                          <div key={tv.user?._id || i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <img src={getUploadUrl(tv.user?.profilePicture || '/uploads/default-avatar.png')} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{tv.user?.fullName}</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>@{tv.user?.username}</div>
+                              </div>
+                            </div>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#8b5cf6', background: 'rgba(139, 92, 246, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>
+                              {tv.count} {tv.count === 1 ? 'view' : 'views'}
+                            </span>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  )}
+
+                  {insightsTab === 'likes' && (
+                    <div>
+                      {insightsData.likes.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No likes yet</p>
+                      ) : (
+                        [...insightsData.likes].reverse().map((u, i) => (
+                          <div key={u._id || i} style={{ display: 'flex', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border-color)', gap: '10px' }}>
+                            <img src={getUploadUrl(u.profilePicture || '/uploads/default-avatar.png')} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
                             <div>
-                              <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{tv.user?.fullName}</div>
-                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>@{tv.user?.username}</div>
+                              <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{u.fullName}</div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>@{u.username}</div>
                             </div>
                           </div>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#8b5cf6', background: 'rgba(139, 92, 246, 0.1)', padding: '2px 8px', borderRadius: '12px' }}>
-                            {tv.count} {tv.count === 1 ? 'view' : 'views'}
-                          </span>
-                        </div>
-                      ));
-                    })()}
-                  </div>
-                )}
+                        ))
+                      )}
+                    </div>
+                  )}
 
-                {insightsTab === 'likes' && (
-                  <div>
-                    {insightsData.likes.length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No likes yet</p>
-                    ) : (
-                      [...insightsData.likes].reverse().map((u, i) => (
-                        <div key={u._id || i} style={{ display: 'flex', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border-color)', gap: '10px' }}>
-                          <img src={getUploadUrl(u.profilePicture || '/uploads/default-avatar.png')} style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{u.fullName}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>@{u.username}</div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {insightsTab === 'replies' && (
-                  <div>
-                    {!insightsData.replies || insightsData.replies.length === 0 ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No replies yet</p>
-                    ) : (
-                      [...insightsData.replies].reverse().map((r, i) => (
-                        <div key={r._id || i} style={{ padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <img src={getUploadUrl(r.sender?.profilePicture || '/uploads/default-avatar.png')} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
-                              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{r.sender?.fullName}</span>
+                  {insightsTab === 'replies' && (
+                    <div>
+                      {!insightsData.replies || insightsData.replies.length === 0 ? (
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '12px' }}>No replies yet</p>
+                      ) : (
+                        [...insightsData.replies].reverse().map((r, i) => (
+                          <div key={r._id || i} style={{ padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <img src={getUploadUrl(r.sender?.profilePicture || '/uploads/default-avatar.png')} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
+                                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-main)' }}>{r.sender?.fullName}</span>
+                              </div>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{timeAgo(r.createdAt)}</span>
                             </div>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{timeAgo(r.createdAt)}</span>
+                            <div style={{ paddingLeft: '32px', fontSize: '0.85rem', color: 'var(--text-main)' }}>{r.message}</div>
                           </div>
-                          <div style={{ paddingLeft: '32px', fontSize: '0.85rem', color: 'var(--text-main)' }}>{r.message}</div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="modal-footer">
               <button type="button" className="btn btn-primary" onClick={handleCloseInsights}>Close</button>
