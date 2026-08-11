@@ -17,39 +17,57 @@ import PWAInstallPrompt from './components/PWA/PWAInstallPrompt';
 import Offline from './pages/Offline/Offline';
 
 
+// Helper for lazy loading with automatic retry on failure (e.g. chunk loading errors after new deployment)
+const lazyWithRetry = (componentImport) => {
+  return lazy(async () => {
+    try {
+      return await componentImport();
+    } catch (error) {
+      console.error('Error loading lazy component:', error);
+      const hasRetried = sessionStorage.getItem('chunk-load-retried');
+      if (!hasRetried) {
+        sessionStorage.setItem('chunk-load-retried', 'true');
+        window.location.reload();
+        return new Promise(() => {}); // Do not resolve or reject, wait for reload
+      }
+      throw error;
+    }
+  });
+};
+
 // Lazy load pages
-const Home = lazy(() => import('./pages/Home/Home'));
-const Login = lazy(() => import('./pages/Login/Login'));
-const Register = lazy(() => import('./pages/Register/Register'));
-const Profile = lazy(() => import('./pages/Profile/Profile'));
-const PostDetail = lazy(() => import('./pages/Post/PostDetail'));
-const Explore = lazy(() => import('./pages/Explore/Explore'));
-const Search = lazy(() => import('./pages/Search/Search'));
-const NotificationsPage = lazy(() => import('./pages/Notifications/NotificationsPage'));
-const Messages = lazy(() => import('./pages/Messages/Messages'));
-const Saved = lazy(() => import('./pages/Saved/Saved'));
-const Friends = lazy(() => import('./pages/Friends/Friends'));
-const NotFound = lazy(() => import('./pages/NotFound/NotFound'));
-const LocationPage = lazy(() => import('./pages/Location/LocationPage'));
-const BirthdayMemoriesPage = lazy(() => import('./pages/BirthdayMemories/BirthdayMemoriesPage'));
-const Verify = lazy(() => import('./pages/Verify/Verify'));
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword/ForgotPassword'));
-const VerifyResetCode = lazy(() => import('./pages/VerifyResetCode/VerifyResetCode'));
-const ResetPassword = lazy(() => import('./pages/ResetPassword/ResetPassword'));
+const Home = lazyWithRetry(() => import('./pages/Home/Home'));
+const Login = lazyWithRetry(() => import('./pages/Login/Login'));
+const Register = lazyWithRetry(() => import('./pages/Register/Register'));
+const Profile = lazyWithRetry(() => import('./pages/Profile/Profile'));
+const PostDetail = lazyWithRetry(() => import('./pages/Post/PostDetail'));
+const Explore = lazyWithRetry(() => import('./pages/Explore/Explore'));
+const Search = lazyWithRetry(() => import('./pages/Search/Search'));
+const NotificationsPage = lazyWithRetry(() => import('./pages/Notifications/NotificationsPage'));
+const Messages = lazyWithRetry(() => import('./pages/Messages/Messages'));
+const Saved = lazyWithRetry(() => import('./pages/Saved/Saved'));
+const Friends = lazyWithRetry(() => import('./pages/Friends/Friends'));
+const NotFound = lazyWithRetry(() => import('./pages/NotFound/NotFound'));
+const LocationPage = lazyWithRetry(() => import('./pages/Location/LocationPage'));
+const BirthdayMemoriesPage = lazyWithRetry(() => import('./pages/BirthdayMemories/BirthdayMemoriesPage'));
+const Verify = lazyWithRetry(() => import('./pages/Verify/Verify'));
+const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword/ForgotPassword'));
+const VerifyResetCode = lazyWithRetry(() => import('./pages/VerifyResetCode/VerifyResetCode'));
+const ResetPassword = lazyWithRetry(() => import('./pages/ResetPassword/ResetPassword'));
 
 // Admin Pages
-const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin'));
-const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard/AdminDashboard'));
-const AdminUsers = lazy(() => import('./pages/Admin/Users/AdminUsers'));
-const AdminPosts = lazy(() => import('./pages/Admin/Posts/AdminPosts'));
-const AdminComments = lazy(() => import('./pages/Admin/Comments/AdminComments'));
-const AdminReports = lazy(() => import('./pages/Admin/Reports/AdminReports'));
-const AdminNotifications = lazy(() => import('./pages/Admin/Notifications/AdminNotifications'));
-const AdminActivityLogs = lazy(() => import('./pages/Admin/ActivityLogs/AdminActivityLogs'));
-const AdminRecycleBin = lazy(() => import('./pages/Admin/RecycleBin/AdminRecycleBin'));
-const AdminPlatformSettings = lazy(() => import('./pages/Admin/PlatformSettings/AdminPlatformSettings'));
-const AdminTrending = lazy(() => import('./pages/Admin/Trending/AdminTrending'));
-const AdminProfile = lazy(() => import('./pages/Admin/Profile/AdminProfile'));
+const AdminLogin = lazyWithRetry(() => import('./pages/Admin/AdminLogin'));
+const AdminDashboard = lazyWithRetry(() => import('./pages/Admin/Dashboard/AdminDashboard'));
+const AdminUsers = lazyWithRetry(() => import('./pages/Admin/Users/AdminUsers'));
+const AdminPosts = lazyWithRetry(() => import('./pages/Admin/Posts/AdminPosts'));
+const AdminComments = lazyWithRetry(() => import('./pages/Admin/Comments/AdminComments'));
+const AdminReports = lazyWithRetry(() => import('./pages/Admin/Reports/AdminReports'));
+const AdminNotifications = lazyWithRetry(() => import('./pages/Admin/Notifications/AdminNotifications'));
+const AdminActivityLogs = lazyWithRetry(() => import('./pages/Admin/ActivityLogs/AdminActivityLogs'));
+const AdminRecycleBin = lazyWithRetry(() => import('./pages/Admin/RecycleBin/AdminRecycleBin'));
+const AdminPlatformSettings = lazyWithRetry(() => import('./pages/Admin/PlatformSettings/AdminPlatformSettings'));
+const AdminTrending = lazyWithRetry(() => import('./pages/Admin/Trending/AdminTrending'));
+const AdminProfile = lazyWithRetry(() => import('./pages/Admin/Profile/AdminProfile'));
 
 
 // Admin Route wrapper
@@ -198,6 +216,9 @@ const AppContent = () => {
   const [isOfflineError, setIsOfflineError] = useState(false);
 
   useEffect(() => {
+    // Clear chunk-load-retried flag on successful load
+    sessionStorage.removeItem('chunk-load-retried');
+
     // 1. Listen for api-offline-error event
     const handleOfflineError = () => {
       setIsOfflineError(true);

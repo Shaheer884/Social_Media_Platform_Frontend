@@ -79,8 +79,8 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: ({ request }) => ['style', 'script', 'document'].includes(request.destination),
-            handler: 'CacheFirst',
+            urlPattern: ({ request }) => ['style', 'script'].includes(request.destination),
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'static-assets',
               expiration: {
