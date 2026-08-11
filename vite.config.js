@@ -79,7 +79,7 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: ({ request }) => ['style', 'script'].includes(request.destination),
+            urlPattern: ({ request, url }) => ['style', 'script'].includes(request.destination) && url.origin === self.location.origin,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'static-assets',
