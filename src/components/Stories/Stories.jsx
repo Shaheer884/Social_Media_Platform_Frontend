@@ -1379,7 +1379,7 @@ const Stories = () => {
               </div>
 
               {/* BOTTOM ACTION BAR */}
-              <div className="story-viewer-bottom-actions">
+              <div className={`story-viewer-bottom-actions ${replyModeActive ? 'reply-active' : ''}`}>
                 {/* Private Reply Input (For others' stories) */}
                 {!isOwnActiveStory ? (
                   <div className="story-viewer-input-wrapper">
