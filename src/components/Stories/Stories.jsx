@@ -237,6 +237,7 @@ const Stories = () => {
     progressRef.current = 0;
     setIsStoryPaused(false);
     setReplyModeActive(false);
+    setPublicCommentsOpen(false);
 
     if (!activeStory) {
       setStoryDuration(5000);
@@ -261,17 +262,17 @@ const Stories = () => {
     const video = viewerVideoRef.current;
     if (!video) return;
 
-    const shouldPlay = viewerOpen && !editModeOpen && !commentInputFocused && !isStoryPaused && !insightsOpen;
+    const shouldPlay = viewerOpen && !editModeOpen && !commentInputFocused && !isStoryPaused && !insightsOpen && !publicCommentsOpen;
     if (shouldPlay) {
       video.play().catch((err) => console.log('Story video autoplay blocked:', err));
     } else {
       video.pause();
     }
-  }, [viewerOpen, editModeOpen, commentInputFocused, isStoryPaused, insightsOpen, selectedStoryIndex, selectedGroupIndex]);
+  }, [viewerOpen, editModeOpen, commentInputFocused, isStoryPaused, insightsOpen, publicCommentsOpen, selectedStoryIndex, selectedGroupIndex]);
 
   // Autoplay Logic with Pause/Resume capability
   useEffect(() => {
-    if (!viewerOpen || editModeOpen || commentInputFocused || isStoryPaused || insightsOpen) {
+    if (!viewerOpen || editModeOpen || commentInputFocused || isStoryPaused || insightsOpen || publicCommentsOpen) {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
       return;
     }
@@ -298,7 +299,7 @@ const Stories = () => {
     return () => {
       if (progressTimerRef.current) clearInterval(progressTimerRef.current);
     };
-  }, [viewerOpen, selectedGroupIndex, selectedStoryIndex, editModeOpen, commentInputFocused, isStoryPaused, insightsOpen, storyDuration]);
+  }, [viewerOpen, selectedGroupIndex, selectedStoryIndex, editModeOpen, commentInputFocused, isStoryPaused, insightsOpen, publicCommentsOpen, storyDuration]);
 
   // Auto-open story from URL param
   useEffect(() => {

@@ -940,51 +940,34 @@
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
 }
 
-/* Floating Public Comments Side-Drawer */
+/* Floating Public Comments Bottom-Drawer (Unified for mobile & desktop) */
 .story-comments-drawer {
   position: absolute;
-  right: -330px;
-  top: 0;
-  width: 320px;
-  height: 100%;
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  width: 100%;
+  height: 55%;
   background: rgba(15, 23, 42, 0.93);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0 24px 24px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px 24px 0 0;
   display: flex;
   flex-direction: column;
   z-index: 10;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, visibility 0.3s ease;
-  box-shadow: -10px 0 40px rgba(0,0,0,0.4);
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.4);
   opacity: 0;
   visibility: hidden;
+  transform: translateY(100%);
 }
 
 .story-comments-drawer.open {
-  transform: translateX(-330px);
+  transform: translateY(0);
   opacity: 1;
   visibility: visible;
-}
-
-@media (max-width: 992px) {
-  /* On tablet/mobile, drawer overlays top of card instead of floating beside it */
-  .story-comments-drawer {
-    right: 0;
-    top: auto;
-    bottom: 0;
-    width: 100%;
-    height: 55%;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 24px 24px 0 0;
-    transform: translateY(100%);
-    box-shadow: 0 -10px 40px rgba(0,0,0,0.4);
-  }
-
-  .story-comments-drawer.open {
-    transform: translateY(0);
-  }
 }
 
 .story-comments-drawer-header {
