@@ -1394,15 +1394,17 @@ const Stories = () => {
                       className="story-viewer-reply-input"
                     />
                     {replyModeActive && (
-                      <button
-                        className="story-viewer-reply-cancel-btn"
-                        onClick={(e) => { e.stopPropagation(); handleCancelReply(); }}
-                        style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '18px', padding: '6px 14px', fontSize: '0.8rem', marginRight: '6px', cursor: 'pointer' }}
-                      >
-                        Cancel
-                      </button>
+                      <>
+                        <button
+                          className="story-viewer-reply-cancel-btn"
+                          onClick={(e) => { e.stopPropagation(); handleCancelReply(); }}
+                          style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '18px', padding: '6px 14px', fontSize: '0.8rem', marginRight: '6px', cursor: 'pointer' }}
+                        >
+                          Cancel
+                        </button>
+                        <button className="story-viewer-reply-submit" onClick={handleReplySubmit}>Send</button>
+                      </>
                     )}
-                    <button className="story-viewer-reply-submit" onClick={handleReplySubmit}>Send</button>
                   </div>
                 ) : (
                   <div style={{ flex: 1 }} /> // Empty spacer for layout alignment
