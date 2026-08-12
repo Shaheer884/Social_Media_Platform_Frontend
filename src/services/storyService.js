@@ -4,11 +4,13 @@ const storyService = {
   getStories() {
     return api.get('/stories');
   },
-  createStory(storyData) {
+  createStory(storyData, config = {}) {
     const isFormData = storyData instanceof FormData;
     return api.post('/stories', storyData, {
+      ...config,
       headers: {
-        'Content-Type': isFormData ? 'multipart/form-data' : 'application/json'
+        'Content-Type': isFormData ? 'multipart/form-data' : 'application/json',
+        ...(config.headers || {})
       }
     });
   },

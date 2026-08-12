@@ -41,6 +41,10 @@ const Stories = () => {
   const [chosenFile, setChosenFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const targetProgressRef = useRef(0);
+  const progressIntervalRef = useRef(null);
+  const apiSuccessRef = useRef(false);
 
   // Privacy Selection States
   const [privacy, setPrivacy] = useState('public');
@@ -215,6 +219,60 @@ const Stories = () => {
   useEffect(() => {
     loadStories();
   }, []);
+
+  const handleUploadSuccess = async () => {
+    await loadStories();
+    setCreateModalOpen(false);
+    setStoryText('');
+    if (imagePreview && imagePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(imagePreview);
+    }
+    setChosenFile(null);
+    setImagePreview('');
+    setChosenGradient(GRADIENTS[0]);
+    setIsPublishing(false);
+    showAlert('Story Posted Successfully', 'Success');
+  };
+
+  useEffect(() => {
+    if (isPublishing) {
+      setUploadProgress(0);
+      targetProgressRef.current = 0;
+      apiSuccessRef.current = false;
+
+      progressIntervalRef.current = setInterval(() => {
+        if (storyCreatorTab === 'text' && targetProgressRef.current < 90) {
+          targetProgressRef.current = Math.min(90, targetProgressRef.current + Math.floor(Math.random() * 5) + 3);
+        }
+
+        setUploadProgress((prev) => {
+          if (prev < targetProgressRef.current) {
+            const nextProgress = prev + 1;
+            if (nextProgress === 100 && apiSuccessRef.current) {
+              clearInterval(progressIntervalRef.current);
+              progressIntervalRef.current = null;
+              setTimeout(() => {
+                handleUploadSuccess();
+              }, 100);
+            }
+            return nextProgress;
+          }
+          return prev;
+        });
+      }, 20);
+    } else {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, [isPublishing]);
 
   useEffect(() => {
     const el = storiesRef.current;
@@ -537,6 +595,7 @@ const Stories = () => {
   };
 
   const closeCreateModal = () => {
+    if (isPublishing) return;
     setCreateModalOpen(false);
     if (imagePreview && imagePreview.startsWith('blob:')) {
       URL.revokeObjectURL(imagePreview);
@@ -566,6 +625,10 @@ const Stories = () => {
     }
 
     setIsPublishing(true);
+    setUploadProgress(0);
+    targetProgressRef.current = 0;
+    apiSuccessRef.current = false;
+
     try {
       let res;
       if (storyCreatorTab === 'image') {
@@ -578,7 +641,16 @@ const Stories = () => {
         } else if (privacy === 'hide') {
           formData.append('hiddenUsers', JSON.stringify(privacySelectedUsers));
         }
-        res = await storyService.createStory(formData);
+        
+        const config = {
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              targetProgressRef.current = Math.min(95, percentCompleted);
+            }
+          }
+        };
+        res = await storyService.createStory(formData, config);
       } else {
         const payload = {
           text: storyText.trim(),
@@ -593,22 +665,19 @@ const Stories = () => {
         res = await storyService.createStory(payload);
       }
 
-      if (res.success) {
-        await loadStories();
-        setCreateModalOpen(false);
-        // Reset fields
-        setStoryText('');
-        if (imagePreview && imagePreview.startsWith('blob:')) {
-          URL.revokeObjectURL(imagePreview);
-        }
-        setChosenFile(null);
-        setImagePreview('');
-        setChosenGradient(GRADIENTS[0]);
+      if (res && res.success) {
+        apiSuccessRef.current = true;
+        targetProgressRef.current = 100;
+      } else {
+        throw new Error('Failed to publish story');
       }
     } catch (err) {
-      showAlert(err.message || 'Failed to create story', 'Error');
-    } finally {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
       setIsPublishing(false);
+      showAlert(err.message || 'Failed to create story', 'Error');
     }
   };
 
@@ -1003,7 +1072,40 @@ const Stories = () => {
 
       {/* Creation Modal */}
       <Modal isOpen={createModalOpen} onClose={closeCreateModal} title="Create Story">
-        <div className="story-creator-option-tabs">
+        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+          {isPublishing && (
+            <div className="story-upload-progress-overlay">
+              <svg width="0" height="0" style={{ position: 'absolute', zIndex: -1 }}>
+                <defs>
+                  <linearGradient id="story-upload-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#ec4899" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="story-upload-progress-card">
+                <div className="story-upload-progress-ring">
+                  <svg className="progress-ring-svg" width="80" height="80">
+                    <circle className="progress-ring-bg" cx="40" cy="40" r="34" strokeWidth="6" fill="transparent" />
+                    <circle
+                      className="progress-ring-bar"
+                      cx="40"
+                      cy="40"
+                      r="34"
+                      strokeWidth="6"
+                      fill="transparent"
+                      strokeDasharray={2 * Math.PI * 34}
+                      strokeDashoffset={2 * Math.PI * 34 * (1 - uploadProgress / 100)}
+                    />
+                  </svg>
+                  <div className="progress-percent-label">{uploadProgress}%</div>
+                </div>
+                <div className="progress-message-title">Publishing Story</div>
+                <div className="progress-message-sub">Please wait while we upload your story...</div>
+              </div>
+            </div>
+          )}
+          <div className="story-creator-option-tabs">
           <div
             className={`story-creator-tab ${storyCreatorTab === 'image' ? 'active' : ''}`}
             onClick={() => setStoryCreatorTab('image')}
@@ -1195,6 +1297,7 @@ const Stories = () => {
             </button>
           </div>
         </form>
+        </div>
       </Modal>
 
       {/* Story Viewer Overlay (Immersive Glassmorphism) */}
