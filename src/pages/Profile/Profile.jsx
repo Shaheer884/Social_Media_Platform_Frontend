@@ -448,8 +448,8 @@ const Profile = () => {
       showAlert('Please select a valid image file', 'Invalid File');
       return;
     }
-    if (file.size > 15 * 1024 * 1024) {
-      showAlert('Image file size is too large. Maximum size is 15MB.', 'File Too Large');
+    if (file.size > 4 * 1024 * 1024) {
+      showAlert('Image file size is too large. Maximum size is 4MB due to server limitations.', 'File Too Large');
       return;
     }
     const reader = new FileReader();

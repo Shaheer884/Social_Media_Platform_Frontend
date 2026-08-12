@@ -548,14 +548,13 @@ const Stories = () => {
         showAlert('Please select a valid image or video file', 'Invalid File');
         return;
       }
-
-      if (isImage && file.size > 15 * 1024 * 1024) {
-        showAlert('Image file size is too large. Maximum size is 15MB.', 'File Too Large');
+      if (isImage && file.size > 4 * 1024 * 1024) {
+        showAlert('Image file size is too large. Maximum size is 4MB due to server limitations.', 'File Too Large');
         return;
       }
 
-      if (isVideo && file.size > 200 * 1024 * 1024) {
-        showAlert('Video file size is too large. Maximum size is 200MB.', 'File Too Large');
+      if (isVideo && file.size > 4 * 1024 * 1024) {
+        showAlert('Video file size is too large. Maximum size is 4MB due to server limitations.', 'File Too Large');
         return;
       }
 
