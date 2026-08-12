@@ -601,6 +601,13 @@
   }
 }
 
+@media (min-width: 769px) {
+  .story-viewer-card {
+    aspect-ratio: 9/18;
+    max-height: calc(100vh - 120px);
+  }
+}
+
 /* Story Header */
 .story-viewer-header {
   position: absolute;
