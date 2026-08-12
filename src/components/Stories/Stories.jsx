@@ -1517,15 +1517,17 @@ const Stories = () => {
                 {!replyModeActive && (
                   <>
                     {/* Like Button */}
-                    <button
-                      className={`story-viewer-icon-btn ${isLiked ? 'liked' : ''}`}
-                      onClick={handleLikeStory}
-                      title={isLiked ? 'Unlike' : 'Like'}
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                      </svg>
-                    </button>
+                    {!isOwnActiveStory && (
+                      <button
+                        className={`story-viewer-icon-btn ${isLiked ? 'liked' : ''}`}
+                        onClick={handleLikeStory}
+                        title={isLiked ? 'Unlike' : 'Like'}
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                        </svg>
+                      </button>
+                    )}
 
                     {/* Public Comments Toggle Button */}
                     <button
@@ -1559,9 +1561,19 @@ const Stories = () => {
 
             {/* STORY STATS (BELOW THE MAIN CARD) */}
             <div className="story-viewer-stats-below" onClick={() => { if (isOwnActiveStory) handleOpenInsights(); }}>
-              <span>👁 {activeStory.views ? activeStory.views.length : 0} Views</span>
-              <span>❤️ {likeCount} Likes</span>
-              {isOwnActiveStory && <span style={{ color: '#a78bfa', marginLeft: '6px' }}>• View Insights</span>}
+              {isOwnActiveStory ? (
+                <>
+                  <span>👁 {activeStory.views ? activeStory.views.length : 0} Views</span>
+                  <span>❤️ {likeCount} Likes</span>
+                  <span>💬 {activeStory.storyReplies ? activeStory.storyReplies.length : 0} Replies</span>
+                  <span style={{ color: '#a78bfa', marginLeft: '6px' }}>• View Insights</span>
+                </>
+              ) : (
+                <>
+                  <span>❤️ {likeCount} Likes</span>
+                  <span>💬 {activeStory.comments ? activeStory.comments.length : 0} Comments</span>
+                </>
+              )}
             </div>
           </div>
         </div>
