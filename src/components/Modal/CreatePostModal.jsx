@@ -56,7 +56,7 @@ const BG_PRESETS = [
 const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
   const { currentUser } = useAuth();
   const { publishPost } = usePosts();
-  const { showAlert } = useDialog();
+  const { showAlert, showConfirm } = useDialog();
 
   const [currentScreen, setCurrentScreen] = useState('main'); // 'main' | 'feeling' | 'location'
   const [feelingTab, setFeelingTab] = useState('feelings'); // 'feelings' | 'activities'
