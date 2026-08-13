@@ -56,11 +56,11 @@ export const PostsProvider = ({ children }) => {
     }
   }, []);
 
-  const publishPost = async (postData) => {
+  const publishPost = async (postData, onUploadProgress) => {
     // If offline, creating a post can queue, but since postData might contain images/videos
     // that are too large or require multipart upload, we run it normally.
     // If offline, the api interceptor will throw OFFLINE_QUEUED for simple requests.
-    const res = await postService.createPost(postData);
+    const res = await postService.createPost(postData, onUploadProgress);
     if (res.success) {
       setPosts((prev) => [res.data, ...prev]);
     }

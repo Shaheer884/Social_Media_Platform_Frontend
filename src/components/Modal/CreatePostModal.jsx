@@ -89,6 +89,10 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
   const [chosenFiles, setChosenFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [publishLoading, setPublishLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const targetProgressRef = useRef(0);
+  const progressIntervalRef = useRef(null);
+  const apiSuccessRef = useRef(false);
 
   // Cropper states
   const [cropperOpen, setCropperOpen] = useState(false);
@@ -128,6 +132,56 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
       setShowBgSelector(false);
     }
   }, [chosenFiles]);
+
+  const handlePublishSuccess = () => {
+    setPostText('');
+    clearSelectedMedia();
+    setLocation(null);
+    setSelectedFeeling(null);
+    setPublishLoading(false);
+    onClose();
+  };
+
+  useEffect(() => {
+    if (publishLoading) {
+      setUploadProgress(0);
+      targetProgressRef.current = 0;
+      apiSuccessRef.current = false;
+
+      progressIntervalRef.current = setInterval(() => {
+        // For text-only posts, fake progress since there is no media upload
+        if (chosenFiles.length === 0 && targetProgressRef.current < 90) {
+          targetProgressRef.current = Math.min(90, targetProgressRef.current + Math.floor(Math.random() * 5) + 3);
+        }
+
+        setUploadProgress((prev) => {
+          if (prev < targetProgressRef.current) {
+            const nextProgress = prev + 1;
+            if (nextProgress === 100 && apiSuccessRef.current) {
+              clearInterval(progressIntervalRef.current);
+              progressIntervalRef.current = null;
+              setTimeout(() => {
+                handlePublishSuccess();
+              }, 100);
+            }
+            return nextProgress;
+          }
+          return prev;
+        });
+      }, 20);
+    } else {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, [publishLoading, chosenFiles]);
 
   // Fetch friends list for tagging
   useEffect(() => {
@@ -491,10 +545,21 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
     if (!postText.trim() && chosenFiles.length === 0) return;
 
     setPublishLoading(true);
+    setUploadProgress(0);
+    targetProgressRef.current = 0;
+    apiSuccessRef.current = false;
+
     try {
       let res;
       const feelingValue = selectedFeeling ? `${selectedFeeling.emoji} ${selectedFeeling.name}` : '';
       
+      const uploadConfig = (progressEvent) => {
+        if (progressEvent.total) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          targetProgressRef.current = Math.min(95, percentCompleted);
+        }
+      };
+
       if (chosenFiles.length > 0) {
         const formData = new FormData();
         formData.append('content', postText.trim());
@@ -508,7 +573,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
           formData.append('feeling', feelingValue);
         }
         formData.append('audience', audience);
-        res = await publishPost(formData);
+        res = await publishPost(formData, uploadConfig);
       } else {
         res = await publishPost({
           content: postText.trim(),
@@ -519,17 +584,19 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
         });
       }
 
-      if (res.success) {
-        setPostText('');
-        clearSelectedMedia();
-        setLocation(null);
-        setSelectedFeeling(null);
-        onClose();
+      if (res && res.success) {
+        apiSuccessRef.current = true;
+        targetProgressRef.current = 100;
+      } else {
+        throw new Error('Failed to create post');
       }
     } catch (err) {
-      showAlert(err.message || 'Error publishing post', 'Error');
-    } finally {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
       setPublishLoading(false);
+      showAlert(err.message || 'Error publishing post', 'Error');
     }
   };
 
@@ -558,8 +625,41 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} title="Create post">
-        {currentScreen === 'main' && (
+      <Modal isOpen={isOpen} onClose={publishLoading ? () => {} : onClose} title="Create post">
+        <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '350px', display: 'flex', flexDirection: 'column' }}>
+          {publishLoading && (
+            <div className="story-upload-progress-overlay">
+              <svg width="0" height="0" style={{ position: 'absolute', zIndex: -1 }}>
+                <defs>
+                  <linearGradient id="story-upload-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#ec4899" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="story-upload-progress-card">
+                <div className="story-upload-progress-ring">
+                  <svg className="progress-ring-svg" width="80" height="80">
+                    <circle className="progress-ring-bg" cx="40" cy="40" r="34" strokeWidth="6" fill="transparent" />
+                    <circle
+                      className="progress-ring-bar"
+                      cx="40"
+                      cy="40"
+                      r="34"
+                      strokeWidth="6"
+                      fill="transparent"
+                      strokeDasharray={2 * Math.PI * 34}
+                      strokeDashoffset={2 * Math.PI * 34 * (1 - uploadProgress / 100)}
+                    />
+                  </svg>
+                  <div className="progress-percent-label">{uploadProgress}%</div>
+                </div>
+                <div className="progress-message-title">Creating Post</div>
+                <div className="progress-message-sub">Please wait while we upload your post...</div>
+              </div>
+            </div>
+          )}
+          {currentScreen === 'main' && (
           <div className="create-post-modal-content">
             {/* Header User Row */}
             <div className="create-post-header-row">
@@ -848,9 +948,16 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
                 className="create-post-submit-btn"
                 onClick={handlePublishClick}
                 disabled={!canPublish || publishLoading}
-                style={{ flex: 1, marginLeft: '16px' }}
+                style={{ flex: 1, marginLeft: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
               >
-                {publishLoading ? <Spinner size="18px" /> : 'Post'}
+                {publishLoading ? (
+                  <>
+                    <Spinner size="18px" />
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  'Post'
+                )}
               </button>
             </div>
           </div>
@@ -1072,6 +1179,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
             </div>
           </div>
         )}
+        </div>
       </Modal>
 
       {/* Cropper integration inside the modal structure */}
