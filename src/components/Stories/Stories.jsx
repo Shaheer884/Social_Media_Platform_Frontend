@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useDialog } from '../../context/CustomDialogContext';
 import storyService from '../../services/storyService';
@@ -631,17 +632,26 @@ const Stories = () => {
     try {
       let res;
       if (storyCreatorTab === 'image') {
-        const formData = new FormData();
-        formData.append('text', storyText.trim());
-        formData.append('storyImage', chosenFile);
-        formData.append('privacy', privacy);
-        if (privacy === 'custom') {
-          formData.append('allowedUsers', JSON.stringify(privacySelectedUsers));
-        } else if (privacy === 'hide') {
-          formData.append('hiddenUsers', JSON.stringify(privacySelectedUsers));
-        }
+        const isVideo = chosenFile.type.startsWith('video/');
         
-        const config = {
+        // 1. Get signed upload parameters from backend
+        const signRes = await storyService.getUploadSignature(isVideo ? 'video' : 'image');
+        if (!signRes.success) {
+          throw new Error(signRes.error || 'Failed to generate upload signature');
+        }
+
+        const { signature, timestamp, folder, apiKey, cloudName } = signRes;
+
+        // 2. Upload file directly to Cloudinary
+        const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${isVideo ? 'video' : 'image'}/upload`;
+        const fd = new FormData();
+        fd.append('file', chosenFile);
+        fd.append('api_key', apiKey);
+        fd.append('timestamp', timestamp);
+        fd.append('signature', signature);
+        fd.append('folder', folder);
+
+        const uploadConfig = {
           onUploadProgress: (progressEvent) => {
             if (progressEvent.total) {
               const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -649,7 +659,38 @@ const Stories = () => {
             }
           }
         };
-        res = await storyService.createStory(formData, config);
+
+        const clRes = await axios.post(cloudinaryUrl, fd, uploadConfig);
+        const result = clRes.data;
+
+        // 3. Post pre-uploaded Cloudinary metadata to backend
+        const payload = {
+          text: storyText.trim(),
+          privacy,
+          imageUrl: result.secure_url,
+          mediaType: result.resource_type || (isVideo ? 'video' : 'image'),
+          cloudinaryPublicId: result.public_id,
+          media: [
+            {
+              url: result.secure_url,
+              publicId: result.public_id,
+              resourceType: result.resource_type || (isVideo ? 'video' : 'image'),
+              format: result.format,
+              width: result.width,
+              height: result.height,
+              duration: result.duration || 0,
+              size: result.bytes
+            }
+          ]
+        };
+
+        if (privacy === 'custom') {
+          payload.allowedUsers = privacySelectedUsers;
+        } else if (privacy === 'hide') {
+          payload.hiddenUsers = privacySelectedUsers;
+        }
+
+        res = await storyService.createStory(payload);
       } else {
         const payload = {
           text: storyText.trim(),
@@ -676,7 +717,8 @@ const Stories = () => {
         progressIntervalRef.current = null;
       }
       setIsPublishing(false);
-      showAlert(err.message || 'Failed to create story', 'Error');
+      const errorMsg = err.response?.data?.error?.message || err.message || 'Failed to create story';
+      showAlert(errorMsg, 'Error');
     }
   };
 

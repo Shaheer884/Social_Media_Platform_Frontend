@@ -4,6 +4,9 @@ const storyService = {
   getStories() {
     return api.get('/stories');
   },
+  getUploadSignature(resourceType) {
+    return api.get(`/stories/sign-upload?resourceType=${resourceType}`);
+  },
   createStory(storyData, config = {}) {
     const isFormData = storyData instanceof FormData;
     return api.post('/stories', storyData, {
