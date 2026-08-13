@@ -88,6 +88,7 @@ const Stories = () => {
   // Commenting States
   const [commentInputFocused, setCommentInputFocused] = useState(false);
   const [storyCommentText, setStoryCommentText] = useState('');
+  const [isSendingComment, setIsSendingComment] = useState(false);
 
   const fileInputRef = useRef(null);
   const progressTimerRef = useRef(null);
@@ -388,7 +389,7 @@ const Stories = () => {
     }
   }, [location.search, storyGroups]);
 
-  // Escape key handler for active replies, insights modal, or story viewer
+  // Escape key handler for active replies, insights modal, comments, or story viewer
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
@@ -396,6 +397,8 @@ const Stories = () => {
           handleCloseInsights();
         } else if (replyModeActive) {
           handleCancelReply();
+        } else if (publicCommentsOpen) {
+          handleCancelComment();
         } else if (viewerOpen) {
           setViewerOpen(false);
         }
@@ -407,7 +410,7 @@ const Stories = () => {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [viewerOpen, replyModeActive, insightsOpen]);
+  }, [viewerOpen, replyModeActive, insightsOpen, publicCommentsOpen]);
 
   // Automatically focus reply input when reply mode is activated
   useEffect(() => {
@@ -415,6 +418,16 @@ const Stories = () => {
       storyReplyInputRef.current.focus();
     }
   }, [replyModeActive]);
+
+  // Automatically focus comment input when public comments are opened
+  useEffect(() => {
+    if (publicCommentsOpen && storyCommentInputRef.current) {
+      const timer = setTimeout(() => {
+        storyCommentInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [publicCommentsOpen]);
 
   // Load friends/followers for custom privacy selections
   useEffect(() => {
@@ -887,30 +900,37 @@ const Stories = () => {
   };
 
   const handleCommentSubmit = async (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const val = storyCommentText.trim();
-      if (!val || !activeStory) return;
+    if (e) e.preventDefault();
+    const val = storyCommentText.trim();
+    if (!val || !activeStory || isSendingComment) return;
 
-      try {
+    setIsSendingComment(true);
+    try {
+      const res = await storyService.commentStory(activeStory._id, val);
+      if (res.success) {
         setStoryCommentText('');
-        const res = await storyService.commentStory(activeStory._id, val);
-        if (res.success) {
-          const updatedGroups = storyGroups.map((group, gIdx) => {
-            if (gIdx !== selectedGroupIndex) return group;
-            const updatedStories = group.stories.map((story, sIdx) => {
-              if (sIdx !== selectedStoryIndex) return story;
-              const currentComments = story.comments || [];
-              return { ...story, comments: [...currentComments, res.comment] };
-            });
-            return { ...group, stories: updatedStories };
+        const updatedGroups = storyGroups.map((group, gIdx) => {
+          if (gIdx !== selectedGroupIndex) return group;
+          const updatedStories = group.stories.map((story, sIdx) => {
+            if (sIdx !== selectedStoryIndex) return story;
+            const currentComments = story.comments || [];
+            return { ...story, comments: [...currentComments, res.comment] };
           });
-          setStoryGroups(updatedGroups);
-        }
-      } catch (err) {
-        showAlert('Could not post comment', 'Error');
+          return { ...group, stories: updatedStories };
+        });
+        setStoryGroups(updatedGroups);
+        setPublicCommentsOpen(false);
       }
+    } catch (err) {
+      showAlert('Could not post comment', 'Error');
+    } finally {
+      setIsSendingComment(false);
     }
+  };
+
+  const handleCancelComment = () => {
+    setStoryCommentText('');
+    setPublicCommentsOpen(false);
   };
 
   const handleStartReply = () => {
@@ -1507,17 +1527,40 @@ const Stories = () => {
                     )}
                   </div>
                   <div className="story-comments-drawer-input-row">
-                    <input
-                      ref={storyCommentInputRef}
-                      type="text"
-                      placeholder="Comment publicly..."
-                      value={storyCommentText}
-                      onChange={(e) => setStoryCommentText(e.target.value)}
-                      onKeyDown={handleCommentSubmit}
-                      onFocus={() => setCommentInputFocused(true)}
-                      onBlur={() => setCommentInputFocused(false)}
-                      className="story-comments-drawer-input"
-                    />
+                    <div className="story-viewer-input-wrapper">
+                      <input
+                        ref={storyCommentInputRef}
+                        type="text"
+                        placeholder="Comment publicly..."
+                        value={storyCommentText}
+                        onChange={(e) => setStoryCommentText(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleCommentSubmit(e); }}
+                        onFocus={() => setCommentInputFocused(true)}
+                        onBlur={() => setCommentInputFocused(false)}
+                        className="story-viewer-reply-input"
+                      />
+                      <button
+                        type="button"
+                        className="story-viewer-reply-cancel-btn"
+                        onClick={(e) => { e.stopPropagation(); handleCancelComment(); }}
+                        style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', borderRadius: '18px', padding: '6px 14px', fontSize: '0.8rem', marginRight: '6px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="story-viewer-reply-submit"
+                        onClick={handleCommentSubmit}
+                        disabled={!storyCommentText.trim() || isSendingComment}
+                        style={{
+                          opacity: !storyCommentText.trim() || isSendingComment ? 0.5 : 1,
+                          cursor: !storyCommentText.trim() || isSendingComment ? 'not-allowed' : 'pointer',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {isSendingComment ? 'Sending...' : 'Send'}
+                      </button>
+                    </div>
                     <MentionSuggestions text={storyCommentText} setText={setStoryCommentText} targetInputRef={storyCommentInputRef} />
                   </div>
                 </div>
