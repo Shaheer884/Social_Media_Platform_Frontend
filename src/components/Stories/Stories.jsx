@@ -553,8 +553,8 @@ const Stories = () => {
         return;
       }
 
-      if (isVideo && file.size > 4 * 1024 * 1024) {
-        showAlert('Video file size is too large. Maximum size is 4MB due to server limitations.', 'File Too Large');
+      if (isVideo && file.size > 30 * 1024 * 1024) {
+        showAlert('Maximum Story video size is 30 MB. Please choose a smaller video.', 'File Too Large');
         return;
       }
 

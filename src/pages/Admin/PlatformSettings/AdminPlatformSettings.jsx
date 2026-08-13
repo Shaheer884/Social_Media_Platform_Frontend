@@ -19,7 +19,7 @@ const AdminPlatformSettings = () => {
   const [requireEmailVerification, setRequireEmailVerification] = useState(true);
   
   const [maxImageSizeMb, setMaxImageSizeMb] = useState(5);
-  const [maxVideoSizeMb, setMaxVideoSizeMb] = useState(20);
+  const [maxVideoSizeMb, setMaxVideoSizeMb] = useState(30);
   
   const [allowedImageTypes, setAllowedImageTypes] = useState('');
   const [allowedVideoTypes, setAllowedVideoTypes] = useState('');
@@ -38,7 +38,7 @@ const AdminPlatformSettings = () => {
           setAllowRegistration(s.allowRegistration !== undefined ? s.allowRegistration : true);
           setRequireEmailVerification(s.requireEmailVerification !== undefined ? s.requireEmailVerification : true);
           setMaxImageSizeMb((s.maxImageSize || 5 * 1024 * 1024) / (1024 * 1024));
-          setMaxVideoSizeMb((s.maxVideoSize || 20 * 1024 * 1024) / (1024 * 1024));
+          setMaxVideoSizeMb((s.maxVideoSize || 30 * 1024 * 1024) / (1024 * 1024));
           setAllowedImageTypes((s.allowedImageTypes || []).join(', '));
           setAllowedVideoTypes((s.allowedVideoTypes || []).join(', '));
         }
