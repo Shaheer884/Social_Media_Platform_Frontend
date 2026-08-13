@@ -46,6 +46,9 @@ const storyService = {
   },
   getStoryReplies(id) {
     return api.get(`/stories/${id}/replies`);
+  },
+  cleanupStoryMedia(publicId, resourceType) {
+    return api.post('/stories/cleanup-media', { publicId, resourceType });
   }
 };
 

@@ -93,6 +93,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
   const targetProgressRef = useRef(0);
   const progressIntervalRef = useRef(null);
   const apiSuccessRef = useRef(false);
+  const abortControllerRef = useRef(null);
 
   // Cropper states
   const [cropperOpen, setCropperOpen] = useState(false);
@@ -541,6 +542,25 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
     setCurrentScreen('main');
   };
 
+  const handleCancelUploadClick = async () => {
+    const confirmCancel = await showConfirm(
+      'Your upload will be cancelled.',
+      'Cancel Upload?'
+    );
+    if (!confirmCancel) return;
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    setPublishLoading(false);
+    showAlert('Post upload cancelled.', 'Cancelled');
+  };
+
   const handlePublishClick = async () => {
     if (!postText.trim() && chosenFiles.length === 0) return;
 
@@ -548,6 +568,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
     setUploadProgress(0);
     targetProgressRef.current = 0;
     apiSuccessRef.current = false;
+    abortControllerRef.current = new AbortController();
 
     try {
       let res;
@@ -573,7 +594,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
           formData.append('feeling', feelingValue);
         }
         formData.append('audience', audience);
-        res = await publishPost(formData, uploadConfig);
+        res = await publishPost(formData, uploadConfig, abortControllerRef.current.signal);
       } else {
         res = await publishPost({
           content: postText.trim(),
@@ -581,7 +602,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
           feeling: feelingValue || undefined,
           bgColor: selectedBg.background !== 'transparent' ? selectedBg.background : undefined,
           audience: audience
-        });
+        }, null, abortControllerRef.current.signal);
       }
 
       if (res && res.success) {
@@ -591,6 +612,10 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
         throw new Error('Failed to create post');
       }
     } catch (err) {
+      if (err.name === 'CanceledError' || err.message === 'canceled' || err.message === 'Query was cancelled by user') {
+        console.log('Post upload cancelled by user');
+        return;
+      }
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
@@ -656,6 +681,13 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
                 </div>
                 <div className="progress-message-title">Creating Post</div>
                 <div className="progress-message-sub">Please wait while we upload your post...</div>
+                <button
+                  type="button"
+                  onClick={handleCancelUploadClick}
+                  style={{ marginTop: '16px', background: '#ef4444', border: 'none', color: '#fff', borderRadius: '20px', padding: '8px 20px', fontSize: '0.85rem', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  Cancel Upload
+                </button>
               </div>
             </div>
           )}

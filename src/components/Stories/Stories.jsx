@@ -90,6 +90,9 @@ const Stories = () => {
   const [storyCommentText, setStoryCommentText] = useState('');
   const [isSendingComment, setIsSendingComment] = useState(false);
 
+  const storyAbortControllerRef = useRef(null);
+  const storyUploadedMediaRef = useRef(null);
+
   const fileInputRef = useRef(null);
   const progressTimerRef = useRef(null);
   const storiesRef = useRef(null);
@@ -626,6 +629,35 @@ const Stories = () => {
     if (fileInputRef.current) fileInputRef.current.click();
   };
 
+  const handleCancelStoryUploadClick = async () => {
+    const confirmCancel = await showConfirm(
+      'Your upload will be cancelled.',
+      'Cancel Upload?'
+    );
+    if (!confirmCancel) return;
+
+    if (storyAbortControllerRef.current) {
+      storyAbortControllerRef.current.abort();
+    }
+
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    setIsPublishing(false);
+
+    if (storyUploadedMediaRef.current) {
+      const { publicId, resourceType } = storyUploadedMediaRef.current;
+      try {
+        await storyService.cleanupStoryMedia(publicId, resourceType);
+      } catch (err) {
+        console.error('Failed to cleanup story media:', err);
+      }
+    }
+
+    showAlert('Story upload cancelled.', 'Cancelled');
+  };
+
   const handlePublishStory = async (e) => {
     e.preventDefault();
     if (storyCreatorTab === 'image' && !chosenFile) {
@@ -641,6 +673,8 @@ const Stories = () => {
     setUploadProgress(0);
     targetProgressRef.current = 0;
     apiSuccessRef.current = false;
+    storyAbortControllerRef.current = new AbortController();
+    storyUploadedMediaRef.current = null;
 
     try {
       let res;
@@ -665,6 +699,7 @@ const Stories = () => {
         fd.append('folder', folder);
 
         const uploadConfig = {
+          signal: storyAbortControllerRef.current.signal,
           onUploadProgress: (progressEvent) => {
             if (progressEvent.total) {
               const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -675,6 +710,12 @@ const Stories = () => {
 
         const clRes = await axios.post(cloudinaryUrl, fd, uploadConfig);
         const result = clRes.data;
+
+        // Save uploaded resource details in case of subsequent cancellation
+        storyUploadedMediaRef.current = {
+          publicId: result.public_id,
+          resourceType: result.resource_type || (isVideo ? 'video' : 'image')
+        };
 
         // 3. Post pre-uploaded Cloudinary metadata to backend
         const payload = {
@@ -703,7 +744,7 @@ const Stories = () => {
           payload.hiddenUsers = privacySelectedUsers;
         }
 
-        res = await storyService.createStory(payload);
+        res = await storyService.createStory(payload, { signal: storyAbortControllerRef.current.signal });
       } else {
         const payload = {
           text: storyText.trim(),
@@ -715,7 +756,7 @@ const Stories = () => {
         } else if (privacy === 'hide') {
           payload.hiddenUsers = privacySelectedUsers;
         }
-        res = await storyService.createStory(payload);
+        res = await storyService.createStory(payload, { signal: storyAbortControllerRef.current.signal });
       }
 
       if (res && res.success) {
@@ -725,6 +766,10 @@ const Stories = () => {
         throw new Error('Failed to publish story');
       }
     } catch (err) {
+      if (axios.isCancel(err) || err.name === 'CanceledError' || err.message === 'canceled') {
+        console.log('Story upload cancelled by user');
+        return;
+      }
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
@@ -1163,6 +1208,13 @@ const Stories = () => {
                 </div>
                 <div className="progress-message-title">Publishing Story</div>
                 <div className="progress-message-sub">Please wait while we upload your story...</div>
+                <button
+                  type="button"
+                  onClick={handleCancelStoryUploadClick}
+                  style={{ marginTop: '16px', background: '#ef4444', border: 'none', color: '#fff', borderRadius: '20px', padding: '8px 20px', fontSize: '0.85rem', cursor: 'pointer', fontWeight: '600' }}
+                >
+                  Cancel Upload
+                </button>
               </div>
             </div>
           )}
