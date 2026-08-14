@@ -1,8 +1,25 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { execSync } from 'child_process';
+
+const getCommitHash = () => {
+  if (process.env.VERCEL_GIT_COMMIT_SHA) {
+    return process.env.VERCEL_GIT_COMMIT_SHA.substring(0, 7);
+  }
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch (e) {
+    return 'dev';
+  }
+};
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
+    __BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString()),
+    __COMMIT_HASH__: JSON.stringify(getCommitHash()),
+  },
   plugins: [
     react(),
     VitePWA({
@@ -40,7 +57,7 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: true,
+        skipWaiting: false,
         globPatterns: ['**/*.{js,css,html,png,svg,ico,woff,woff2}'],
         importScripts: ['/push-notifications.js'],
         runtimeCaching: [

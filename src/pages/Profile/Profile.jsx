@@ -1,3 +1,4 @@
+/* global __APP_VERSION__, __BUILD_TIMESTAMP__, __COMMIT_HASH__ */
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
@@ -1360,14 +1361,30 @@ const Profile = () => {
 
             <div className="pwa-settings-section" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
               <h4 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600 }}>App Settings & Storage</h4>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', marginBottom: '12px' }}>
-                <div>
-                  <strong style={{ display: 'block', fontWeight: 600 }}>ConnectHub PWA</strong>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Version 1.0.0 | Build 2026.08.09</span>
+              
+              {/* About Section */}
+              <div className="settings-about-section" style={{ marginBottom: '16px', padding: '12px', borderRadius: '12px', backgroundColor: 'var(--input-bg)', border: '1px solid var(--border-color)' }}>
+                <h5 style={{ margin: '0 0 10px 0', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  ℹ️ About ConnectHub
+                </h5>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Build Version:</span>
+                    <strong style={{ color: 'var(--text-main)' }}>{__APP_VERSION__}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Build Timestamp:</span>
+                    <strong style={{ color: 'var(--text-main)' }}>{new Date(__BUILD_TIMESTAMP__).toLocaleString()}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Commit Hash:</span>
+                    <strong style={{ fontFamily: 'monospace', color: 'var(--text-main)', backgroundColor: 'var(--border-color)', padding: '2px 6px', borderRadius: '4px' }}>{__COMMIT_HASH__}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '6px', borderTop: '1px dashed var(--border-color)' }}>
+                    <span>Standalone PWA:</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{window.matchMedia('(display-mode: standalone)').matches ? 'Yes' : 'No'}</span>
+                  </div>
                 </div>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', backgroundColor: 'var(--input-bg)', padding: '4px 8px', borderRadius: '4px' }}>
-                  Standalone: {window.matchMedia('(display-mode: standalone)').matches ? 'Yes' : 'No'}
-                </span>
               </div>
               
               <div className="settings-storage-section" style={{ margin: 0 }}>
