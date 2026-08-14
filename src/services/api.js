@@ -60,6 +60,13 @@ api.interceptors.response.use(
       // Clear token and user storage
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
+      sessionStorage.removeItem('adminToken');
+      sessionStorage.removeItem('adminUser');
+
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
 
       // Redirect to login if not already there
       const currentPath = window.location.pathname;

@@ -4,16 +4,52 @@ import authService from '../services/authService';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const isPWA = () => {
+    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+  };
+
   const [currentUser, setCurrentUser] = useState(() => {
-    const savedUser = sessionStorage.getItem('user');
+    let savedUser = sessionStorage.getItem('user');
+    if (!savedUser && (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone)) {
+      savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        sessionStorage.setItem('user', savedUser);
+      }
+    }
     return savedUser ? JSON.parse(savedUser) : null;
   });
-  const [token, setToken] = useState(() => sessionStorage.getItem('token'));
+
+  const [token, setToken] = useState(() => {
+    let savedToken = sessionStorage.getItem('token');
+    if (!savedToken && (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone)) {
+      savedToken = localStorage.getItem('token');
+      if (savedToken) {
+        sessionStorage.setItem('token', savedToken);
+      }
+    }
+    return savedToken;
+  });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = sessionStorage.getItem('token');
-    const savedUser = sessionStorage.getItem('user');
+    const runningInPWA = isPWA();
+    let savedToken = sessionStorage.getItem('token');
+    let savedUser = sessionStorage.getItem('user');
+
+    if (runningInPWA) {
+      const savedAdminToken = localStorage.getItem('adminToken');
+      const savedAdminUser = localStorage.getItem('adminUser');
+      if (savedAdminToken && savedAdminUser) {
+        if (!sessionStorage.getItem('adminToken')) {
+          sessionStorage.setItem('adminToken', savedAdminToken);
+        }
+        if (!sessionStorage.getItem('adminUser')) {
+          sessionStorage.setItem('adminUser', savedAdminUser);
+        }
+      }
+    }
+
     if (savedToken && savedUser) {
       const userObj = JSON.parse(savedUser);
       setToken(savedToken);
@@ -36,11 +72,21 @@ export const AuthProvider = ({ children }) => {
       const { token: userToken, ...userData } = res.data;
       sessionStorage.setItem('token', userToken);
       sessionStorage.setItem('user', JSON.stringify(userData));
+
+      if (isPWA()) {
+        localStorage.setItem('token', userToken);
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
+
       setToken(userToken);
       setCurrentUser(userData);
       if (userData.role === 'admin') {
         sessionStorage.setItem('adminToken', userToken);
         sessionStorage.setItem('adminUser', JSON.stringify(userData));
+        if (isPWA()) {
+          localStorage.setItem('adminToken', userToken);
+          localStorage.setItem('adminUser', JSON.stringify(userData));
+        }
       }
     }
     return res;
@@ -52,6 +98,12 @@ export const AuthProvider = ({ children }) => {
       const { token: userToken, ...registeredData } = res.data;
       sessionStorage.setItem('token', userToken);
       sessionStorage.setItem('user', JSON.stringify(registeredData));
+
+      if (isPWA()) {
+        localStorage.setItem('token', userToken);
+        localStorage.setItem('user', JSON.stringify(registeredData));
+      }
+
       setToken(userToken);
       setCurrentUser(registeredData);
     }
@@ -63,10 +115,22 @@ export const AuthProvider = ({ children }) => {
     if (res.success) {
       const userData = res.data;
       sessionStorage.setItem('user', JSON.stringify(userData));
+
+      if (isPWA()) {
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
+
       setCurrentUser(userData);
       if (userData.role === 'admin') {
-        sessionStorage.setItem('adminToken', token || sessionStorage.getItem('token'));
-        sessionStorage.setItem('adminUser', JSON.stringify(userData));
+        const currentToken = token || sessionStorage.getItem('token') || (isPWA() ? localStorage.getItem('token') : null);
+        if (currentToken) {
+          sessionStorage.setItem('adminToken', currentToken);
+          sessionStorage.setItem('adminUser', JSON.stringify(userData));
+          if (isPWA()) {
+            localStorage.setItem('adminToken', currentToken);
+            localStorage.setItem('adminUser', JSON.stringify(userData));
+          }
+        }
       }
     }
     return res;
@@ -79,6 +143,14 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
+    sessionStorage.removeItem('adminToken');
+    sessionStorage.removeItem('adminUser');
+
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+
     setToken(null);
     setCurrentUser(null);
   };
@@ -93,6 +165,9 @@ export const AuthProvider = ({ children }) => {
         coverPhoto: updatedData.coverPhoto
       };
       sessionStorage.setItem('user', JSON.stringify(updated));
+      if (isPWA()) {
+        localStorage.setItem('user', JSON.stringify(updated));
+      }
       return updated;
     });
   };

@@ -26,6 +26,8 @@ adminApi.interceptors.response.use(
       // Clear admin session
       sessionStorage.removeItem('adminToken');
       sessionStorage.removeItem('adminUser');
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
       
       const path = window.location.pathname;
       if (path !== '/admin/login') {
@@ -43,6 +45,12 @@ const adminService = {
     if (res.data.success) {
       sessionStorage.setItem('adminToken', res.data.data.token);
       sessionStorage.setItem('adminUser', JSON.stringify(res.data.data));
+
+      const runningInPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+      if (runningInPWA) {
+        localStorage.setItem('adminToken', res.data.data.token);
+        localStorage.setItem('adminUser', JSON.stringify(res.data.data));
+      }
     }
     return res.data;
   },
@@ -50,6 +58,8 @@ const adminService = {
   logout: () => {
     sessionStorage.removeItem('adminToken');
     sessionStorage.removeItem('adminUser');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
   },
 
   getStats: () => adminApi.get('/stats'),
