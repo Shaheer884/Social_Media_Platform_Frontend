@@ -3266,4 +3266,18 @@ textarea {
     margin-top: 4px;
     padding-left: 0;
   }
+
+  /* Responsive Story Card Enhancements (Mobile Only) */
+  .story-card {
+    width: 135px;
+    height: 214px;
+  }
+
+  .create-story-top {
+    height: 152px;
+  }
+
+  .create-story-bottom {
+    height: 62px;
+  }
 }
