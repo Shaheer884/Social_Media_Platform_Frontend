@@ -800,7 +800,8 @@
   text-decoration: none;
 }
 
-.settings-home-item:hover {
+.settings-home-item:hover,
+.settings-home-item:active {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   border-color: var(--purple);
@@ -825,7 +826,8 @@
   flex-shrink: 0;
 }
 
-.settings-home-item:hover .settings-home-icon-circle {
+.settings-home-item:hover .settings-home-icon-circle,
+.settings-home-item:active .settings-home-icon-circle {
   background: var(--primary-gradient);
   color: #fff;
 }
@@ -854,7 +856,8 @@
   transition: transform 0.2s ease;
 }
 
-.settings-home-item:hover .settings-home-arrow {
+.settings-home-item:hover .settings-home-arrow,
+.settings-home-item:active .settings-home-arrow {
   transform: translateX(4px);
   color: var(--purple);
 }
