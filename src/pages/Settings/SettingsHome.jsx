@@ -60,26 +60,23 @@ const SettingsHome = () => {
   ];
 
   return (
-    <div className="settings-content-wrapper">
-      <div className="settings-card">
-        <div className="settings-card-header" style={{ marginBottom: '20px', borderBottom: 'none', paddingBottom: '0' }}>
-          <h2 className="settings-card-title">Settings</h2>
-          <p className="settings-card-desc">Select a setting category below to configure your preferences.</p>
-        </div>
-        <div className="settings-home-menu">
-          {settingsCategories.map((item) => (
-            <Link key={item.path} to={item.path} className="settings-home-item">
-              <div className="settings-home-item-left">
-                <div className="settings-home-icon-circle">{item.icon}</div>
-                <div className="settings-home-details">
-                  <span className="settings-home-title">{item.title}</span>
-                  <span className="settings-home-desc">{item.desc}</span>
-                </div>
+    <div className="settings-card">
+      <div className="settings-card-header" style={{ marginBottom: '20px', borderBottom: 'none', paddingBottom: '0' }}>
+        <p className="settings-card-desc">Select a setting category below to configure your preferences.</p>
+      </div>
+      <div className="settings-home-menu">
+        {settingsCategories.map((item) => (
+          <Link key={item.path} to={item.path} className="settings-home-item">
+            <div className="settings-home-item-left">
+              <div className="settings-home-icon-circle">{item.icon}</div>
+              <div className="settings-home-details">
+                <span className="settings-home-title">{item.title}</span>
+                <span className="settings-home-desc">{item.desc}</span>
               </div>
-              <span className="settings-home-arrow">➔</span>
-            </Link>
-          ))}
-        </div>
+            </div>
+            <span className="settings-home-arrow">➔</span>
+          </Link>
+        ))}
       </div>
     </div>
   );
