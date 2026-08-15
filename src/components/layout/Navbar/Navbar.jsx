@@ -5,6 +5,7 @@ import { useNotifications } from '../../../context/NotificationsContext';
 import { timeAgo } from '../../../utils/formatters';
 import { getUploadUrl } from '../../../utils/mediaHelper';
 import PWAInstallButton from '../../PWA/PWAInstallButton';
+import settingsService from '../../../services/settingsService';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -12,25 +13,108 @@ const Navbar = () => {
   const { notifications, unreadCount, markAllRead, markRead } = useNotifications();
 
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('theme') || 'light';
+    return localStorage.getItem('theme') || 'system';
   });
+  const [isSystemDark, setIsSystemDark] = useState(
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
   const [notiOpen, setNotiOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Handle HTML document body themes
+  // Sync theme preference from database on mount if authenticated
   useEffect(() => {
-    if (theme === 'dark') {
-      document.body.classList.add('dark-theme');
-    } else {
-      document.body.classList.remove('dark-theme');
-    }
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    const fetchTheme = async () => {
+      if (!currentUser) return;
+      try {
+        const res = await settingsService.getSettings();
+        if (res.success && res.data.theme) {
+          const cloudTheme = res.data.theme;
+          setTheme(cloudTheme);
+          localStorage.setItem('theme', cloudTheme);
+          window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: cloudTheme } }));
+        }
+      } catch (err) {
+        console.error('Failed to fetch theme from cloud on navbar mount:', err);
+      }
+    };
+    fetchTheme();
+  }, [currentUser]);
 
-  const toggleTheme = (e) => {
+  // Handle HTML document body themes class application
+  useEffect(() => {
+    const applyTheme = (themeName) => {
+      const body = document.body;
+      if (themeName === 'dark') {
+        body.classList.add('dark-theme');
+      } else if (themeName === 'light') {
+        body.classList.remove('dark-theme');
+      } else if (themeName === 'system') {
+        if (isSystemDark) {
+          body.classList.add('dark-theme');
+        } else {
+          body.classList.remove('dark-theme');
+        }
+      }
+    };
+
+    applyTheme(theme);
+    localStorage.setItem('theme', theme);
+  }, [theme, isSystemDark]);
+
+  // Listen to system preference changes, custom theme-changed events, and storage events
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemChange = (e) => {
+      setIsSystemDark(e.matches);
+    };
+    mediaQuery.addEventListener('change', handleSystemChange);
+
+    const handleThemeChange = (e) => {
+      if (e.detail && e.detail.theme) {
+        setTheme(e.detail.theme);
+      }
+    };
+    window.addEventListener('theme-changed', handleThemeChange);
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'theme' && e.newValue) {
+        setTheme(e.newValue);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleSystemChange);
+      window.removeEventListener('theme-changed', handleThemeChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  const toggleTheme = async (e) => {
     e.stopPropagation();
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+
+    // Determine the next theme based on what's currently active (dark or light)
+    const isCurrentlyDark = 
+      theme === 'dark' || 
+      (theme === 'system' && isSystemDark);
+
+    const nextTheme = isCurrentlyDark ? 'light' : 'dark';
+
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+
+    // Dispatch event to notify other tabs/components in real-time
+    window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: nextTheme } }));
+
+    // Persist to database if authenticated
+    if (currentUser) {
+      try {
+        await settingsService.updateTheme(nextTheme);
+      } catch (err) {
+        console.error('Failed to sync theme to database:', err);
+      }
+    }
   };
 
   const handleSearchKeyDown = (e) => {
@@ -102,7 +186,7 @@ const Navbar = () => {
         <div className="nav-actions">
           <PWAInstallButton />
           <button className="nav-btn" onClick={toggleTheme} title="Toggle Theme">
-            {theme === 'dark' ? (
+            {theme === 'dark' || (theme === 'system' && isSystemDark) ? (
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="4" />
                 <path d="M12 2v2" />

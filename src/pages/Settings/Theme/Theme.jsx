@@ -13,9 +13,12 @@ const Theme = () => {
       try {
         const res = await settingsService.getSettings();
         if (res.success) {
-          setSelectedTheme(res.data.theme || 'system');
+          const themeName = res.data.theme || 'system';
+          setSelectedTheme(themeName);
           // Update local storage to keep in sync
-          localStorage.setItem('theme', res.data.theme || 'system');
+          localStorage.setItem('theme', themeName);
+          // Dispatch custom event to notify other components
+          window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: themeName } }));
         }
       } catch (err) {
         console.error('Failed to load theme setting:', err);
@@ -26,6 +29,28 @@ const Theme = () => {
       }
     };
     fetchThemePreference();
+  }, []);
+
+  // Listen to external theme changes (like from Navbar toggle button or other tabs)
+  useEffect(() => {
+    const handleThemeChange = (e) => {
+      if (e.detail && e.detail.theme) {
+        setSelectedTheme(e.detail.theme);
+      }
+    };
+    window.addEventListener('theme-changed', handleThemeChange);
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'theme' && e.newValue) {
+        setSelectedTheme(e.newValue);
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('theme-changed', handleThemeChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const applyTheme = (themeName) => {
@@ -55,8 +80,11 @@ const Theme = () => {
     // 2. Persist in LocalStorage
     localStorage.setItem('theme', themeName);
 
+    // 3. Dispatch custom event to notify other components (like Navbar.jsx)
+    window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: themeName } }));
+
     try {
-      // 3. Save to database
+      // 4. Save to database
       const res = await settingsService.updateTheme(themeName);
       if (res.success) {
         setStatus({ type: 'success', message: `Theme preference set to ${themeName} successfully.` });

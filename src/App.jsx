@@ -230,7 +230,7 @@ const AppContent = () => {
 
   // Sync theme configurations on startup
   useEffect(() => {
-    const activeTheme = localStorage.getItem('theme') || 'light';
+    const activeTheme = localStorage.getItem('theme') || 'system';
     const applyTheme = (themeName) => {
       const body = document.body;
       if (themeName === 'dark') {
@@ -250,7 +250,7 @@ const AppContent = () => {
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleSystemChange = (e) => {
-      const currentVal = localStorage.getItem('theme') || 'light';
+      const currentVal = localStorage.getItem('theme') || 'system';
       if (currentVal === 'system') {
         if (e.matches) {
           document.body.classList.add('dark-theme');
@@ -261,15 +261,23 @@ const AppContent = () => {
     };
     mediaQuery.addEventListener('change', handleSystemChange);
 
+    const handleThemeChange = (e) => {
+      if (e.detail && e.detail.theme) {
+        applyTheme(e.detail.theme);
+      }
+    };
+    window.addEventListener('theme-changed', handleThemeChange);
+
     const handleStorageChange = (e) => {
       if (e.key === 'theme') {
-        applyTheme(e.newValue || 'light');
+        applyTheme(e.newValue || 'system');
       }
     };
     window.addEventListener('storage', handleStorageChange);
 
     return () => {
       mediaQuery.removeEventListener('change', handleSystemChange);
+      window.removeEventListener('theme-changed', handleThemeChange);
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
