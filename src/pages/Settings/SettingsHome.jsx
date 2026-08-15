@@ -17,19 +17,19 @@ const SettingsHome = () => {
     },
     {
       path: '/settings/theme',
-      title: 'Theme Settings',
+      title: 'Theme',
       desc: 'Choose between Light, Dark, or System Default visual styles.',
       icon: '🎨'
     },
     {
       path: '/settings/notifications',
-      title: 'Notification Preferences',
+      title: 'Notifications',
       desc: 'Manage your notification alerts for likes, comments, stories, and friends.',
       icon: '🔔'
     },
     {
       path: '/settings/privacy',
-      title: 'Privacy & Follow Requests',
+      title: 'Privacy',
       desc: 'Toggle Private Account status and manage pending follower requests.',
       icon: '🔒'
     },
@@ -41,7 +41,7 @@ const SettingsHome = () => {
     },
     {
       path: '/settings/comments',
-      title: 'Comments Settings',
+      title: 'Comments',
       desc: 'Configure who can comment on your posts and moderate contents.',
       icon: '💬'
     },

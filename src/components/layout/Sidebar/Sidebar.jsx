@@ -9,9 +9,9 @@ const Sidebar = () => {
   if (!currentUser) return null;
 
   const profilePath = `/profile/${currentUser.username}`;
-  const settingsPath = `/profile/${currentUser.username}?edit=true`;
+  const settingsPath = `/settings`;
 
-  const isSettingsActive = location.pathname === `/profile/${currentUser.username}` && location.search.includes('edit=true');
+  const isSettingsActive = location.pathname.startsWith('/settings');
   const isProfileActive = location.pathname === `/profile/${currentUser.username}` && !location.search.includes('edit=true');
 
   return (
@@ -51,7 +51,7 @@ const Sidebar = () => {
         <li>
           <NavLink to={settingsPath} className={() => `sidebar-link ${isSettingsActive ? 'active' : ''}`}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--text-muted)' }}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            <span>Edit Profile</span>
+            <span>Settings</span>
           </NavLink>
         </li>
       </ul>

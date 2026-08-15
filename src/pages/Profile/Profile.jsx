@@ -443,7 +443,7 @@ const Profile = () => {
               >
                 <span>📸</span> Memories
               </button>
-              <button className="btn btn-secondary" onClick={() => navigate('/settings/account')}>Edit Profile</button>
+              <button className="btn btn-secondary" onClick={() => navigate('/settings')}>Settings</button>
             </>
           ) : (
             <button className={followBtnClass} onClick={handleFollowToggle} disabled={followLoading}>
