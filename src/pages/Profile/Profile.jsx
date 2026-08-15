@@ -38,6 +38,7 @@ const Profile = () => {
   const [loadingFollowList, setLoadingFollowList] = useState(false);
 
 
+  const [isCachedProfileData, setIsCachedProfileData] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
   // Birthday Wall States
