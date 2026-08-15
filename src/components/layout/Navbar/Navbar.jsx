@@ -211,37 +211,9 @@ const Navbar = () => {
                   <div className="dropdown-divider"></div>
                 </>
               )}
-              <div className="dropdown-item" onClick={() => navigate('/settings/account')}>
-                <span style={{ marginRight: '8px' }}>👤</span>
-                <span>Account Details</span>
-              </div>
-              <div className="dropdown-item" onClick={() => navigate('/settings/posts')}>
-                <span style={{ marginRight: '8px' }}>📝</span>
-                <span>Manage Posts</span>
-              </div>
-              <div className="dropdown-item" onClick={() => navigate('/settings/theme')}>
-                <span style={{ marginRight: '8px' }}>🎨</span>
-                <span>Theme Settings</span>
-              </div>
-              <div className="dropdown-item" onClick={() => navigate('/settings/notifications')}>
-                <span style={{ marginRight: '8px' }}>🔔</span>
-                <span>Notifications</span>
-              </div>
-              <div className="dropdown-item" onClick={() => navigate('/settings/privacy')}>
-                <span style={{ marginRight: '8px' }}>🔒</span>
-                <span>Privacy & Requests</span>
-              </div>
-              <div className="dropdown-item" onClick={() => navigate('/settings/blocked')}>
-                <span style={{ marginRight: '8px' }}>🚫</span>
-                <span>Blocked Accounts</span>
-              </div>
-              <div className="dropdown-item" onClick={() => navigate('/settings/comments')}>
-                <span style={{ marginRight: '8px' }}>💬</span>
-                <span>Comments Settings</span>
-              </div>
-              <div className="dropdown-item" onClick={() => navigate('/settings/about')}>
-                <span style={{ marginRight: '8px' }}>ℹ️</span>
-                <span>About</span>
+              <div className="dropdown-item" onClick={() => navigate('/settings')}>
+                <span style={{ marginRight: '8px' }}>⚙️</span>
+                <span>Settings</span>
               </div>
               <div className="dropdown-divider"></div>
               <div className="dropdown-item" onClick={() => navigate('/settings/logout')} style={{ color: 'var(--danger)' }}>
