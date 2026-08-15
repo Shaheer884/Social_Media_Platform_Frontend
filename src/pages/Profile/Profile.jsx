@@ -37,26 +37,7 @@ const Profile = () => {
   const [followListUsers, setFollowListUsers] = useState([]);
   const [loadingFollowList, setLoadingFollowList] = useState(false);
 
-  // Edit Modal States
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editFullName, setEditFullName] = useState('');
-  const [editUsername, setEditUsername] = useState('');
-  const [editLocation, setEditLocation] = useState('');
-  const [editBio, setEditBio] = useState('');
-  const [editBirthday, setEditBirthday] = useState('');
-  const [editBirthdayPrivacy, setEditBirthdayPrivacy] = useState('Public');
-  const [editIsPrivate, setEditIsPrivate] = useState(false);
-  const [editAvatarUrl, setEditAvatarUrl] = useState('');
-  const [editCoverUrl, setEditCoverUrl] = useState('');
-  const [chosenAvatarFile, setChosenAvatarFile] = useState(null);
-  const [chosenCoverFile, setChosenCoverFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState('');
-  const [coverPreview, setCoverPreview] = useState('');
-  const [editSaving, setEditSaving] = useState(false);
-  const [cropperOpen, setCropperOpen] = useState(false);
-  const [cropperSrc, setCropperSrc] = useState('');
-  const [cropperAspect, setCropperAspect] = useState(1);
-  const [cropperTarget, setCropperTarget] = useState('avatar');
+
   const [followLoading, setFollowLoading] = useState(false);
 
   // Birthday Wall States
@@ -73,31 +54,10 @@ const Profile = () => {
   const [editingWishId, setEditingWishId] = useState(null);
   const [editingWishText, setEditingWishText] = useState('');
 
-  const [cacheSize, setCacheSize] = useState(0);
-  const [isCachedProfileData, setIsCachedProfileData] = useState(false);
-
-  useEffect(() => {
-    if (editModalOpen) {
-      getCacheSize().then(setCacheSize).catch(() => setCacheSize(0));
-    }
-  }, [editModalOpen]);
-
-  const handleClearCache = async () => {
-    if (window.confirm("Are you sure you want to clear the app cache? This will reload the app.")) {
-      await clearAppCache();
-      window.location.reload();
-    }
-  };
 
 
-  const avatarInputRef = useRef(null);
-  const coverInputRef = useRef(null);
 
-  // Photo menu states & refs
-  const [avatarMenuOpen, setAvatarMenuOpen] = useState(false);
-  const [coverMenuOpen, setCoverMenuOpen] = useState(false);
-  const avatarCameraInputRef = useRef(null);
-  const coverCameraInputRef = useRef(null);
+
 
   const isOwnProfile = profileUser?._id === currentUser?._id;
 
@@ -110,17 +70,6 @@ const Profile = () => {
         setIsCachedProfileData(false);
         // Cache this profile user
         localStorage.setItem('connecthub_cached_profile_user', JSON.stringify(res.data));
-
-        // Pre-fill edit fields
-        setEditFullName(res.data.fullName);
-        setEditUsername(res.data.username || '');
-        setEditLocation(res.data.location || '');
-        setEditBio(res.data.bio || '');
-        setEditBirthday(res.data.birthday ? res.data.birthday.split('T')[0] : '');
-        setEditBirthdayPrivacy(res.data.birthdayPrivacy || 'Public');
-        setEditIsPrivate(res.data.isPrivate || false);
-        setAvatarPreview(getUploadUrl(res.data.profilePicture || '/uploads/default-avatar.png'));
-        setCoverPreview(getUploadUrl(res.data.coverPhoto || '/uploads/default-cover.png'));
       }
     } catch (err) {
       console.error(err);
@@ -138,13 +87,6 @@ const Profile = () => {
           if (isMatch) {
             setProfileUser(cachedUser);
             setIsCachedProfileData(true);
-
-            setEditFullName(cachedUser.fullName);
-            setEditUsername(cachedUser.username || '');
-            setEditLocation(cachedUser.location || '');
-            setEditBio(cachedUser.bio || '');
-            setAvatarPreview(getUploadUrl(cachedUser.profilePicture || '/uploads/default-avatar.png'));
-            setCoverPreview(getUploadUrl(cachedUser.coverPhoto || '/uploads/default-cover.png'));
             console.log('Loaded profile from offline cache');
             return;
           }
@@ -366,29 +308,12 @@ const Profile = () => {
     }
   };
 
-  // Open edit modal if edit query param is present
+  // Redirect legacy edit profile parameter trigger to Settings page
   useEffect(() => {
     if (searchParams.get('edit') === 'true' && isOwnProfile) {
-      setEditModalOpen(true);
+      navigate('/settings/account', { replace: true });
     }
-  }, [searchParams, isOwnProfile]);
-
-  // Close dropdowns on document click and modal close
-  useEffect(() => {
-    const handleDocumentClick = () => {
-      setAvatarMenuOpen(false);
-      setCoverMenuOpen(false);
-    };
-    document.addEventListener('click', handleDocumentClick);
-    return () => document.removeEventListener('click', handleDocumentClick);
-  }, []);
-
-  useEffect(() => {
-    if (!editModalOpen) {
-      setAvatarMenuOpen(false);
-      setCoverMenuOpen(false);
-    }
-  }, [editModalOpen]);
+  }, [searchParams, isOwnProfile, navigate]);
 
   const handleFollowToggle = async () => {
     if (!profileUser) return;
@@ -444,230 +369,7 @@ const Profile = () => {
     }
   };
 
-  const openCropperForFile = (file, target, aspect) => {
-    if (!file.type.startsWith('image/')) {
-      showAlert('Please select a valid image file', 'Invalid File');
-      return;
-    }
-    if (file.size > 4 * 1024 * 1024) {
-      showAlert('Image file size is too large. Maximum size is 4MB due to server limitations.', 'File Too Large');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => {
-      setCropperSrc(reader.result);
-      setCropperTarget(target);
-      setCropperAspect(aspect);
-      setCropperOpen(true);
-    };
-    reader.readAsDataURL(file);
-  };
 
-  const handleAvatarIconClick = (e) => {
-    e.stopPropagation();
-    setAvatarMenuOpen(prev => !prev);
-    setCoverMenuOpen(false);
-  };
-
-  const handleCoverIconClick = (e) => {
-    e.stopPropagation();
-    setCoverMenuOpen(prev => !prev);
-    setAvatarMenuOpen(false);
-  };
-
-  const handleTakeAvatarClick = (e) => {
-    e.stopPropagation();
-    if (avatarCameraInputRef.current) {
-      avatarCameraInputRef.current.click();
-    }
-    setAvatarMenuOpen(false);
-  };
-
-  const handleSelectAvatarClick = (e) => {
-    e.stopPropagation();
-    if (avatarInputRef.current) {
-      avatarInputRef.current.click();
-    }
-    setAvatarMenuOpen(false);
-  };
-
-  const handleDeleteAvatarClick = (e) => {
-    e.stopPropagation();
-    setChosenAvatarFile(null);
-    setEditAvatarUrl('/uploads/default-avatar.png');
-    setAvatarPreview(getUploadUrl('/uploads/default-avatar.png'));
-    setAvatarMenuOpen(false);
-  };
-
-  const handleTakeCoverClick = (e) => {
-    e.stopPropagation();
-    if (coverCameraInputRef.current) {
-      coverCameraInputRef.current.click();
-    }
-    setCoverMenuOpen(false);
-  };
-
-  const handleSelectCoverClick = (e) => {
-    e.stopPropagation();
-    if (coverInputRef.current) {
-      coverInputRef.current.click();
-    }
-    setCoverMenuOpen(false);
-  };
-
-  const handleDeleteCoverClick = (e) => {
-    e.stopPropagation();
-    setChosenCoverFile(null);
-    setEditCoverUrl('/uploads/default-cover.png');
-    setCoverPreview(getUploadUrl('/uploads/default-cover.png'));
-    setCoverMenuOpen(false);
-  };
-
-  const handleAvatarFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      openCropperForFile(file, 'avatar', 1);
-    }
-  };
-
-  const handleCoverFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      openCropperForFile(file, 'cover', 3.3); // Aspect ratio of ~3.3:1 matches cover aspect ratio in CSS
-    }
-  };
-
-  const handleCropComplete = (croppedFile, previewUrl) => {
-    if (cropperTarget === 'avatar') {
-      setChosenAvatarFile(croppedFile);
-      setAvatarPreview(previewUrl);
-    } else if (cropperTarget === 'cover') {
-      setChosenCoverFile(croppedFile);
-      setCoverPreview(previewUrl);
-    }
-    setCropperOpen(false);
-    if (avatarInputRef.current) avatarInputRef.current.value = '';
-    if (coverInputRef.current) coverInputRef.current.value = '';
-    if (avatarCameraInputRef.current) avatarCameraInputRef.current.value = '';
-    if (coverCameraInputRef.current) coverCameraInputRef.current.value = '';
-  };
-
-  const handleCropCancel = () => {
-    setCropperOpen(false);
-    if (avatarInputRef.current) avatarInputRef.current.value = '';
-    if (coverInputRef.current) coverInputRef.current.value = '';
-    if (avatarCameraInputRef.current) avatarCameraInputRef.current.value = '';
-    if (coverCameraInputRef.current) coverCameraInputRef.current.value = '';
-  };
-
-  // URL inputs live previews
-  const handleAvatarUrlChange = (e) => {
-    let url = e.target.value;
-    setEditAvatarUrl(url);
-    if (url.trim()) {
-      if (!/^https?:\/\//i.test(url)) {
-        url = 'https://' + url.trim();
-      }
-      setAvatarPreview(url);
-      setChosenAvatarFile(null);
-    }
-  };
-
-  const handleCoverUrlChange = (e) => {
-    let url = e.target.value;
-    setEditCoverUrl(url);
-    if (url.trim()) {
-      if (!/^https?:\/\//i.test(url)) {
-        url = 'https://' + url.trim();
-      }
-      setCoverPreview(url);
-      setChosenCoverFile(null);
-    }
-  };
-
-  const handleEditProfileSubmit = async (e) => {
-    e.preventDefault();
-    setEditSaving(true);
-
-    try {
-      let res;
-      if (chosenAvatarFile || chosenCoverFile) {
-        const formData = new FormData();
-        formData.append('fullName', editFullName.trim());
-        formData.append('username', editUsername.trim());
-        formData.append('location', editLocation.trim());
-        formData.append('bio', editBio.trim());
-        formData.append('birthday', editBirthday);
-        formData.append('birthdayPrivacy', editBirthdayPrivacy);
-        formData.append('isPrivate', editIsPrivate);
-        if (chosenAvatarFile) formData.append('profilePicture', chosenAvatarFile);
-        if (chosenCoverFile) formData.append('coverPhoto', chosenCoverFile);
-        if (editAvatarUrl && !chosenAvatarFile) formData.append('profilePictureUrl', editAvatarUrl);
-        if (editCoverUrl && !chosenCoverFile) formData.append('coverPhotoUrl', editCoverUrl);
-
-        res = await userService.updateProfile(currentUser._id, formData);
-      } else {
-        res = await userService.updateProfile(currentUser._id, {
-          fullName: editFullName.trim(),
-          username: editUsername.trim(),
-          location: editLocation.trim(),
-          bio: editBio.trim(),
-          birthday: editBirthday,
-          birthdayPrivacy: editBirthdayPrivacy,
-          profilePictureUrl: editAvatarUrl.trim(),
-          coverPhotoUrl: editCoverUrl.trim(),
-          isPrivate: editIsPrivate
-        });
-      }
-
-      if (res.success) {
-        // Sync context
-        updateLocalUser(res.data);
-        const oldUsername = profileUser?.username;
-        const newUsername = res.data.username;
-        // Refresh local details
-        await fetchProfile();
-        setEditModalOpen(false);
-        // Clean URL params if they have edit=true
-        if (searchParams.get('edit') === 'true') {
-          navigate(location.pathname, { replace: true });
-        }
-        // If username changed, redirect to the new username URL
-        if (newUsername && newUsername.toLowerCase() !== oldUsername?.toLowerCase()) {
-          navigate(`/profile/${newUsername}`, { replace: true });
-        }
-        // Show success popup
-        showAlert('Profile updated successfully!', 'Success');
-      }
-    } catch (err) {
-      showAlert(err.message || 'Error updating profile', 'Error');
-    } finally {
-      setEditSaving(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    const confirmDelete = await showConfirm(
-      "Are you sure you want to completely delete your account? This action is permanent and will completely remove your posts, comments, likes, notifications, and all profile data.",
-      "Delete Account"
-    );
-    if (!confirmDelete) return;
-
-    try {
-      setEditSaving(true);
-      const res = await userService.deleteAccount(currentUser._id);
-      if (res.success) {
-        await showAlert("Your account has been successfully deleted.", "Account Deleted");
-        setEditModalOpen(false);
-        logout();
-        navigate('/login');
-      }
-    } catch (err) {
-      showAlert(err.message || "Error deleting account", "Error");
-    } finally {
-      setEditSaving(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -740,7 +442,7 @@ const Profile = () => {
               >
                 <span>📸</span> Memories
               </button>
-              <button className="btn btn-secondary" onClick={() => setEditModalOpen(true)}>Edit Profile</button>
+              <button className="btn btn-secondary" onClick={() => navigate('/settings/account')}>Edit Profile</button>
             </>
           ) : (
             <button className={followBtnClass} onClick={handleFollowToggle} disabled={followLoading}>
@@ -1232,195 +934,7 @@ const Profile = () => {
         </div>
       </Modal>
 
-      {/* Edit Profile Modal */}
-      <Modal isOpen={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Profile">
-        <form onSubmit={handleEditProfileSubmit}>
-          <div className="modal-body">
-            {/* Live Cover and Avatar Preview Panel */}
-            <div className="profile-edit-cover-preview-wrapper" id="edit-cover-wrapper">
-              <img src={coverPreview} id="edit-cover-img" className="profile-edit-cover-preview" alt="Cover Preview" />
-              <button className={`edit-overlay-btn ${coverMenuOpen ? 'menu-active' : ''}`} type="button" onClick={handleCoverIconClick} title="Change Cover Image">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
-              </button>
 
-              {coverMenuOpen && (
-                <div className="photo-options-dropdown active" style={{ top: '65%', left: '50%', transform: 'translate(-50%, 0)' }}>
-                  <div className="dropdown-item" onClick={handleTakeCoverClick}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
-                    <span>Take Photo</span>
-                  </div>
-                  <div className="dropdown-item" onClick={handleSelectCoverClick}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
-                    <span>Select Photo</span>
-                  </div>
-                  <div className="dropdown-item" onClick={handleDeleteCoverClick} style={{ color: 'var(--danger)' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                    <span>Delete Photo</span>
-                  </div>
-                </div>
-              )}
-
-              <input type="file" ref={coverInputRef} className="hidden-file-input" accept="image/*" onChange={handleCoverFileChange} />
-              <input type="file" ref={coverCameraInputRef} className="hidden-file-input" accept="image/*" capture="environment" onChange={handleCoverFileChange} />
-
-              <div className="profile-edit-avatar-preview-wrapper" id="edit-avatar-wrapper" style={{ overflow: 'visible' }}>
-                <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden' }}>
-                  <img src={avatarPreview} id="edit-avatar-img" className="profile-edit-avatar-preview" alt="Avatar Preview" />
-                </div>
-                <button className={`edit-overlay-btn ${avatarMenuOpen ? 'menu-active' : ''}`} type="button" onClick={handleAvatarIconClick} title="Change Avatar Image">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
-                </button>
-
-                {avatarMenuOpen && (
-                  <div className="photo-options-dropdown active" style={{ top: '40px', left: '0', zIndex: 10 }}>
-                    <div className="dropdown-item" onClick={handleTakeAvatarClick}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>
-                      <span>Take Photo</span>
-                    </div>
-                    <div className="dropdown-item" onClick={handleSelectAvatarClick}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
-                      <span>Select Photo</span>
-                    </div>
-                    <div className="dropdown-item" onClick={handleDeleteAvatarClick} style={{ color: 'var(--danger)' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                      <span>Delete Photo</span>
-                    </div>
-                  </div>
-                )}
-
-                <input type="file" ref={avatarInputRef} className="hidden-file-input" accept="image/*" onChange={handleAvatarFileChange} />
-                <input type="file" ref={avatarCameraInputRef} className="hidden-file-input" accept="image/*" capture="user" onChange={handleAvatarFileChange} />
-              </div>
-            </div>
-
-            <div className="form-group" style={{ marginTop: '16px' }}>
-              <label className="form-label" htmlFor="edit-fullName">Full Name</label>
-              <input type="text" id="edit-fullName" className="form-input" value={editFullName} onChange={(e) => setEditFullName(e.target.value)} required />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="edit-username">Username</label>
-              <input type="text" id="edit-username" className="form-input" placeholder="Choose a username" value={editUsername} onChange={(e) => setEditUsername(e.target.value)} required minLength={3} />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="edit-location">Location</label>
-              <input type="text" id="edit-location" className="form-input" placeholder="e.g. San Francisco, CA" value={editLocation} onChange={(e) => setEditLocation(e.target.value)} />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="edit-bio">Bio</label>
-              <textarea id="edit-bio" className="form-input form-textarea" placeholder="Tell us about yourself..." maxLength="160" value={editBio} onChange={(e) => setEditBio(e.target.value)}></textarea>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="edit-birthday">Birthday</label>
-              <input type="date" id="edit-birthday" className="form-input" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="edit-birthdayPrivacy">Birthday Privacy</label>
-              <select
-                id="edit-birthdayPrivacy"
-                className="form-input"
-                value={editBirthdayPrivacy}
-                onChange={(e) => setEditBirthdayPrivacy(e.target.value)}
-              >
-                <option value="Public">Public</option>
-                <option value="Friends Only">Friends Only</option>
-                <option value="Only Me">Only Me</option>
-              </select>
-            </div>
-
-            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '16px', marginBottom: '16px' }}>
-              <input
-                type="checkbox"
-                id="edit-isPrivate"
-                checked={editIsPrivate}
-                onChange={(e) => setEditIsPrivate(e.target.checked)}
-                style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--purple)' }}
-              />
-              <label htmlFor="edit-isPrivate" style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--text-main)', cursor: 'pointer' }}>
-                Private Account (Hide posts & stories from feed)
-              </label>
-            </div>
-
-            <div className="delete-account-section" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
-              <h4 style={{ color: 'var(--danger)', marginBottom: '8px' }}>Danger Zone</h4>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                Once you delete your account, there is no going back. All your posts, comments, likes, and settings will be permanently removed.
-              </p>
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={handleDeleteAccount}
-              >
-                Delete Account
-              </button>
-            </div>
-
-            <div className="pwa-settings-section" style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
-              <h4 style={{ marginBottom: '12px', fontSize: '1rem', fontWeight: 600 }}>App Settings & Storage</h4>
-              
-              {/* About Section */}
-              <div className="settings-about-section" style={{ marginBottom: '16px', padding: '12px', borderRadius: '12px', backgroundColor: 'var(--input-bg)', border: '1px solid var(--border-color)' }}>
-                <h5 style={{ margin: '0 0 10px 0', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  ℹ️ About ConnectHub
-                </h5>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Build Version:</span>
-                    <strong style={{ color: 'var(--text-main)' }}>{__APP_VERSION__}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Build Timestamp:</span>
-                    <strong style={{ color: 'var(--text-main)' }}>{new Date(__BUILD_TIMESTAMP__).toLocaleString()}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>Commit Hash:</span>
-                    <strong style={{ fontFamily: 'monospace', color: 'var(--text-main)', backgroundColor: 'var(--border-color)', padding: '2px 6px', borderRadius: '4px' }}>{__COMMIT_HASH__}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '6px', borderTop: '1px dashed var(--border-color)' }}>
-                    <span>Standalone PWA:</span>
-                    <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{window.matchMedia('(display-mode: standalone)').matches ? 'Yes' : 'No'}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="settings-storage-section" style={{ margin: 0 }}>
-                <div className="settings-storage-details">
-                  <span>Cached Files (Offline Data)</span>
-                  <span style={{ fontWeight: 'bold' }}>{cacheSize} MB</span>
-                </div>
-                <button
-                  type="button"
-                  className="settings-storage-btn"
-                  onClick={handleClearCache}
-                  style={{ marginTop: '10px', width: '100%' }}
-                >
-                  Clear Cache & Refresh App
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="modal-footer">
-            <button type="button" className="btn btn-secondary" onClick={() => setEditModalOpen(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={editSaving}>
-              {editSaving ? <Spinner size="16px" style={{ borderColor: 'transparent', borderTopColor: '#fff' }} /> : 'Save Changes'}
-            </button>
-          </div>
-        </form>
-      </Modal>
-
-      <ImageCropperModal
-        isOpen={cropperOpen}
-        imageSrc={cropperSrc}
-        aspectRatio={cropperAspect}
-        onCrop={handleCropComplete}
-        onClose={handleCropCancel}
-        title={cropperTarget === 'avatar' ? "Crop Profile Picture" : "Crop Cover Photo"}
-      />
 
       {giftModalOpen && (
         <GiftModal

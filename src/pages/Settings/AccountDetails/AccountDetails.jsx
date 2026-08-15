@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import settingsService from '../../../services/settingsService';
+import userService from '../../../services/userService';
 import Spinner from '../../../components/Loader/Spinner';
 
 const AccountDetails = () => {
-  const { currentUser, updateLocalUser } = useAuth();
+  const { currentUser, updateLocalUser, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     username: '',
@@ -14,6 +17,7 @@ const AccountDetails = () => {
     phone: '',
     website: '',
     birthday: '',
+    birthdayPrivacy: 'Public',
     gender: '',
     location: ''
   });
@@ -50,6 +54,7 @@ const AccountDetails = () => {
             phone: data.phone || '',
             website: data.website || '',
             birthday: data.birthday ? data.birthday.split('T')[0] : '',
+            birthdayPrivacy: data.birthdayPrivacy || 'Public',
             gender: data.gender || '',
             location: data.location || ''
           });
@@ -82,6 +87,30 @@ const AccountDetails = () => {
 
   const triggerFileInput = (ref) => {
     if (ref.current) ref.current.click();
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to completely delete your account? This action is permanent and will completely remove your posts, comments, likes, notifications, and all profile data."
+    );
+    if (!confirmDelete) return;
+
+    setSaving(true);
+    try {
+      const res = await userService.deleteAccount(currentUser._id);
+      if (res.success) {
+        window.alert("Your account has been successfully deleted.");
+        logout();
+        navigate('/login');
+      } else {
+        setStatus({ type: 'error', message: res.error || 'Failed to delete account.' });
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus({ type: 'error', message: 'Error deleting account.' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -296,6 +325,20 @@ const AccountDetails = () => {
           </div>
 
           <div className="settings-form-group">
+            <label className="settings-label">Birthday Privacy</label>
+            <select 
+              name="birthdayPrivacy" 
+              className="settings-select"
+              value={formData.birthdayPrivacy}
+              onChange={handleChange}
+            >
+              <option value="Public">Public</option>
+              <option value="Friends Only">Friends Only (Mutual Followers)</option>
+              <option value="Only Me">Only Me</option>
+            </select>
+          </div>
+
+          <div className="settings-form-group">
             <label className="settings-label">Gender (optional)</label>
             <select 
               name="gender" 
@@ -331,6 +374,21 @@ const AccountDetails = () => {
             disabled={saving}
           >
             {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+
+        <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h4 style={{ color: '#ef4444', margin: '0 0 4px 0', fontSize: '0.95rem', fontWeight: 700 }}>Delete Account</h4>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>Permanently delete your profile, posts, comments, and all data.</p>
+          </div>
+          <button 
+            type="button" 
+            className="settings-btn settings-btn-danger"
+            disabled={saving}
+            onClick={handleDeleteAccount}
+          >
+            Delete Account
           </button>
         </div>
       </form>
