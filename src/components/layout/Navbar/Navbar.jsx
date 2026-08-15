@@ -196,8 +196,8 @@ const Navbar = () => {
             </button>
             <div className={`dropdown-menu ${profileOpen ? 'active' : ''}`} id="nav-dropdown-menu">
               <div className="dropdown-item" onClick={() => navigate(`/profile/${currentUser.username}`)} style={{ fontWeight: 600 }}>
-                <img src={getUploadUrl(currentUser.profilePicture || defaultAvatar)} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
-                <span>{currentUser.fullName}</span>
+                <img src={getUploadUrl(currentUser.profilePicture || defaultAvatar)} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} alt="" />
+                <span>My Profile</span>
               </div>
               <div className="dropdown-divider"></div>
               {currentUser?.role === 'admin' && (
@@ -211,26 +211,41 @@ const Navbar = () => {
                   <div className="dropdown-divider"></div>
                 </>
               )}
-              <div className="dropdown-item" onClick={() => navigate(`/profile/${currentUser.username}?edit=true`)}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="3" />
-                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                </svg>
-                <span>Edit Profile</span>
+              <div className="dropdown-item" onClick={() => navigate('/settings/account')}>
+                <span style={{ marginRight: '8px' }}>👤</span>
+                <span>Account Details</span>
               </div>
-              <div className="dropdown-item" onClick={() => navigate('/saved')}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                </svg>
-                <span>Saved Posts</span>
+              <div className="dropdown-item" onClick={() => navigate('/settings/posts')}>
+                <span style={{ marginRight: '8px' }}>📝</span>
+                <span>Manage Posts</span>
+              </div>
+              <div className="dropdown-item" onClick={() => navigate('/settings/theme')}>
+                <span style={{ marginRight: '8px' }}>🎨</span>
+                <span>Theme Settings</span>
+              </div>
+              <div className="dropdown-item" onClick={() => navigate('/settings/notifications')}>
+                <span style={{ marginRight: '8px' }}>🔔</span>
+                <span>Notifications</span>
+              </div>
+              <div className="dropdown-item" onClick={() => navigate('/settings/privacy')}>
+                <span style={{ marginRight: '8px' }}>🔒</span>
+                <span>Privacy & Requests</span>
+              </div>
+              <div className="dropdown-item" onClick={() => navigate('/settings/blocked')}>
+                <span style={{ marginRight: '8px' }}>🚫</span>
+                <span>Blocked Accounts</span>
+              </div>
+              <div className="dropdown-item" onClick={() => navigate('/settings/comments')}>
+                <span style={{ marginRight: '8px' }}>💬</span>
+                <span>Comments Settings</span>
+              </div>
+              <div className="dropdown-item" onClick={() => navigate('/settings/about')}>
+                <span style={{ marginRight: '8px' }}>ℹ️</span>
+                <span>About</span>
               </div>
               <div className="dropdown-divider"></div>
-              <div className="dropdown-item" onClick={handleLogout} style={{ color: 'var(--danger)' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
+              <div className="dropdown-item" onClick={() => navigate('/settings/logout')} style={{ color: 'var(--danger)' }}>
+                <span style={{ marginRight: '8px' }}>🚪</span>
                 <span>Logout</span>
               </div>
             </div>

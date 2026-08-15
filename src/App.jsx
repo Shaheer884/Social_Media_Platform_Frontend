@@ -55,6 +55,19 @@ const ForgotPassword = lazyWithRetry(() => import('./pages/ForgotPassword/Forgot
 const VerifyResetCode = lazyWithRetry(() => import('./pages/VerifyResetCode/VerifyResetCode'));
 const ResetPassword = lazyWithRetry(() => import('./pages/ResetPassword/ResetPassword'));
 
+// Settings Pages
+const SettingsLayout = lazyWithRetry(() => import('./pages/Settings/SettingsLayout'));
+const SettingsHome = lazyWithRetry(() => import('./pages/Settings/SettingsHome'));
+const AccountDetails = lazyWithRetry(() => import('./pages/Settings/AccountDetails/AccountDetails'));
+const ManagePosts = lazyWithRetry(() => import('./pages/Settings/ManagePosts/ManagePosts'));
+const Theme = lazyWithRetry(() => import('./pages/Settings/Theme/Theme'));
+const Notifications = lazyWithRetry(() => import('./pages/Settings/Notifications/Notifications'));
+const Privacy = lazyWithRetry(() => import('./pages/Settings/Privacy/Privacy'));
+const BlockedAccounts = lazyWithRetry(() => import('./pages/Settings/BlockedAccounts/BlockedAccounts'));
+const Comments = lazyWithRetry(() => import('./pages/Settings/Comments/Comments'));
+const About = lazyWithRetry(() => import('./pages/Settings/About/About'));
+const Logout = lazyWithRetry(() => import('./pages/Settings/Logout/Logout'));
+
 // Admin Pages
 const AdminLogin = lazyWithRetry(() => import('./pages/Admin/AdminLogin'));
 const AdminDashboard = lazyWithRetry(() => import('./pages/Admin/Dashboard/AdminDashboard'));
@@ -215,6 +228,52 @@ const NotificationToast = () => {
 const AppContent = () => {
   const [isOfflineError, setIsOfflineError] = useState(false);
 
+  // Sync theme configurations on startup
+  useEffect(() => {
+    const activeTheme = localStorage.getItem('theme') || 'light';
+    const applyTheme = (themeName) => {
+      const body = document.body;
+      if (themeName === 'dark') {
+        body.classList.add('dark-theme');
+      } else if (themeName === 'light') {
+        body.classList.remove('dark-theme');
+      } else if (themeName === 'system') {
+        const matchesDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (matchesDark) {
+          body.classList.add('dark-theme');
+        } else {
+          body.classList.remove('dark-theme');
+        }
+      }
+    };
+    applyTheme(activeTheme);
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemChange = (e) => {
+      const currentVal = localStorage.getItem('theme') || 'light';
+      if (currentVal === 'system') {
+        if (e.matches) {
+          document.body.classList.add('dark-theme');
+        } else {
+          document.body.classList.remove('dark-theme');
+        }
+      }
+    };
+    mediaQuery.addEventListener('change', handleSystemChange);
+
+    const handleStorageChange = (e) => {
+      if (e.key === 'theme') {
+        applyTheme(e.newValue || 'light');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleSystemChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   useEffect(() => {
     // Clear chunk-load-retried flag on successful load
     sessionStorage.removeItem('chunk-load-retried');
@@ -289,6 +348,20 @@ const AppContent = () => {
           <Route path="/saved" element={<ProtectedRoute><Saved /></ProtectedRoute>} />
           <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
           <Route path="/location/:placeId" element={<ProtectedRoute><LocationPage /></ProtectedRoute>} />
+
+          {/* Profile Settings System Routes */}
+          <Route path="/settings" element={<ProtectedRoute><SettingsLayout /></ProtectedRoute>}>
+            <Route index element={<SettingsHome />} />
+            <Route path="account" element={<AccountDetails />} />
+            <Route path="posts" element={<ManagePosts />} />
+            <Route path="theme" element={<Theme />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="privacy" element={<Privacy />} />
+            <Route path="blocked" element={<BlockedAccounts />} />
+            <Route path="comments" element={<Comments />} />
+            <Route path="about" element={<About />} />
+            <Route path="logout" element={<Logout />} />
+          </Route>
 
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
