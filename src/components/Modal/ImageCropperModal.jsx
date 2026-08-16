@@ -255,8 +255,10 @@ const ImageCropperModal = ({
     }, mimeType, (mimeType === 'image/jpeg' || mimeType === 'image/webp') ? 0.95 : undefined);
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="modal-overlay active" style={{ zIndex: 2000 }} onClick={onClose}>
+    <div className="modal-overlay active" style={{ zIndex: 10010 }} onClick={onClose}>
       <div className="modal-content" style={{ maxWidth: '500px', width: '95%' }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3 style={{ fontSize: '1.1rem', color: 'var(--text-main)', marginBottom: 0 }}>{title}</h3>
