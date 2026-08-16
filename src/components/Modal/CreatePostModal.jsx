@@ -8,6 +8,7 @@ import { useDialog } from '../../context/CustomDialogContext';
 import { getUploadUrl } from '../../utils/mediaHelper';
 import MentionSuggestions from '../MentionSuggestions/MentionSuggestions';
 import userService from '../../services/userService';
+import { uploadDirectToCloudinary, validateFile, cleanupCloudinaryAsset } from '../../utils/cloudinaryUploader';
 
 const FEELINGS = [
   { name: 'happy', emoji: '🙂' },
@@ -93,6 +94,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
   const targetProgressRef = useRef(0);
   const progressIntervalRef = useRef(null);
   const apiSuccessRef = useRef(false);
+  const uploadedMediaRef = useRef([]);
   const abortControllerRef = useRef(null);
 
   // Cropper states
@@ -267,32 +269,26 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
     return () => clearTimeout(delayDebounce);
   }, [locationSearch, currentScreen]);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
+
+    if (chosenFiles.length + files.length > 10) {
+      showAlert('You can upload a maximum of 10 media files.', 'File Count Limit');
+      return;
+    }
 
     const validFiles = [];
     const validPreviews = [];
 
     for (const file of files) {
+      const val = await validateFile(file, 'post');
+      if (!val.valid) {
+        showAlert(val.error, 'Validation Error');
+        return;
+      }
+
       const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
-
-      if (!isVideo && !isImage) {
-        showAlert('Please select valid image or video files', 'Invalid File Type');
-        return;
-      }
-
-      if (isImage && file.size > 4 * 1024 * 1024) {
-        showAlert(`Image ${file.name} is too large. Maximum size is 4MB due to server limitations.`, 'File Too Large');
-        return;
-      }
-
-      if (isVideo && file.size > 4 * 1024 * 1024) {
-        showAlert(`Video ${file.name} is too large. Maximum size is 4MB due to server limitations.`, 'File Too Large');
-        return;
-      }
-
       validFiles.push(file);
       validPreviews.push({
         url: URL.createObjectURL(file),
@@ -558,6 +554,16 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
       progressIntervalRef.current = null;
     }
     setPublishLoading(false);
+
+    // Delete any successfully uploaded files from Cloudinary to prevent orphans
+    if (uploadedMediaRef.current.length > 0) {
+      for (const m of uploadedMediaRef.current) {
+        if (m.publicId) {
+          await cleanupCloudinaryAsset(m.publicId, m.resourceType).catch(() => {});
+        }
+      }
+    }
+
     showAlert('Post upload cancelled.', 'Cancelled');
   };
 
@@ -569,53 +575,91 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
     targetProgressRef.current = 0;
     apiSuccessRef.current = false;
     abortControllerRef.current = new AbortController();
+    uploadedMediaRef.current = [];
 
     try {
       let res;
       const feelingValue = selectedFeeling ? `${selectedFeeling.emoji} ${selectedFeeling.name}` : '';
-      
-      const uploadConfig = (progressEvent) => {
-        if (progressEvent.total) {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          targetProgressRef.current = Math.min(95, percentCompleted);
-        }
-      };
 
       if (chosenFiles.length > 0) {
-        const formData = new FormData();
-        formData.append('content', postText.trim());
-        chosenFiles.forEach((file) => {
-          formData.append('postImages', file);
-        });
-        if (location) {
-          formData.append('location', JSON.stringify(location));
+        const mediaList = [];
+
+        for (let i = 0; i < chosenFiles.length; i++) {
+          const file = chosenFiles[i];
+          const isVideo = file.type.startsWith('video/');
+          const resourceType = isVideo ? 'video' : 'image';
+          const folder = isVideo ? 'connecthub/posts/videos' : 'connecthub/posts/images';
+
+          const onUploadProgress = (progressEvent) => {
+            if (progressEvent.total) {
+              const filePercent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              const overallPercent = Math.round(((i * 100) + filePercent) / chosenFiles.length);
+              targetProgressRef.current = Math.min(95, overallPercent);
+            }
+          };
+
+          const uploadResult = await uploadDirectToCloudinary({
+            file,
+            folder,
+            resourceType,
+            onUploadProgress,
+            signal: abortControllerRef.current.signal
+          });
+
+          const mediaObj = {
+            url: uploadResult.secure_url,
+            publicId: uploadResult.public_id,
+            resourceType: uploadResult.resource_type || resourceType,
+            format: uploadResult.format,
+            width: uploadResult.width,
+            height: uploadResult.height,
+            duration: uploadResult.duration || 0,
+            size: uploadResult.bytes
+          };
+
+          mediaList.push(mediaObj);
+          uploadedMediaRef.current.push(mediaObj);
         }
-        if (feelingValue) {
-          formData.append('feeling', feelingValue);
-        }
-        formData.append('audience', audience);
-        res = await publishPost(formData, uploadConfig, abortControllerRef.current.signal);
-      } else {
+
         res = await publishPost({
           content: postText.trim(),
-          location: location ? JSON.stringify(location) : undefined,
+          media: mediaList,
+          location: location || undefined,
           feeling: feelingValue || undefined,
           bgColor: selectedBg.background !== 'transparent' ? selectedBg.background : undefined,
           audience: audience
-        }, null, abortControllerRef.current.signal);
+        });
+      } else {
+        res = await publishPost({
+          content: postText.trim(),
+          location: location || undefined,
+          feeling: feelingValue || undefined,
+          bgColor: selectedBg.background !== 'transparent' ? selectedBg.background : undefined,
+          audience: audience
+        });
       }
 
       if (res && res.success) {
         apiSuccessRef.current = true;
         targetProgressRef.current = 100;
       } else {
-        throw new Error('Failed to create post');
+        throw new Error(res?.error || 'Failed to create post');
       }
     } catch (err) {
       if (err.name === 'CanceledError' || err.message === 'canceled' || err.message === 'Query was cancelled by user') {
         console.log('Post upload cancelled by user');
         return;
       }
+
+      // Cleanup completed uploads on failure to prevent orphans
+      if (uploadedMediaRef.current.length > 0) {
+        for (const m of uploadedMediaRef.current) {
+          if (m.publicId) {
+            await cleanupCloudinaryAsset(m.publicId, m.resourceType).catch(() => {});
+          }
+        }
+      }
+
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;

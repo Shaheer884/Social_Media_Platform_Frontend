@@ -4,6 +4,7 @@ import { useAuth } from '../../../context/AuthContext';
 import settingsService from '../../../services/settingsService';
 import userService from '../../../services/userService';
 import Spinner from '../../../components/Loader/Spinner';
+import { uploadDirectToCloudinary, validateFile, cleanupCloudinaryAsset } from '../../../utils/cloudinaryUploader';
 
 const AccountDetails = () => {
   const { currentUser, updateLocalUser, logout } = useAuth();
@@ -130,34 +131,82 @@ const AccountDetails = () => {
       return;
     }
 
+    let profilePicResult = null;
+    let coverPhotoResult = null;
+
     try {
-      const dataToSend = new FormData();
-      Object.keys(formData).forEach((key) => {
-        dataToSend.append(key, formData[key]);
-      });
+      // 1. Validate files if selected
       if (files.profilePicture) {
-        dataToSend.append('profilePicture', files.profilePicture);
+        const val = await validateFile(files.profilePicture, 'post');
+        if (!val.valid) {
+          setStatus({ type: 'error', message: val.error });
+          setSaving(false);
+          return;
+        }
       }
       if (files.coverPhoto) {
-        dataToSend.append('coverPhoto', files.coverPhoto);
+        const val = await validateFile(files.coverPhoto, 'post');
+        if (!val.valid) {
+          setStatus({ type: 'error', message: val.error });
+          setSaving(false);
+          return;
+        }
       }
 
-      const res = await settingsService.updateAccount(dataToSend);
+      // 2. Direct upload files to Cloudinary
+      if (files.profilePicture) {
+        profilePicResult = await uploadDirectToCloudinary({
+          file: files.profilePicture,
+          folder: 'connecthub/profiles/avatars',
+          resourceType: 'image'
+        });
+      }
+      if (files.coverPhoto) {
+        coverPhotoResult = await uploadDirectToCloudinary({
+          file: files.coverPhoto,
+          folder: 'connecthub/profiles/covers',
+          resourceType: 'image'
+        });
+      }
+
+      // 3. Prepare payload and call update settings
+      const payload = {
+        ...formData,
+        profilePicture: profilePicResult ? profilePicResult.secure_url : undefined,
+        profilePicturePublicId: profilePicResult ? profilePicResult.public_id : undefined,
+        profilePictureSize: files.profilePicture ? profilePicResult?.bytes : undefined,
+        profilePictureFormat: files.profilePicture ? profilePicResult?.format : undefined,
+        coverPhoto: coverPhotoResult ? coverPhotoResult.secure_url : undefined,
+        coverPhotoPublicId: coverPhotoResult ? coverPhotoResult.public_id : undefined,
+        coverPhotoSize: files.coverPhoto ? coverPhotoResult?.bytes : undefined,
+        coverPhotoFormat: files.coverPhoto ? coverPhotoResult?.format : undefined
+      };
+
+      const res = await settingsService.updateAccount(payload);
       if (res.success) {
         setStatus({ type: 'success', message: 'Profile details updated successfully!' });
-        // Sync with authentication state context so header, sidebar, profile updates instantly
         updateLocalUser({
           username: res.data.username,
           fullName: res.data.fullName,
           profilePicture: res.data.profilePicture,
           coverPhoto: res.data.coverPhoto
         });
+        setFiles({ profilePicture: null, coverPhoto: null });
       } else {
-        setStatus({ type: 'error', message: res.error || 'Failed to save changes' });
+        throw new Error(res.error || 'Failed to save changes');
       }
     } catch (err) {
       console.error(err);
-      const errMsg = err.response?.data?.error || 'Something went wrong. Please check your inputs.';
+      
+      // Cleanup completed uploads on failure to prevent orphans
+      if (profilePicResult?.public_id) {
+        await cleanupCloudinaryAsset(profilePicResult.public_id, 'image').catch(() => {});
+      }
+      if (coverPhotoResult?.public_id) {
+        await cleanupCloudinaryAsset(coverPhotoResult.public_id, 'image').catch(() => {});
+      }
+
+      const errMsg = err.message || 'Something went wrong. Please check your inputs.';
       setStatus({ type: 'error', message: errMsg });
     } finally {
       setSaving(false);

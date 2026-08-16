@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../layout/AdminLayout';
 import adminService from '../services/adminService';
 import { getUploadUrl } from '../../../utils/mediaHelper';
+import { uploadDirectToCloudinary, validateFile, cleanupCloudinaryAsset } from '../../../utils/cloudinaryUploader';
 
 const AdminProfile = () => {
   const [loading, setLoading] = useState(false);
@@ -52,30 +53,51 @@ const AdminProfile = () => {
 
     setLoading(true);
 
-    const formData = new FormData();
-    formData.append('fullName', fullName);
-    formData.append('username', username);
-    formData.append('email', email);
-    if (password) {
-      formData.append('password', password);
-    }
-    if (avatarFile) {
-      formData.append('profilePicture', avatarFile);
-    }
+    let uploadResult = null;
 
     try {
-      const res = await adminService.updateProfile(formData);
+      // 1. Validate & upload avatar file directly to Cloudinary if provided
+      if (avatarFile) {
+        const val = await validateFile(avatarFile, 'post');
+        if (!val.valid) {
+          setError(val.error);
+          setLoading(false);
+          return;
+        }
+
+        uploadResult = await uploadDirectToCloudinary({
+          file: avatarFile,
+          folder: 'connecthub/profiles/avatars',
+          resourceType: 'image'
+        });
+      }
+
+      // 2. Submit credentials & image metadata to backend
+      const payload = {
+        fullName,
+        username,
+        email,
+        password: password || undefined,
+        profilePicture: uploadResult ? uploadResult.secure_url : undefined,
+        profilePicturePublicId: uploadResult ? uploadResult.public_id : undefined,
+        profilePictureSize: avatarFile ? uploadResult?.bytes : undefined,
+        profilePictureFormat: avatarFile ? uploadResult?.format : undefined
+      };
+
+      const res = await adminService.updateProfile(payload);
       if (res.success) {
         setSuccess('Admin profile updated successfully!');
-        // Update session storage
         sessionStorage.setItem('adminUser', JSON.stringify(res.data));
-        // Reset password fields
         setPassword('');
         setConfirmPassword('');
-        // Trigger event or custom reload logic so other components fetch updated data
+        setAvatarFile(null); // Clear selected file
         window.dispatchEvent(new Event('adminProfileUpdated'));
       }
     } catch (err) {
+      // Cleanup completed upload on failure to prevent orphans
+      if (uploadResult?.public_id) {
+        await cleanupCloudinaryAsset(uploadResult.public_id, 'image').catch(() => {});
+      }
       setError(err.message || 'Failed to update profile');
     } finally {
       setLoading(false);

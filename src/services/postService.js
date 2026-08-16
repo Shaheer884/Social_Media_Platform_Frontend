@@ -4,9 +4,8 @@ const postService = {
   getFeed(page = 1, limit = 5) {
     return api.get(`/posts?page=${page}&limit=${limit}`);
   },
-  createPost(postData, onUploadProgress) {
-    // If postData is FormData, axios handles Content-Type boundary automatically
-    return api.post('/posts', postData, { onUploadProgress });
+  createPost(postData) {
+    return api.post('/posts', postData);
   },
   getPost(id) {
     return api.get(`/posts/${id}`);

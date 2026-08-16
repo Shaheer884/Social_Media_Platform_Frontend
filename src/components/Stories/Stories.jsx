@@ -10,6 +10,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Modal from '../Modal/Modal';
 import Spinner from '../Loader/Spinner';
 import MentionSuggestions from '../MentionSuggestions/MentionSuggestions';
+import { uploadDirectToCloudinary, validateFile, cleanupCloudinaryAsset } from '../../utils/cloudinaryUploader';
 
 const GRADIENTS = [
   'linear-gradient(135deg, #8b5cf6, #ec4899)', // Purple -> Pink (Default)
@@ -555,46 +556,25 @@ const Stories = () => {
   };
 
   // Create Story logic
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
+      const val = await validateFile(file, 'story');
+      if (!val.valid) {
+        showAlert(val.error, 'Validation Error');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
       const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
-
-      if (!isVideo && !isImage) {
-        showAlert('Please select a valid image or video file', 'Invalid File');
-        return;
-      }
-      if (isImage && file.size > 4 * 1024 * 1024) {
-        showAlert('Image file size is too large. Maximum size is 4MB due to server limitations.', 'File Too Large');
-        return;
-      }
-
-      if (isVideo && file.size > 30 * 1024 * 1024) {
-        showAlert('Maximum Story video size is 30 MB. Please choose a smaller video.', 'File Too Large');
-        return;
-      }
-
       if (isVideo) {
-        const videoElement = document.createElement('video');
+        if (imagePreview && imagePreview.startsWith('blob:')) {
+          URL.revokeObjectURL(imagePreview);
+        }
         const objectUrl = URL.createObjectURL(file);
-        videoElement.src = objectUrl;
-        videoElement.onloadedmetadata = () => {
-          if (videoElement.duration > 60) {
-            showAlert('Video duration cannot exceed 60 seconds', 'Invalid Video Length');
-            URL.revokeObjectURL(objectUrl);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-            return;
-          }
-          // Clean up previous blob if any
-          if (imagePreview && imagePreview.startsWith('blob:')) {
-            URL.revokeObjectURL(imagePreview);
-          }
-          setChosenFile(file);
-          setImagePreview(objectUrl);
-        };
-      } else if (file.type.startsWith('image/')) {
-        // Clean up previous blob if any
+        setChosenFile(file);
+        setImagePreview(objectUrl);
+      } else {
         if (imagePreview && imagePreview.startsWith('blob:')) {
           URL.revokeObjectURL(imagePreview);
         }
@@ -604,8 +584,6 @@ const Stories = () => {
           setImagePreview(reader.result);
         };
         reader.readAsDataURL(file);
-      } else {
-        showAlert('Please select a valid image or video file', 'Invalid File');
       }
     }
   };
@@ -680,60 +658,44 @@ const Stories = () => {
       let res;
       if (storyCreatorTab === 'image') {
         const isVideo = chosenFile.type.startsWith('video/');
-        
-        // 1. Get signed upload parameters from backend
-        const signRes = await storyService.getUploadSignature(isVideo ? 'video' : 'image');
-        if (!signRes.success) {
-          throw new Error(signRes.error || 'Failed to generate upload signature');
-        }
+        const folder = isVideo ? 'connecthub/stories/videos' : 'connecthub/stories/images';
 
-        const { signature, timestamp, folder, apiKey, cloudName } = signRes;
-
-        // 2. Upload file directly to Cloudinary
-        const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${isVideo ? 'video' : 'image'}/upload`;
-        const fd = new FormData();
-        fd.append('file', chosenFile);
-        fd.append('api_key', apiKey);
-        fd.append('timestamp', timestamp);
-        fd.append('signature', signature);
-        fd.append('folder', folder);
-
-        const uploadConfig = {
-          signal: storyAbortControllerRef.current.signal,
+        const uploadResult = await uploadDirectToCloudinary({
+          file: chosenFile,
+          folder,
+          resourceType: isVideo ? 'video' : 'image',
           onUploadProgress: (progressEvent) => {
             if (progressEvent.total) {
               const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
               targetProgressRef.current = Math.min(95, percentCompleted);
             }
-          }
-        };
-
-        const clRes = await axios.post(cloudinaryUrl, fd, uploadConfig);
-        const result = clRes.data;
+          },
+          signal: storyAbortControllerRef.current.signal
+        });
 
         // Save uploaded resource details in case of subsequent cancellation
         storyUploadedMediaRef.current = {
-          publicId: result.public_id,
-          resourceType: result.resource_type || (isVideo ? 'video' : 'image')
+          publicId: uploadResult.public_id,
+          resourceType: uploadResult.resource_type || (isVideo ? 'video' : 'image')
         };
 
-        // 3. Post pre-uploaded Cloudinary metadata to backend
+        // 2. Post pre-uploaded Cloudinary metadata to backend
         const payload = {
           text: storyText.trim(),
           privacy,
-          imageUrl: result.secure_url,
-          mediaType: result.resource_type || (isVideo ? 'video' : 'image'),
-          cloudinaryPublicId: result.public_id,
+          imageUrl: uploadResult.secure_url,
+          mediaType: uploadResult.resource_type || (isVideo ? 'video' : 'image'),
+          cloudinaryPublicId: uploadResult.public_id,
           media: [
             {
-              url: result.secure_url,
-              publicId: result.public_id,
-              resourceType: result.resource_type || (isVideo ? 'video' : 'image'),
-              format: result.format,
-              width: result.width,
-              height: result.height,
-              duration: result.duration || 0,
-              size: result.bytes
+              url: uploadResult.secure_url,
+              publicId: uploadResult.public_id,
+              resourceType: uploadResult.resource_type || (isVideo ? 'video' : 'image'),
+              format: uploadResult.format,
+              width: uploadResult.width,
+              height: uploadResult.height,
+              duration: uploadResult.duration || 0,
+              size: uploadResult.bytes
             }
           ]
         };

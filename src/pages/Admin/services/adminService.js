@@ -108,12 +108,8 @@ const adminService = {
   },
   
   getTrending: () => adminApi.get('/trending'),
-  updateProfile: (formData) => {
-    return adminApi.put('/profile', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+  updateProfile: (profileData) => {
+    return adminApi.put('/profile', profileData);
   }
 };
 

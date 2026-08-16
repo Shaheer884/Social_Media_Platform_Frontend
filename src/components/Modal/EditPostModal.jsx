@@ -5,6 +5,7 @@ import postService from '../../services/postService';
 import { getUploadUrl } from '../../utils/mediaHelper';
 import MentionSuggestions from '../MentionSuggestions/MentionSuggestions';
 import LocationSelector from '../Location/LocationSelector';
+import { uploadDirectToCloudinary, validateFile, cleanupCloudinaryAsset } from '../../utils/cloudinaryUploader';
 
 const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
   const [postText, setPostText] = useState('');
@@ -59,31 +60,27 @@ const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
     setExistingMedia((prev) => prev.filter((m) => m.publicId !== publicId));
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     setErrorMsg('');
     const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    if (existingMedia.length + newFiles.length + files.length > 10) {
+      setErrorMsg('You can upload a maximum of 10 media files.');
+      return;
+    }
+
     const validFiles = [];
     const validPreviews = [];
 
     for (const file of files) {
+      const val = await validateFile(file, 'post');
+      if (!val.valid) {
+        setErrorMsg(val.error);
+        return;
+      }
+
       const isVideo = file.type.startsWith('video/');
-      const isImage = file.type.startsWith('image/');
-
-      if (!isVideo && !isImage) {
-        setErrorMsg('Only image and video files are supported.');
-        return;
-      }
-
-      if (isImage && file.size > 15 * 1024 * 1024) {
-        setErrorMsg(`Image ${file.name} exceeds the 15MB limit.`);
-        return;
-      }
-
-      if (isVideo && file.size > 200 * 1024 * 1024) {
-        setErrorMsg(`Video ${file.name} exceeds the 200MB limit.`);
-        return;
-      }
-
       validFiles.push(file);
       validPreviews.push({
         name: file.name,
@@ -119,28 +116,64 @@ const EditPostModal = ({ isOpen, onClose, post, onUpdateSuccess }) => {
     setSaving(true);
     setErrorMsg('');
 
-    try {
-      const formData = new FormData();
-      formData.append('content', postText.trim());
-      formData.append('existingMedia', JSON.stringify(existingMedia));
-      formData.append('location', location ? JSON.stringify(location) : '');
+    const newUploadedList = [];
 
-      newFiles.forEach((file) => {
-        formData.append('postImages', file);
+    try {
+      // 1. Upload new files directly to Cloudinary
+      if (newFiles.length > 0) {
+        for (const file of newFiles) {
+          const isVideo = file.type.startsWith('video/');
+          const resourceType = isVideo ? 'video' : 'image';
+          const folder = isVideo ? 'connecthub/posts/videos' : 'connecthub/posts/images';
+
+          const uploadResult = await uploadDirectToCloudinary({
+            file,
+            folder,
+            resourceType
+          });
+
+          newUploadedList.push({
+            url: uploadResult.secure_url,
+            publicId: uploadResult.public_id,
+            resourceType: uploadResult.resource_type || resourceType,
+            format: uploadResult.format,
+            width: uploadResult.width,
+            height: uploadResult.height,
+            duration: uploadResult.duration || 0,
+            size: uploadResult.bytes
+          });
+        }
+      }
+
+      // 2. Submit changes to backend
+      const res = await postService.updatePost(post._id, {
+        content: postText.trim(),
+        existingMedia,
+        newMedia: newUploadedList,
+        location: location || undefined
       });
 
-      const res = await postService.updatePost(post._id, formData);
       if (res.success) {
         if (onUpdateSuccess) {
           onUpdateSuccess(res.data);
         }
         onClose();
       } else {
-        setErrorMsg(res.error || 'Failed to update post.');
+        throw new Error(res.error || 'Failed to update post.');
       }
     } catch (err) {
       console.error(err);
-      setErrorMsg(err.response?.data?.error || err.message || 'Error updating post.');
+      
+      // Automatic cleanup of completed uploads if save fails
+      if (newUploadedList.length > 0) {
+        for (const m of newUploadedList) {
+          if (m.publicId) {
+            await cleanupCloudinaryAsset(m.publicId, m.resourceType).catch(() => {});
+          }
+        }
+      }
+
+      setErrorMsg(err.message || 'Error updating post.');
     } finally {
       setSaving(false);
     }
