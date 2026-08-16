@@ -881,38 +881,134 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
 
             {/* Media Upload Previews */}
             {imagePreviews.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '4px', marginBottom: '4px' }}>
-                {imagePreviews.map((p, idx) => (
-                  <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+              <div style={{ marginTop: '12px', marginBottom: '12px', width: '100%' }}>
+                {imagePreviews.length === 1 && imagePreviews[0].type === 'video' ? (
+                  <div className="single-video-container" style={{ position: 'relative', width: '100%', borderRadius: '8px', overflow: 'hidden' }}>
                     <button
                       type="button"
-                      onClick={() => removeSelectedFile(idx)}
-                      style={{ position: 'absolute', top: '4px', right: '4px', background: 'rgba(239, 68, 68, 0.9)', color: '#fff', border: 'none', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', cursor: 'pointer', zIndex: 3 }}
+                      onClick={() => removeSelectedFile(0)}
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'rgba(239, 68, 68, 0.9)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        zIndex: 10
+                      }}
                     >
                       &times;
                     </button>
-                    {p.type === 'video' ? (
-                      <video
-                        src={p.url}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div
-                        onClick={() => handleStartCrop(idx)}
-                        className="preview-image-container"
-                        title="Click to crop image"
-                      >
-                        <img src={p.url} alt="upload preview" />
-                        <div className="crop-overlay">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M6.13 1L6 16a2 2 0 0 0 2 2h15" />
-                            <path d="M1 6.13L16 6a2 2 0 0 1 2 2v15" />
-                          </svg>
-                        </div>
-                      </div>
-                    )}
+                    <video
+                      controls
+                      className="single-video-element"
+                      src={imagePreviews[0].url}
+                      style={{ width: '100%', borderRadius: '8px', maxHeight: '400px', display: 'block' }}
+                    />
                   </div>
-                ))}
+                ) : (
+                  <div className={`post-media-grid items-${Math.min(imagePreviews.length, 4)}`} style={{ position: 'relative', width: '100%' }}>
+                    {imagePreviews.slice(0, 4).map((p, idx) => {
+                      const isLast = idx === 3 && imagePreviews.length > 4;
+                      return (
+                        <div
+                          key={idx}
+                          className="media-grid-item"
+                          style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', height: '100%', width: '100%' }}
+                        >
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeSelectedFile(idx);
+                            }}
+                            style={{
+                              position: 'absolute',
+                              top: '8px',
+                              right: '8px',
+                              background: 'rgba(239, 68, 68, 0.9)',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '22px',
+                              height: '22px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '14px',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              zIndex: 10
+                            }}
+                          >
+                            &times;
+                          </button>
+                          {p.type === 'video' ? (
+                            <video
+                              src={p.url}
+                              className="grid-media-element"
+                              controls={false}
+                              muted
+                              autoPlay
+                              loop
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <div
+                              onClick={() => handleStartCrop(idx)}
+                              style={{ width: '100%', height: '100%', cursor: 'pointer', position: 'relative' }}
+                              title="Click to crop image"
+                            >
+                              <img
+                                src={p.url}
+                                alt="upload preview"
+                                className="grid-media-element"
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  background: 'rgba(0, 0, 0, 0.3)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  opacity: 0,
+                                  transition: 'opacity 0.2s',
+                                  color: '#fff'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                                onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                              >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                  <path d="M6.13 1L6 16a2 2 0 0 0 2 2h15" />
+                                  <path d="M1 6.13L16 6a2 2 0 0 1 2 2v15" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                          {isLast && (
+                            <div className="media-grid-overlay">
+                              <span>+{imagePreviews.length - 4}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
