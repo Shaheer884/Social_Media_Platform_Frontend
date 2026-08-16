@@ -143,6 +143,7 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
     setSelectedFeeling(null);
     setPublishLoading(false);
     onClose();
+    showAlert('Post Published Successfully', 'Success');
   };
 
   useEffect(() => {
