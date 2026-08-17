@@ -7,6 +7,8 @@ import { getUploadUrl } from '../../../utils/mediaHelper';
 import PWAInstallButton from '../../PWA/PWAInstallButton';
 import settingsService from '../../../services/settingsService';
 
+import NotificationDropdown from '../../Notifications/NotificationDropdown';
+
 const Navbar = () => {
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
@@ -126,20 +128,6 @@ const Navbar = () => {
     }
   };
 
-  const handleNotiClick = async (e, n) => {
-    e.stopPropagation();
-    setNotiOpen(false);
-    await markRead(n._id);
-    if (n.post) {
-      navigate(`/post/${n.post._id || n.post}`);
-    } else if (n.story) {
-      const storyId = n.story._id || n.story;
-      navigate(`/?storyId=${storyId}`);
-    } else if (n.sender) {
-      navigate(`/profile/${n.sender.username}`);
-    }
-  };
-
   const handleLogout = (e) => {
     e.stopPropagation();
     logout();
@@ -213,66 +201,9 @@ const Navbar = () => {
               </svg>
               {unreadCount > 0 && <span className="notification-badge" id="noti-badge">{unreadCount}</span>}
             </button>
-            <div className={`notifications-dropdown ${notiOpen ? 'active' : ''}`} id="noti-dropdown">
-              <div className="notification-header">
-                <span>Notifications</span>
-                <button className="mark-read-btn" onClick={markAllRead}>Mark all read</button>
-              </div>
-              <div id="notifications-list-container">
-                {notifications.length === 0 ? (
-                  <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No new notifications
-                  </div>
-                ) : (
-                  notifications.map((n) => {
-                    let actionText = '';
-                    if (n.type === 'like') actionText = 'liked your post';
-                    else if (n.type === 'comment') actionText = 'commented on your post';
-                    else if (n.type === 'story-like') actionText = 'liked your story ❤️';
-                    else if (n.type === 'story-comment') actionText = 'commented on your story';
-                    else if (n.type === 'story-reply') actionText = 'replied to your story 💬';
-                    else if (n.type === 'story-mention') actionText = 'mentioned you in a story 📢';
-                    else if (n.type === 'follow') {
-                      actionText = n.sender?.relationshipStatus === 'friends'
-                        ? 'is now your friend!'
-                        : 'started following you';
-                    } else if (n.type === 'birthday') {
-                      const recipientId = n.recipient?._id || n.recipient;
-                      const isSelf = n.sender?._id?.toString() === recipientId?.toString() || n.sender?.toString() === recipientId?.toString();
-                      actionText = isSelf
-                        ? '- Happy Birthday! Have a wonderful day! 🎉'
-                        : 'celebrates their birthday today. Wish them a Happy Birthday! 🎂';
-                    } else if (n.type === 'birthday-wish') {
-                      actionText = 'wished you a Happy Birthday! 🎂';
-                    } else if (n.type === 'birthday-gift') {
-                      actionText = 'sent you a virtual birthday gift! 🎁';
-                    }
-
-                    const postText = n.post ? ` "${(n.post.content || '').substring(0, 15)}..."` : '';
-                    const senderAvatar = getUploadUrl(n.sender?.profilePicture || defaultAvatar);
-
-                    return (
-                      <div
-                        key={n._id}
-                        className={`notification-item ${n.read || n.isRead ? '' : 'unread'}`}
-                        onClick={(e) => handleNotiClick(e, n)}
-                      >
-                        <img src={senderAvatar} className="notification-avatar" alt="Avatar" />
-                        <div className="notification-desc">
-                          <div>
-                            <span className="notification-user">{n.sender?.fullName || 'Someone'}</span>{' '}
-                            {actionText}
-                            {n.type !== 'follow' && postText}
-                          </div>
-                          <div className="notification-time">{timeAgo(n.createdAt)}</div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
+            <NotificationDropdown isOpen={notiOpen} onClose={() => setNotiOpen(false)} />
           </div>
+
 
           <div className="profile-dropdown-container" onClick={(e) => e.stopPropagation()}>
             <button className="profile-avatar-btn" onClick={() => { setProfileOpen(!profileOpen); setNotiOpen(false); }}>

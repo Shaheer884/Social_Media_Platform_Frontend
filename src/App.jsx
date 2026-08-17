@@ -44,6 +44,7 @@ const PostDetail = lazyWithRetry(() => import('./pages/Post/PostDetail'));
 const Explore = lazyWithRetry(() => import('./pages/Explore/Explore'));
 const Search = lazyWithRetry(() => import('./pages/Search/Search'));
 const NotificationsPage = lazyWithRetry(() => import('./pages/Notifications/NotificationsPage'));
+const NotificationDetailsPage = lazyWithRetry(() => import('./pages/Notifications/NotificationDetailsPage'));
 const Messages = lazyWithRetry(() => import('./pages/Messages/Messages'));
 const Saved = lazyWithRetry(() => import('./pages/Saved/Saved'));
 const Friends = lazyWithRetry(() => import('./pages/Friends/Friends'));
@@ -352,6 +353,7 @@ const AppContent = () => {
           <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
           <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+          <Route path="/notifications/:id" element={<ProtectedRoute><NotificationDetailsPage /></ProtectedRoute>} />
           <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
           <Route path="/saved" element={<ProtectedRoute><Saved /></ProtectedRoute>} />
           <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
