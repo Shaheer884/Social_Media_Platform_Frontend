@@ -3292,18 +3292,18 @@ textarea {
   display: flex;
   align-items: center;
   padding: 16px 20px;
-  background-color: var(--card-bg);
+  background: var(--primary-gradient);
   border-radius: 12px;
-  border: 1px solid var(--border-color);
+  border: none;
   margin-bottom: 16px;
   gap: 12px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.2);
 }
 
 .center-back-btn {
   background: none;
   border: none;
-  color: var(--text-main);
+  color: #ffffff;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -3314,7 +3314,7 @@ textarea {
 }
 
 .center-back-btn:hover {
-  background-color: var(--input-bg);
+  background-color: rgba(255, 255, 255, 0.15);
   transform: translateX(-2px);
 }
 
@@ -3329,19 +3329,19 @@ textarea {
   margin: 0;
   font-size: 1.3rem;
   font-weight: 700;
-  color: var(--text-main);
+  color: #ffffff;
 }
 
 .center-counter {
   font-size: 1rem;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.8);
   font-weight: 500;
 }
 
 .center-clear-all-btn {
   background: none;
   border: none;
-  color: var(--danger);
+  color: #ffffff;
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
@@ -3351,7 +3351,7 @@ textarea {
 }
 
 .center-clear-all-btn:hover {
-  background-color: rgba(239, 68, 68, 0.08);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Search Bar Styles */
@@ -3748,6 +3748,18 @@ textarea {
   padding: 8px 16px;
   font-size: 0.85rem;
   font-weight: 600;
+  background: var(--primary-gradient);
+  color: #ffffff !important;
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(139, 92, 246, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.load-more-btn:hover {
+  background: var(--primary-gradient-hover);
+  transform: translateY(-1px);
 }
 
 /* Dropdown Notification Enhancement */
@@ -4196,12 +4208,12 @@ textarea {
 
 /* Back to Notification Navigation Banner styles */
 .back-to-notification-banner {
-  background-color: var(--card-bg);
-  border: 1px solid var(--border-color);
+  background: var(--primary-gradient);
+  border: none;
   border-radius: 12px;
   padding: 12px 18px;
   margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.2);
   display: flex;
   align-items: center;
 }
@@ -4209,7 +4221,7 @@ textarea {
 .back-to-notification-btn {
   background: none;
   border: none;
-  color: var(--purple);
+  color: #ffffff;
   font-weight: 700;
   font-size: 0.9rem;
   cursor: pointer;
@@ -4219,6 +4231,6 @@ textarea {
 }
 
 .back-to-notification-btn:hover {
-  opacity: 0.85;
+  opacity: 0.9;
   text-decoration: underline;
 }
