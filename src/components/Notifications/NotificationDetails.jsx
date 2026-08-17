@@ -15,24 +15,23 @@ const formatDateTime = (dateInput) => {
   });
 };
 
-const NotificationDetails = ({ notification: n, onDelete }) => {
-  const navigate = useNavigate();
+const NotificationDetails = ({ notification: n, onDelete, onNavigate }) => {
   const avatar = getUploadUrl(n.sender?.profilePicture || '/uploads/default-avatar.png');
   const typeInfo = getTypeIcon(n.type, n.sender?.relationshipStatus);
 
   const handleOpenPost = () => {
-    if (n.post) navigate(`/post/${n.post._id || n.post}`);
+    if (n.post) onNavigate('post', `/post/${n.post._id || n.post}`);
   };
 
   const handleVisitProfile = () => {
-    if (n.sender) navigate(`/profile/${n.sender.username}`);
+    if (n.sender) onNavigate('profile', `/profile/${n.sender.username}`);
   };
 
   const handleViewStory = () => {
     if (n.story) {
-      navigate(`/?storyId=${n.story._id || n.story}`);
+      onNavigate('story', `/?storyId=${n.story._id || n.story}`);
     } else {
-      navigate('/');
+      onNavigate('story', '/');
     }
   };
 
@@ -174,7 +173,7 @@ const NotificationDetails = ({ notification: n, onDelete }) => {
               <p className="announcement-message">{n.message}</p>
             </div>
             <div className="details-actions">
-              <button className="btn btn-secondary" onClick={() => navigate('/')}>
+              <button className="btn btn-secondary" onClick={() => onNavigate('home', '/')}>
                 Back to Home
               </button>
             </div>
@@ -198,7 +197,7 @@ const NotificationDetails = ({ notification: n, onDelete }) => {
               </div>
             </div>
             <div className="details-actions">
-              <button className="btn btn-primary" onClick={() => navigate('/settings/account')}>
+              <button className="btn btn-primary" onClick={() => onNavigate('settings', '/settings/account')}>
                 Manage Account Settings
               </button>
             </div>

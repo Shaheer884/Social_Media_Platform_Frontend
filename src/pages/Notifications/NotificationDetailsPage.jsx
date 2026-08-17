@@ -5,6 +5,7 @@ import notificationService from '../../services/notificationService';
 import { useNotifications } from '../../context/NotificationsContext';
 import { useDialog } from '../../context/CustomDialogContext';
 import NotificationDetails from '../../components/Notifications/NotificationDetails';
+import ContentUnavailableModal from '../../components/Notifications/ContentUnavailableModal';
 import Spinner from '../../components/Loader/Spinner';
 
 const NotificationDetailsPage = () => {
@@ -15,9 +16,34 @@ const NotificationDetailsPage = () => {
 
   const [notification, setNotification] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [unavailableStatus, setUnavailableStatus] = useState(null);
 
   useEffect(() => {
     const fetchDetails = async () => {
+      // 1. Try to restore state from sessionStorage to prevent flickers when navigating back
+      const cachedState = sessionStorage.getItem(`noti_state_${id}`);
+      if (cachedState) {
+        try {
+          const parsed = JSON.parse(cachedState);
+          setNotification(parsed);
+          setLoading(false);
+          
+          // Restore scroll position
+          const cachedScroll = sessionStorage.getItem(`noti_scroll_${id}`);
+          if (cachedScroll) {
+            setTimeout(() => {
+              window.scrollTo(0, parseInt(cachedScroll));
+              // Clean up to prevent side-effects on subsequent clean loads
+              sessionStorage.removeItem(`noti_state_${id}`);
+              sessionStorage.removeItem(`noti_scroll_${id}`);
+            }, 80);
+          }
+          return;
+        } catch (e) {
+          console.error('Failed to parse cached details state:', e);
+        }
+      }
+
       setLoading(true);
       try {
         const res = await notificationService.getNotificationDetails(id);
@@ -50,6 +76,21 @@ const NotificationDetailsPage = () => {
       } catch (error) {
         console.error(error);
       }
+    }
+  };
+
+  const handleNavigate = (type, url) => {
+    const validation = notification?.resourceValidation || { status: 'VALID', exists: true };
+    if (!validation.exists) {
+      // If resource is deleted/expired/unavailable, render the modal
+      setUnavailableStatus(validation.status);
+    } else {
+      // Save current page state and scroll position before navigating away
+      sessionStorage.setItem(`noti_state_${id}`, JSON.stringify(notification));
+      sessionStorage.setItem(`noti_scroll_${id}`, window.scrollY.toString());
+      
+      // Navigate to target resource, passing the notification ID in location history state
+      navigate(url, { state: { fromNotificationId: id } });
     }
   };
 
@@ -95,10 +136,19 @@ const NotificationDetailsPage = () => {
             <NotificationDetails 
               notification={notification} 
               onDelete={handleDelete} 
+              onNavigate={handleNavigate}
             />
           )}
         </div>
       </div>
+
+      {/* Unavailable resource modal */}
+      {unavailableStatus && (
+        <ContentUnavailableModal
+          status={unavailableStatus}
+          onClose={() => setUnavailableStatus(null)}
+        />
+      )}
     </Layout>
   );
 };
