@@ -3462,7 +3462,7 @@ textarea {
   justify-content: space-between;
   padding: 12px 18px;
   border-bottom: 1px solid var(--border-color);
-  background-color: var(--bg-color);
+  background-color: var(--card-bg);
 }
 
 .bulk-select-all-label {
@@ -3739,7 +3739,7 @@ textarea {
   justify-content: center;
   padding: 16px;
   border-top: 1px solid var(--border-color);
-  background-color: var(--bg-color);
+  background-color: var(--card-bg);
 }
 
 .load-more-btn {
