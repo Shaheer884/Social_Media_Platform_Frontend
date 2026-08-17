@@ -84,13 +84,21 @@ const NotificationDetailsPage = () => {
     if (!validation.exists) {
       // If resource is deleted/expired/unavailable, render the modal
       setUnavailableStatus(validation.status);
-    } else {
+    } else if (url && url !== '/post/' && url !== '/profile/') {
       // Save current page state and scroll position before navigating away
       sessionStorage.setItem(`noti_state_${id}`, JSON.stringify(notification));
       sessionStorage.setItem(`noti_scroll_${id}`, window.scrollY.toString());
       
       // Navigate to target resource, passing the notification ID in location history state
       navigate(url, { state: { fromNotificationId: id } });
+    } else {
+      // Fallback: If URL resolves to empty/invalid, treat it as unavailable/deleted
+      setUnavailableStatus(
+        type === 'story' ? 'STORY_DELETED' : 
+        type === 'profile' ? 'USER_NOT_AVAILABLE' : 
+        type === 'comment' ? 'COMMENT_REMOVED' :
+        'RESOURCE_DELETED'
+      );
     }
   };
 

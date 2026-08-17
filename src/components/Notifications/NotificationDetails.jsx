@@ -20,19 +20,15 @@ const NotificationDetails = ({ notification: n, onDelete, onNavigate }) => {
   const typeInfo = getTypeIcon(n.type, n.sender?.relationshipStatus);
 
   const handleOpenPost = () => {
-    if (n.post) onNavigate('post', `/post/${n.post._id || n.post}`);
+    onNavigate('post', `/post/${n.post?._id || n.post || ''}`);
   };
 
   const handleVisitProfile = () => {
-    if (n.sender) onNavigate('profile', `/profile/${n.sender.username}`);
+    onNavigate('profile', `/profile/${n.sender?.username || ''}`);
   };
 
   const handleViewStory = () => {
-    if (n.story) {
-      onNavigate('story', `/?storyId=${n.story._id || n.story}`);
-    } else {
-      onNavigate('story', '/');
-    }
+    onNavigate('story', n.story ? `/?storyId=${n.story._id || n.story}` : '/');
   };
 
   // Render type-specific details block
