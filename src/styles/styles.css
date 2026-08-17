@@ -1355,7 +1355,9 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: none;
+  background: var(--primary-gradient);
+  color: #ffffff;
 }
 
 .notification-item {
@@ -1400,10 +1402,17 @@ textarea {
 .mark-read-btn {
   background: none;
   border: none;
-  color: var(--purple);
+  color: #ffffff;
   cursor: pointer;
   font-size: 0.75rem;
   font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.mark-read-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Toast System */
@@ -3861,24 +3870,26 @@ textarea {
 .dropdown-see-all-wrapper {
   padding: 10px;
   text-align: center;
-  border-top: 1px solid var(--border-color);
-  background-color: var(--bg-color);
+  border-top: none;
+  background: var(--primary-gradient);
 }
 
 .dropdown-see-all-btn {
   background: none;
   border: none;
-  color: var(--purple);
+  color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
   width: 100%;
+  padding: 6px;
+  border-radius: 6px;
 }
 
 .dropdown-see-all-btn:hover {
-  opacity: 0.8;
-  text-decoration: underline;
+  background-color: rgba(255, 255, 255, 0.15);
+  opacity: 1;
 }
 
 /* ==========================================================================
