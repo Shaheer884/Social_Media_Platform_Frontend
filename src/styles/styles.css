@@ -3870,26 +3870,25 @@ textarea {
 .dropdown-see-all-wrapper {
   padding: 10px;
   text-align: center;
-  border-top: none;
-  background: var(--primary-gradient);
+  border-top: 1px solid var(--border-color);
 }
 
 .dropdown-see-all-btn {
   background: none;
   border: none;
-  color: #ffffff;
+  color: var(--purple);
   font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: background-color 0.2s ease, opacity 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
   width: 100%;
   padding: 6px;
   border-radius: 6px;
 }
 
 .dropdown-see-all-btn:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  opacity: 1;
+  background-color: var(--input-bg);
+  color: var(--pink);
 }
 
 /* ==========================================================================
