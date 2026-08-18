@@ -41,23 +41,18 @@ const About = () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '24px 0', textAlign: 'center' }}>
         {/* App Logo Emblem */}
-        <div style={{
-          width: '72px',
-          height: '72px',
-          borderRadius: '16px',
-          background: 'var(--primary-gradient)',
-          color: '#fff',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '2.5rem',
-          fontWeight: 800,
-          boxShadow: '0 8px 16px rgba(139, 92, 246, 0.3)',
-          marginBottom: '14px',
-          fontFamily: 'Outfit, sans-serif'
-        }}>
-          C
-        </div>
+        <img 
+          src="/favicon.png" 
+          alt="ConnectHub Logo"
+          style={{
+            width: '72px',
+            height: '72px',
+            borderRadius: '16px',
+            boxShadow: '0 8px 16px rgba(139, 92, 246, 0.3)',
+            marginBottom: '14px',
+            objectFit: 'cover'
+          }} 
+        />
         <h3 style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-main)', margin: '0 0 4px 0' }}>ConnectHub</h3>
         <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)' }}>The Professional Social Media Experience</span>
       </div>
