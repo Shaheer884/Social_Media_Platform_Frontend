@@ -62,7 +62,7 @@ const SettingsHome = lazyWithRetry(() => import('./pages/Settings/SettingsHome')
 const AccountDetails = lazyWithRetry(() => import('./pages/Settings/AccountDetails/AccountDetails'));
 const ManagePosts = lazyWithRetry(() => import('./pages/Settings/ManagePosts/ManagePosts'));
 const Theme = lazyWithRetry(() => import('./pages/Settings/Theme/Theme'));
-const Notifications = lazyWithRetry(() => import('./pages/Settings/Notifications/Notifications'));
+const Notifications = lazyWithRetry(() => import('./pages/Settings/NotificationSettings/NotificationSettings'));
 const Privacy = lazyWithRetry(() => import('./pages/Settings/Privacy/Privacy'));
 const BlockedAccounts = lazyWithRetry(() => import('./pages/Settings/BlockedAccounts/BlockedAccounts'));
 const Comments = lazyWithRetry(() => import('./pages/Settings/Comments/Comments'));
