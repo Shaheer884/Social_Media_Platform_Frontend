@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminService from '../services/adminService';
 import { getUploadUrl } from '../../../utils/mediaHelper';
+import { useAuth } from '../../../context/AuthContext';
 
 const Navbar = ({ onToggleSidebar, currentTheme, onThemeChange }) => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [admin, setAdmin] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -39,6 +41,7 @@ const Navbar = ({ onToggleSidebar, currentTheme, onThemeChange }) => {
 
   const handleLogout = () => {
     adminService.logout();
+    logout();
     navigate('/admin/login');
   };
 

@@ -70,8 +70,14 @@ api.interceptors.response.use(
 
       // Redirect to login if not already there
       const currentPath = window.location.pathname;
-      if (currentPath !== '/login' && currentPath !== '/register') {
-        window.location.href = '/login';
+      if (currentPath.startsWith('/admin')) {
+        if (currentPath !== '/admin/login') {
+          window.location.href = '/admin/login';
+        }
+      } else {
+        if (currentPath !== '/login' && currentPath !== '/register') {
+          window.location.href = '/login';
+        }
       }
     }
 
