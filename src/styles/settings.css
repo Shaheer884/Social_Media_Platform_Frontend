@@ -990,8 +990,8 @@
   
   .settings-avatar-wrapper {
     bottom: -50px;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 24px;
+    transform: none;
   }
   
   .settings-avatar-preview {
