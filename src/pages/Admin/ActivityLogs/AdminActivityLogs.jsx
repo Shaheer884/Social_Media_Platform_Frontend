@@ -30,7 +30,7 @@ const AdminActivityLogs = () => {
     fetchLogs();
   }, [page]);
 
-  const headings = ['Admin Name', 'Action Taken', 'Target Subject', 'Date & Time', 'IP Address'];
+  const headings = ['User / Admin Name', 'Action Taken', 'Target Subject', 'Date & Time', 'IP Address'];
 
   const getActionBadgeClass = (action) => {
     if (action.includes('Login')) return 'admin-badge-info';
@@ -68,7 +68,7 @@ const AdminActivityLogs = () => {
       <div className="admin-page-header">
         <div>
           <h1 className="admin-page-title">Activity Audit Logs</h1>
-          <p className="admin-page-desc">Comprehensive history of all administrative actions and logins</p>
+          <p className="admin-page-desc">Comprehensive history of all administrative actions and user logins</p>
         </div>
       </div>
 
