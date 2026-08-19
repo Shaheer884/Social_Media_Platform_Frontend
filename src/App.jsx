@@ -82,6 +82,7 @@ const AdminRecycleBin = lazyWithRetry(() => import('./pages/Admin/RecycleBin/Adm
 const AdminPlatformSettings = lazyWithRetry(() => import('./pages/Admin/PlatformSettings/AdminPlatformSettings'));
 const AdminTrending = lazyWithRetry(() => import('./pages/Admin/Trending/AdminTrending'));
 const AdminProfile = lazyWithRetry(() => import('./pages/Admin/Profile/AdminProfile'));
+const AdminTheme = lazyWithRetry(() => import('./pages/Admin/Theme/AdminTheme'));
 
 
 // Admin Route wrapper
@@ -386,6 +387,7 @@ const AppContent = () => {
           <Route path="/admin/platform-settings" element={<AdminRoute><AdminPlatformSettings /></AdminRoute>} />
           <Route path="/admin/trending" element={<AdminRoute><AdminTrending /></AdminRoute>} />
           <Route path="/admin/profile" element={<AdminRoute><AdminProfile /></AdminRoute>} />
+          <Route path="/admin/theme" element={<AdminRoute><AdminTheme /></AdminRoute>} />
 
 
           {/* Catch-all Fallback */}

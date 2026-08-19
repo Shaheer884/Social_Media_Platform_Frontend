@@ -28,7 +28,33 @@ body.dark-theme {
 
 /* --- Admin Panel Themes --- */
 
-/* Theme: Emerald Mint */
+/* Theme: Default Blue */
+.admin-container.theme-default {
+  --admin-primary: #3b82f6;
+  --admin-primary-dark: #2563eb;
+  --admin-primary-light: #eff6ff;
+  --admin-secondary: #0f172a;
+  --admin-bg: #f8fafc;
+  --admin-card-bg: #ffffff;
+  --admin-text: #1e293b;
+  --admin-text-muted: #64748b;
+  --admin-border: #cbd5e1;
+}
+
+/* Theme: Dark Midnight */
+.admin-container.theme-darkmidnight {
+  --admin-primary: #3b82f6;
+  --admin-primary-dark: #1d4ed8;
+  --admin-primary-light: #1e3a8a;
+  --admin-secondary: #0f172a;
+  --admin-bg: #020617;
+  --admin-card-bg: #0f172a;
+  --admin-text: #f8fafc;
+  --admin-text-muted: #94a3b8;
+  --admin-border: #1e293b;
+}
+
+/* Theme: Emerald Green */
 .admin-container.theme-emerald {
   --admin-primary: #10b981;
   --admin-primary-dark: #059669;
@@ -41,62 +67,17 @@ body.dark-theme {
   --admin-border: #d2f4e8;
 }
 
-/* Theme: Ocean Breeze */
-.admin-container.theme-ocean {
-  --admin-primary: #06b6d4;
-  --admin-primary-dark: #0891b2;
-  --admin-primary-light: #ecfeff;
-  --admin-secondary: #0f172a;
-  --admin-bg: #f0fafd;
+/* Theme: Royal Purple */
+.admin-container.theme-royalpurple {
+  --admin-primary: #8b5cf6;
+  --admin-primary-dark: #7c3aed;
+  --admin-primary-light: #ede9fe;
+  --admin-secondary: #1e1b4b;
+  --admin-bg: #faf5ff;
   --admin-card-bg: #ffffff;
-  --admin-text: #0f2d37;
-  --admin-text-muted: #4b6e7a;
-  --admin-border: #d2f4f8;
-}
-
-/* Theme: Crimson Midnight (Dark Theme) */
-.admin-container.theme-crimson {
-  --admin-primary: #f43f5e;
-  --admin-primary-dark: #fda4af;
-  --admin-primary-light: #4c0519;
-  --admin-secondary: #0f172a;
-  --admin-bg: #090d16;
-  --admin-card-bg: #131924;
-  --admin-text: #f1f5f9;
-  --admin-text-muted: #94a3b8;
-  --admin-border: #1e293b;
-}
-
-/* Theme: Cyberpunk Neon (Dark Theme) */
-.admin-container.theme-cyberpunk {
-  --admin-primary: #ec4899;
-  --admin-primary-dark: #fbcfe8;
-  --admin-primary-light: #3f0724;
-  --admin-secondary: #0f051d;
-  --admin-bg: #030008;
-  --admin-card-bg: #0c0514;
-  --admin-text: #39ffd0;
-  --admin-text-muted: #c084fc;
-  --admin-border: #220739;
-}
-
-.admin-container.theme-cyberpunk .admin-sidebar-link:hover,
-.admin-container.theme-cyberpunk .admin-sidebar-link.active {
-  background-color: var(--admin-primary);
-  color: #030008;
-}
-
-/* Theme: Nordic Ice */
-.admin-container.theme-nordic {
-  --admin-primary: #3b82f6;
-  --admin-primary-dark: #2563eb;
-  --admin-primary-light: #eff6ff;
-  --admin-secondary: #1e293b;
-  --admin-bg: #f1f5f9;
-  --admin-card-bg: #ffffff;
-  --admin-text: #0f172a;
-  --admin-text-muted: #475569;
-  --admin-border: #cbd5e1;
+  --admin-text: #2e1065;
+  --admin-text-muted: #581c87;
+  --admin-border: #f3e8ff;
 }
 
 /* Theme: Sunset Orange */
@@ -110,6 +91,97 @@ body.dark-theme {
   --admin-text: #431407;
   --admin-text-muted: #7c2d12;
   --admin-border: #ffedd5;
+}
+
+/* Theme: Crimson Red */
+.admin-container.theme-crimson {
+  --admin-primary: #ef4444;
+  --admin-primary-dark: #dc2626;
+  --admin-primary-light: #fee2e2;
+  --admin-secondary: #450a0a;
+  --admin-bg: #fef2f2;
+  --admin-card-bg: #ffffff;
+  --admin-text: #7f1d1d;
+  --admin-text-muted: #991b1b;
+  --admin-border: #fee2e2;
+}
+
+/* Theme: Sky Blue */
+.admin-container.theme-skyblue {
+  --admin-primary: #0ea5e9;
+  --admin-primary-dark: #0284c7;
+  --admin-primary-light: #e0f2fe;
+  --admin-secondary: #0c4a6e;
+  --admin-bg: #f0f9ff;
+  --admin-card-bg: #ffffff;
+  --admin-text: #0c4a6e;
+  --admin-text-muted: #0369a1;
+  --admin-border: #bae6fd;
+}
+
+/* Theme: Cyber Neon */
+.admin-container.theme-cyberpunk {
+  --admin-primary: #ec4899;
+  --admin-primary-dark: #fbcfe8;
+  --admin-primary-light: #3f0724;
+  --admin-secondary: #0f051d;
+  --admin-bg: #030008;
+  --admin-card-bg: #0c0514;
+  --admin-text: #39ffd0;
+  --admin-text-muted: #c084fc;
+  --admin-border: #220739;
+}
+
+/* Theme: Forest Dark */
+.admin-container.theme-forestdark {
+  --admin-primary: #059669;
+  --admin-primary-dark: #10b981;
+  --admin-primary-light: #064f3d;
+  --admin-secondary: #022c22;
+  --admin-bg: #021a14;
+  --admin-card-bg: #052e24;
+  --admin-text: #ecfdf5;
+  --admin-text-muted: #a7f3d0;
+  --admin-border: #064e3b;
+}
+
+/* Theme: Modern Gray */
+.admin-container.theme-moderngray {
+  --admin-primary: #4b5563;
+  --admin-primary-dark: #374151;
+  --admin-primary-light: #f3f4f6;
+  --admin-secondary: #1f2937;
+  --admin-bg: #f9fafb;
+  --admin-card-bg: #ffffff;
+  --admin-text: #111827;
+  --admin-text-muted: #4b5563;
+  --admin-border: #e5e7eb;
+}
+
+/* Theme: Coffee Brown */
+.admin-container.theme-coffeebrown {
+  --admin-primary: #b45309;
+  --admin-primary-dark: #92400e;
+  --admin-primary-light: #fef3c7;
+  --admin-secondary: #451a03;
+  --admin-bg: #fffbeb;
+  --admin-card-bg: #ffffff;
+  --admin-text: #451a03;
+  --admin-text-muted: #78350f;
+  --admin-border: #fde68a;
+}
+
+/* Theme: Premium Gold */
+.admin-container.theme-premiumgold {
+  --admin-primary: #cca43b;
+  --admin-primary-dark: #b8912e;
+  --admin-primary-light: #fdfbf7;
+  --admin-secondary: #1a160d;
+  --admin-bg: #fbfaf5;
+  --admin-card-bg: #ffffff;
+  --admin-text: #1a160d;
+  --admin-text-muted: #5c4e31;
+  --admin-border: #f1ede2;
 }
 
 /* Layout Wrapper */

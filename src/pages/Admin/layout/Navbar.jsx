@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import adminService from '../services/adminService';
 import { getUploadUrl } from '../../../utils/mediaHelper';
 import { useAuth } from '../../../context/AuthContext';
@@ -65,23 +65,36 @@ const Navbar = ({ onToggleSidebar, currentTheme, onThemeChange }) => {
       </div>
 
       <div className="admin-nav-right">
-        {/* Admin Theme Selector Dropdown */}
-        <div className="admin-theme-selector">
-          <select 
-            value={currentTheme} 
-            onChange={(e) => onThemeChange(e.target.value)}
-            className="admin-theme-select-dropdown"
-            title="Select Admin Theme"
-          >
-            <option value="default">💜 Default Violet</option>
-            <option value="emerald">💚 Emerald Mint</option>
-            <option value="ocean">💙 Ocean Breeze</option>
-            <option value="crimson">❤️ Crimson Midnight</option>
-            <option value="cyberpunk">💖 Cyberpunk Neon</option>
-            <option value="nordic">❄️ Nordic Ice</option>
-            <option value="sunset">🧡 Sunset Orange</option>
-          </select>
-        </div>
+        {/* Admin Theme Settings Link */}
+        <Link 
+          to="/admin/theme" 
+          className="admin-navbar-theme-link" 
+          title="Theme Settings"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '8px',
+            borderRadius: '50%',
+            color: 'var(--admin-text-muted)',
+            transition: 'all 0.2s',
+            marginRight: '12px',
+            backgroundColor: 'rgba(255,255,255,0.05)',
+            border: '1px solid var(--admin-border)'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.color = 'var(--admin-primary)';
+            e.currentTarget.style.backgroundColor = 'var(--admin-primary-light)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.color = 'var(--admin-text-muted)';
+            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.05)';
+          }}
+        >
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+          </svg>
+        </Link>
 
         <div className="admin-profile-container">
           <div className="admin-user-profile" onClick={() => setShowDropdown(!showDropdown)} title="Profile Menu">
