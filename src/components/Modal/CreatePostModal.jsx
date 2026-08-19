@@ -138,8 +138,8 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main', initialFiles
             showAlert('Please capture a valid image', 'Invalid File Type');
             return;
           }
-          if (file.size > 4 * 1024 * 1024) {
-            showAlert('Captured image is too large. Maximum size is 4MB due to server limitations.', 'File Too Large');
+          if (file.size > 10 * 1024 * 1024) {
+            showAlert('Captured image is too large. Maximum size is 10MB due to server limitations.', 'File Too Large');
             return;
           }
           setTempOriginalFile(file);
@@ -396,8 +396,8 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main', initialFiles
       return;
     }
 
-    if (file.size > 4 * 1024 * 1024) {
-      showAlert('Captured image is too large. Maximum size is 4MB due to server limitations.', 'File Too Large');
+    if (file.size > 10 * 1024 * 1024) {
+      showAlert('Captured image is too large. Maximum size is 10MB due to server limitations.', 'File Too Large');
       return;
     }
 
