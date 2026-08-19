@@ -42,7 +42,7 @@ const Navbar = ({ onToggleSidebar, currentTheme, onThemeChange }) => {
   const handleLogout = () => {
     adminService.logout();
     logout();
-    navigate('/admin/login');
+    navigate('/login');
   };
 
   const defaultAvatar = '/uploads/default-avatar.png';

@@ -30,8 +30,8 @@ adminApi.interceptors.response.use(
       localStorage.removeItem('adminUser');
       
       const path = window.location.pathname;
-      if (path !== '/admin/login') {
-        window.location.href = '/admin/login';
+      if (path !== '/login') {
+        window.location.href = '/login';
       }
     }
     const message = error.response?.data?.error || error.message || 'Admin API failed';

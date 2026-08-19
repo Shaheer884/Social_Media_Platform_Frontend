@@ -91,7 +91,7 @@ const AdminRoute = ({ children }) => {
   const adminUser = adminUserStr ? JSON.parse(adminUserStr) : null;
 
   if (!adminToken || !adminUser || adminUser.role !== 'admin') {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/login" replace />;
   }
   return children;
 };
@@ -374,7 +374,7 @@ const AppContent = () => {
           </Route>
 
           {/* Admin Routes */}
-          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/login" element={<Navigate to="/login" replace />} />
           <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
           <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
           <Route path="/admin/posts" element={<AdminRoute><AdminPosts /></AdminRoute>} />
