@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CustomDialogProvider } from './context/CustomDialogContext';
 import { PostsProvider } from './context/PostsContext';
@@ -101,6 +101,8 @@ const AdminRoute = ({ children }) => {
 // Protected Routes wrapper
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading, currentUser } = useAuth();
+  const location = useLocation();
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -109,7 +111,7 @@ const ProtectedRoute = ({ children }) => {
     );
   }
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
   if (currentUser && currentUser.role === 'admin') {
     return <Navigate to="/admin/dashboard" replace />;
@@ -230,6 +232,23 @@ const NotificationToast = () => {
 
 const AppContent = () => {
   const [isOfflineError, setIsOfflineError] = useState(false);
+  const navigate = useNavigate();
+
+  // Listen for dynamic in-app navigation events from background Service Worker click actions
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+
+    const handleNavigateMessage = (event) => {
+      if (event.data && event.data.type === 'NAVIGATE' && event.data.route) {
+        navigate(event.data.route);
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('message', handleNavigateMessage);
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleNavigateMessage);
+    };
+  }, [navigate]);
 
   // Sync theme configurations on startup
   useEffect(() => {

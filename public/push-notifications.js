@@ -27,7 +27,11 @@ self.addEventListener('push', (event) => {
     renotify: true,
     actions: data.actions || [],
     data: {
-      url: data.url || '/',
+      type: data.data?.type || 'general',
+      targetId: data.data?.targetId || null,
+      route: data.data?.route || '/',
+      notificationId: data.data?.notificationId || null,
+      createdAt: data.data?.createdAt || null,
       actionsUrls: data.data?.actionsUrls || {}
     }
   };
@@ -41,39 +45,49 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const action = event.action;
-  let urlToOpen = event.notification.data?.url || '/';
-
-  // If user clicked the 'Dismiss' action button
+  
   if (action === 'dismiss') {
     return;
   }
 
-  // If clicked a custom action button with a mapped URL
-  if (action && event.notification.data?.actionsUrls?.[action]) {
-    urlToOpen = event.notification.data.actionsUrls[action];
+  // Extract relative route and custom action buttons urls
+  let targetRoute = event.notification.data?.route || '/';
+  const actionsUrls = event.notification.data?.actionsUrls || {};
+
+  // If clicked a custom action button with a mapped relative URL
+  if (action && actionsUrls[action]) {
+    targetRoute = actionsUrls[action];
   }
 
-  const targetOrigin = new URL(self.location.origin).origin;
+  const origin = self.location.origin;
+  const absoluteUrl = new URL(targetRoute, origin).href;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       // 1. Search for any open window matching the application origin
       const matchingClient = windowClients.find((client) => {
-        return new URL(client.url).origin === targetOrigin;
+        try {
+          return new URL(client.url).origin === origin;
+        } catch (e) {
+          return false;
+        }
       });
 
-      // 2. If tab found, navigate it to target route and focus it
+      // 2. If tab found, focus it and tell the React app to navigate internally
       if (matchingClient) {
-        return matchingClient.navigate(urlToOpen).then((client) => {
-          if (client && 'focus' in client) {
-            return client.focus();
-          }
+        matchingClient.postMessage({
+          type: 'NAVIGATE',
+          route: targetRoute
         });
-      }
-
-      // 3. If no tab is open, launch a new window
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
+        
+        if ('focus' in matchingClient) {
+          return matchingClient.focus();
+        }
+      } else {
+        // 3. If no tab is open, launch a new window directly on the absolute URL
+        if (clients.openWindow) {
+          return clients.openWindow(absoluteUrl);
+        }
       }
     })
   );

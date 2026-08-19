@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Spinner from '../../components/Loader/Spinner';
 import authBg from '../../assets/connecthub_auth_bg.png';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, isAuthenticated, currentUser } = useAuth();
 
   const [emailOrUsername, setEmailOrUsername] = useState('');
@@ -35,10 +36,12 @@ const Login = () => {
       if (currentUser?.role === 'admin') {
         navigate('/admin/dashboard');
       } else {
-        navigate('/');
+        const from = location.state?.from?.pathname || '/';
+        const redirectUrl = from === '/login' ? '/' : from;
+        navigate(redirectUrl, { replace: true });
       }
     }
-  }, [isAuthenticated, currentUser, navigate]);
+  }, [isAuthenticated, currentUser, navigate, location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -63,7 +66,9 @@ const Login = () => {
       if (res.success && res.data && res.data.role === 'admin') {
         navigate('/admin/dashboard');
       } else {
-        navigate('/');
+        const from = location.state?.from?.pathname || '/';
+        const redirectUrl = from === '/login' ? '/' : from;
+        navigate(redirectUrl, { replace: true });
       }
     } catch (err) {
       setError(err.message || 'Invalid credentials. Please try again.');
