@@ -14,6 +14,7 @@ import './styles/pwa.css';
 import OfflineStatusBanner from './components/PWA/OfflineStatusBanner';
 import UpdatePrompt from './components/PWA/UpdatePrompt';
 import PWAInstallPrompt from './components/PWA/PWAInstallPrompt';
+import NotificationPermission from './push/NotificationPermission';
 import Offline from './pages/Offline/Offline';
 
 
@@ -331,6 +332,7 @@ const AppContent = () => {
       <OfflineStatusBanner />
       <UpdatePrompt />
       <PWAInstallPrompt />
+      <NotificationPermission />
       <NotificationToast />
       <Suspense fallback={
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>

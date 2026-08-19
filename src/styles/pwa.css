@@ -1149,3 +1149,157 @@
   max-width: 240px;
   line-height: 1.4;
 }
+
+/* 6. PWA Push Notification Permission Prompt Overlay */
+.pwa-notification-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100000; /* Stays above everything */
+  padding: 20px;
+  animation: pwaFadeIn 0.25s ease-out;
+}
+
+.pwa-notification-modal {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  padding: 28px 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  animation: pwaScaleUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pwa-notification-icon-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.pwa-notification-ring-icon {
+  font-size: 2.2rem;
+  animation: bellSway 2.5s infinite ease-in-out;
+  transform-origin: top center;
+}
+
+.pwa-notification-ping-dot {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 12px;
+  height: 12px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid var(--card-bg);
+  animation: pingPulse 1.5s infinite ease-in-out;
+}
+
+.pwa-notification-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text-main);
+}
+
+.pwa-notification-desc {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 26px;
+  line-height: 1.55;
+  text-align: center;
+  max-width: 320px;
+}
+
+.pwa-notification-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.pwa-notification-btn-confirm {
+  flex: 1;
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.pwa-notification-btn-confirm:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.pwa-notification-btn-confirm:active {
+  transform: translateY(0);
+}
+
+.pwa-notification-btn-cancel {
+  flex: 1;
+  background-color: var(--input-bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.pwa-notification-btn-cancel:hover {
+  background-color: var(--border-color);
+  color: var(--text-main);
+}
+
+/* Animations */
+@keyframes pwaFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pwaScaleUp {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bellSway {
+  0%, 100% { transform: rotate(0); }
+  10%, 30% { transform: rotate(15deg); }
+  20%, 40% { transform: rotate(-15deg); }
+  50% { transform: rotate(0); }
+}
+
+@keyframes pingPulse {
+  0% { transform: scale(0.9); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.8; }
+  100% { transform: scale(0.9); opacity: 1; }
+}
