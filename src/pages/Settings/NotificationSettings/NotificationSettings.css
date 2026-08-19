@@ -57,6 +57,7 @@
   justify-content: space-between;
   padding: 14px 0;
   border-bottom: 1px dashed var(--border-color);
+  gap: 16px;
 }
 
 .settings-preference-row:last-child {
@@ -69,6 +70,8 @@
   flex-direction: column;
   gap: 4px;
   padding-right: 16px;
+  flex: 1;
+  min-width: 0;
 }
 
 .settings-preference-title {
@@ -78,12 +81,21 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .settings-preference-desc {
   font-size: 0.82rem;
   color: var(--text-muted);
   line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Prevent toggles and security badges from shrinking on mobile screens */
+.settings-switch,
+.security-always-enabled {
+  flex-shrink: 0;
 }
 
 /* Custom Success Feedback Notification Toast styling inside settings card */
