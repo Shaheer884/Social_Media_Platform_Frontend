@@ -54,7 +54,7 @@ const BG_PRESETS = [
   { name: 'midnight', background: 'linear-gradient(135deg, #0f2027 0%, #2c5364 100%)', color: '#ffffff' }
 ];
 
-const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
+const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main', initialFiles = null }) => {
   const { currentUser } = useAuth();
   const { publishPost } = usePosts();
   const { showAlert, showConfirm } = useDialog();
@@ -127,6 +127,77 @@ const CreatePostModal = ({ isOpen, onClose, initialScreen = 'main' }) => {
       setShowBgSelector(false);
     }
   }, [isOpen, initialScreen]);
+
+  // Process files passed from parent (e.g. Home screen action buttons)
+  useEffect(() => {
+    if (isOpen && initialFiles) {
+      if (initialFiles.triggerSource === 'camera') {
+        const file = initialFiles.files?.[0];
+        if (file) {
+          if (!file.type.startsWith('image/')) {
+            showAlert('Please capture a valid image', 'Invalid File Type');
+            return;
+          }
+          if (file.size > 4 * 1024 * 1024) {
+            showAlert('Captured image is too large. Maximum size is 4MB due to server limitations.', 'File Too Large');
+            return;
+          }
+          setTempOriginalFile(file);
+          setCropperFileType(file.type);
+          setCropperFileName(file.name);
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            setCropperSrc(ev.target.result);
+            setCropperOpen(true);
+          };
+          reader.readAsDataURL(file);
+        }
+      } else if (initialFiles.triggerSource === 'gallery') {
+        const files = initialFiles.files || [];
+        if (files.length > 0) {
+          const processFiles = async () => {
+            if (chosenFiles.length + files.length > 10) {
+              showAlert('You can upload a maximum of 10 media files.', 'File Count Limit');
+              return;
+            }
+            const validFiles = [];
+            const validPreviews = [];
+            for (const file of files) {
+              const val = await validateFile(file, 'post');
+              if (!val.valid) {
+                showAlert(val.error, 'Validation Error');
+                return;
+              }
+              const isVideo = file.type.startsWith('video/');
+              validFiles.push(file);
+              validPreviews.push({
+                url: URL.createObjectURL(file),
+                type: isVideo ? 'video' : 'image',
+                name: file.name,
+                originalFile: isVideo ? null : file
+              });
+            }
+            if (validFiles.length === 1 && validFiles[0].type.startsWith('image/')) {
+              const file = validFiles[0];
+              setTempOriginalFile(file);
+              setCropperFileType(file.type);
+              setCropperFileName(file.name);
+              const reader = new FileReader();
+              reader.onload = (ev) => {
+                setCropperSrc(ev.target.result);
+                setCropperOpen(true);
+              };
+              reader.readAsDataURL(file);
+            } else {
+              setChosenFiles((prev) => [...prev, ...validFiles]);
+              setImagePreviews((prev) => [...prev, ...validPreviews]);
+            }
+          };
+          processFiles();
+        }
+      }
+    }
+  }, [isOpen, initialFiles, chosenFiles.length, showAlert]);
 
   // Reset background if media is added
   useEffect(() => {

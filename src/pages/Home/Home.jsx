@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import { useAuth } from '../../context/AuthContext';
@@ -23,7 +23,33 @@ const Home = () => {
 
   const [createPostModalOpen, setCreatePostModalOpen] = useState(false);
   const [initialModalScreen, setInitialModalScreen] = useState('main');
+  const [initialFiles, setInitialFiles] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
+
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
+
+  const handleHomeCameraCapture = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setInitialFiles({ files: [file], triggerSource: 'camera', timestamp: Date.now() });
+      setCreatePostModalOpen(true);
+    }
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
+    }
+  };
+
+  const handleHomeGallerySelect = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      setInitialFiles({ files, triggerSource: 'gallery', timestamp: Date.now() });
+      setCreatePostModalOpen(true);
+    }
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = '';
+    }
+  };
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   // Birthday modal and confetti state
@@ -138,8 +164,7 @@ const Home = () => {
           <button
             className="quick-post-action-item"
             onClick={() => {
-              setInitialModalScreen('main');
-              setCreatePostModalOpen(true);
+              if (cameraInputRef.current) cameraInputRef.current.click();
             }}
             title="Camera"
           >
@@ -152,8 +177,7 @@ const Home = () => {
           <button
             className="quick-post-action-item"
             onClick={() => {
-              setInitialModalScreen('main');
-              setCreatePostModalOpen(true);
+              if (galleryInputRef.current) galleryInputRef.current.click();
             }}
             title="Photo/Video"
           >
@@ -261,10 +285,32 @@ const Home = () => {
         </div>
       )}
 
+      {/* Hidden inputs to trigger camera/gallery directly from home page action buttons */}
+      <input
+        type="file"
+        ref={cameraInputRef}
+        style={{ display: 'none' }}
+        accept="image/*"
+        capture="environment"
+        onChange={handleHomeCameraCapture}
+      />
+      <input
+        type="file"
+        ref={galleryInputRef}
+        style={{ display: 'none' }}
+        accept="image/*,video/*"
+        multiple
+        onChange={handleHomeGallerySelect}
+      />
+
       <CreatePostModal
         isOpen={createPostModalOpen}
-        onClose={() => setCreatePostModalOpen(false)}
+        onClose={() => {
+          setCreatePostModalOpen(false);
+          setInitialFiles(null);
+        }}
         initialScreen={initialModalScreen}
+        initialFiles={initialFiles}
       />
 
       {showBirthdayConfetti && <BirthdayConfetti />}
