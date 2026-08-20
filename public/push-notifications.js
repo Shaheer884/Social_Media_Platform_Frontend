@@ -19,7 +19,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: data.body || 'You have a new update on ConnectHub!',
     icon: data.icon || '/icons/icon-192x192.png',
-    badge: data.badge || '/icons/icon-72x72.png',
+    badge: data.badge || '/icons/badge-72x72.png',
     image: data.image || undefined,
     timestamp: data.timestamp || Date.now(),
     vibrate: [100, 50, 100],

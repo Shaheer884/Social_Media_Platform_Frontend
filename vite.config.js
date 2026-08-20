@@ -52,6 +52,10 @@ export default defineConfig({
           { src: '/icons/maskable-icon-384x384.png', sizes: '384x384', type: 'image/png', purpose: 'maskable' },
           { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
           { src: '/icons/maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+        ],
+        badges: [
+          { src: '/icons/badge-72x72.png', sizes: '72x72', type: 'image/png', purpose: 'monochrome' },
+          { src: '/icons/badge-96x96.png', sizes: '96x96', type: 'image/png', purpose: 'monochrome' }
         ]
       },
       workbox: {
