@@ -25,8 +25,9 @@
   border-radius: 24px;
   width: 100%;
   max-width: 480px;
+  max-height: 92vh;
+  overflow-y: auto;
   box-shadow: var(--shadow-lg), 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -407,11 +408,42 @@
   }
 }
 
-@media (min-width: 481px) and (max-width: 768px) {
-  .qr-modal-card,
-  .qr-scanner-card {
-    max-width: 440px;
-    border-radius: 24px;
+@media (min-width: 481px) {
+  .qr-modal-card {
+    max-width: 410px;
+  }
+  
+  .qr-card-body {
+    padding: 20px 24px 16px;
+  }
+  
+  .qr-user-profile {
+    margin-bottom: 12px;
+    gap: 4px;
+  }
+  
+  .qr-user-avatar {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .qr-modal-title {
+    font-size: 1rem;
+    margin-top: 6px;
+  }
+  
+  .qr-modal-desc {
+    font-size: 0.8rem;
+    margin: 4px 0 12px;
+  }
+  
+  .qr-code-wrapper {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .qr-scan-footer-text {
+    margin-bottom: 16px;
   }
   
   .qr-actions-grid {
@@ -419,8 +451,9 @@
   }
 }
 
-@media (min-width: 769px) {
-  .qr-actions-grid {
-    grid-template-columns: 1fr 1fr;
+@media (min-width: 481px) and (max-width: 768px) {
+  .qr-scanner-card {
+    max-width: 440px;
+    border-radius: 24px;
   }
 }

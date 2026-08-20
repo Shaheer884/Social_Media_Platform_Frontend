@@ -145,7 +145,7 @@ const QRModal = ({ isOpen, onClose, user }) => {
           </p>
 
           {/* QR Code Canvas */}
-          <ProfileQRCode value={profileUrl} size={180} />
+          <ProfileQRCode value={profileUrl} size={160} />
           
           <span className="qr-scan-footer-text">Scan to view my ConnectHub profile</span>
 
