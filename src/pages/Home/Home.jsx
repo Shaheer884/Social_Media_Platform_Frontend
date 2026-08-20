@@ -279,7 +279,7 @@ const Home = () => {
 
       {page < totalPages && (
         <div style={{ textAlign: 'center', margin: '24px 0' }} id="load-more-container">
-          <button className="btn btn-secondary" onClick={handleLoadMore} disabled={loading}>
+          <button className="btn btn-primary" onClick={handleLoadMore} disabled={loading}>
             {loading ? <Spinner size="16px" /> : 'Load More'}
           </button>
         </div>
