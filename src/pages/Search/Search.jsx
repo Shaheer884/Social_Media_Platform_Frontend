@@ -6,11 +6,13 @@ import userService from '../../services/userService';
 import Spinner from '../../components/Loader/Spinner';
 import PostCard from '../../components/PostCard/PostCard';
 import { getUploadUrl } from '../../utils/mediaHelper';
+import QRScanner from '../../components/ProfileQR/QRScanner';
 
 const Search = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const query = searchParams.get('q') || '';
   const [users, setUsers] = useState([]);
@@ -68,8 +70,20 @@ const Search = () => {
 
   return (
     <Layout>
-      <div className="feed-header">
-        <h2 className="feed-title">Search Results for "{query}"</h2>
+      <div className="feed-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2 className="feed-title" style={{ margin: 0 }}>
+          {query ? `Search Results for "${query}"` : 'Search ConnectHub'}
+        </h2>
+        <button
+          className="btn btn-secondary"
+          onClick={() => setScannerOpen(true)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', padding: '6px 14px' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2 2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg> Scan QR
+        </button>
       </div>
 
       {/* Tabs Switcher */}
@@ -255,6 +269,7 @@ const Search = () => {
           </>
         )}
       </div>
+      <QRScanner isOpen={scannerOpen} onClose={() => setScannerOpen(false)} />
     </Layout>
   );
 };

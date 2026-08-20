@@ -370,6 +370,7 @@ const AppContent = () => {
           {/* Protected Routes */}
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/profile/:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/@:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/profile/:username/memories" element={<ProtectedRoute><BirthdayMemoriesPage /></ProtectedRoute>} />
           <Route path="/post/:id" element={<ProtectedRoute><PostDetail /></ProtectedRoute>} />
           <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />

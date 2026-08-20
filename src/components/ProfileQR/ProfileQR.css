@@ -1,0 +1,426 @@
+/* Premium QR Profile Sharing System Stylesheet */
+
+/* Modal Backdrop */
+.qr-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 16px;
+  animation: qrFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Modal Content Card */
+.qr-modal-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: var(--shadow-lg), 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  animation: qrScaleUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Premium Gradient Header Accent */
+.qr-card-gradient-header {
+  height: 6px;
+  width: 100%;
+  background: var(--primary-gradient);
+}
+
+.qr-card-body {
+  padding: 32px 24px 24px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* User Info Section */
+.qr-user-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 8px;
+}
+
+.qr-user-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--white);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  background-color: var(--input-bg);
+}
+
+.qr-user-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.qr-user-username {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background-color: var(--input-bg);
+  padding: 4px 12px;
+  border-radius: 99px;
+}
+
+.qr-modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-top: 12px;
+}
+
+.qr-modal-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 320px;
+  margin: 6px 0 20px;
+}
+
+/* QR Code Container Styling */
+.qr-code-wrapper {
+  background: var(--white);
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05), inset 0 0 0 1px rgba(0, 0, 0, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  position: relative;
+  transition: transform 0.25s ease;
+}
+
+.qr-code-wrapper:hover {
+  transform: scale(1.02);
+}
+
+.qr-scan-footer-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+
+/* QR Card Actions Grid */
+.qr-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.qr-action-btn {
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.2s ease;
+}
+
+.qr-action-btn-primary {
+  background: var(--primary-gradient);
+  color: var(--white);
+}
+
+.qr-action-btn-primary:hover {
+  background: var(--primary-gradient-hover);
+  transform: translateY(-1px);
+}
+
+.qr-action-btn-secondary {
+  background-color: var(--input-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+}
+
+.qr-action-btn-secondary:hover {
+  background-color: var(--border-color);
+}
+
+.qr-action-btn-close {
+  background-color: transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  padding: 8px;
+  width: 100%;
+}
+
+.qr-action-btn-close:hover {
+  color: var(--text-main);
+}
+
+/* Premium QR Scanner Interface */
+.qr-scanner-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 500px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  animation: qrScaleUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.qr-scanner-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.qr-scanner-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.qr-scanner-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+
+.qr-scanner-close-btn:hover {
+  color: var(--text-main);
+}
+
+.qr-scanner-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Camera Target Box and Preview */
+.qr-scanner-view-container {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 16px;
+  overflow: hidden;
+  background-color: #000;
+  position: relative;
+  border: 2px solid var(--border-color);
+}
+
+.qr-scanner-reader-div {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.qr-scanner-reader-div video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Custom Overlay Laser / Target */
+.qr-scanner-target-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.qr-scanner-aimbox {
+  width: 65%;
+  height: 65%;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-radius: 16px;
+  position: relative;
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.5);
+}
+
+/* Laser scan line effect */
+.qr-scanner-laser-line {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  height: 3px;
+  background-color: var(--purple);
+  box-shadow: 0 0 12px 2px var(--purple);
+  animation: qrLaserScan 2s linear infinite;
+}
+
+.qr-scanner-permission-denied {
+  padding: 40px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.qr-scanner-permission-icon {
+  font-size: 3rem;
+}
+
+.qr-scanner-permission-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.qr-scanner-permission-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.qr-scanner-instructions {
+  margin-top: 16px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Toast alert inside modal */
+.qr-scanner-alert {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-top: 12px;
+  text-align: center;
+  width: 100%;
+}
+
+/* Animations */
+@keyframes qrFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes qrScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes qrLaserScan {
+  0% {
+    top: 5%;
+  }
+  50% {
+    top: 95%;
+  }
+  100% {
+    top: 5%;
+  }
+}
+
+/* Responsive Scaling and Accessibility Focus Layout */
+@media (max-width: 480px) {
+  .qr-modal-overlay {
+    padding: 0;
+  }
+  
+  .qr-modal-card,
+  .qr-scanner-card {
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+    border: none;
+    justify-content: center;
+  }
+
+  .qr-card-body {
+    padding: 24px 20px;
+  }
+
+  .qr-scanner-body {
+    padding: 16px;
+    height: calc(100% - 65px);
+    justify-content: center;
+  }
+
+  .qr-scanner-view-container {
+    max-width: 320px;
+  }
+
+  .qr-actions-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
+    padding: 0 10px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .qr-modal-card,
+  .qr-scanner-card {
+    max-width: 440px;
+    border-radius: 24px;
+  }
+  
+  .qr-actions-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 769px) {
+  .qr-actions-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

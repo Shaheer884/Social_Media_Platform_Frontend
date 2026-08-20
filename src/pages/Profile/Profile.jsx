@@ -16,6 +16,7 @@ import ImageCropperModal from '../../components/Modal/ImageCropperModal';
 import birthdayService from '../../services/birthdayService';
 import GiftModal from '../../components/Birthday/GiftModal';
 import { getCacheSize, clearAppCache } from '../../utils/cacheManager';
+import QRModal from '../../components/ProfileQR/QRModal';
 
 
 const Profile = () => {
@@ -33,6 +34,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [followListModalOpen, setFollowListModalOpen] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
   const [followListType, setFollowListType] = useState('followers'); // 'followers' or 'following'
   const [followListUsers, setFollowListUsers] = useState([]);
   const [loadingFollowList, setLoadingFollowList] = useState(false);
@@ -444,6 +446,16 @@ const Profile = () => {
                 <span>📸</span> Memories
               </button>
               <button className="btn btn-secondary" onClick={() => navigate('/settings')}>Settings</button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setQrModalOpen(true)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
+                  <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+                  <line x1="7" y1="7" x2="7.01" y2="7" /><line x1="17" y1="7" x2="17.01" y2="7" /><line x1="17" y1="17" x2="17.01" y2="17" /><line x1="7" y1="17" x2="7.01" y2="17" />
+                </svg> My QR Code
+              </button>
             </>
           ) : (
             <button className={followBtnClass} onClick={handleFollowToggle} disabled={followLoading}>
@@ -943,6 +955,14 @@ const Profile = () => {
           onClose={() => setGiftModalOpen(false)}
           recipientName={u.fullName}
           onSendGift={handleSendGift}
+        />
+      )}
+
+      {isOwnProfile && (
+        <QRModal
+          isOpen={qrModalOpen}
+          onClose={() => setQrModalOpen(false)}
+          user={profileUser}
         />
       )}
     </Layout>

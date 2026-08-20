@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import QRScanner from '../../components/ProfileQR/QRScanner';
 
 const SettingsHome = () => {
+  const [scannerOpen, setScannerOpen] = useState(false);
   const settingsCategories = [
     {
       path: '/settings/account',
@@ -56,6 +58,14 @@ const SettingsHome = () => {
       title: 'Logout',
       desc: 'Safely terminate your active user session and clear cache data.',
       icon: '🚪'
+    },
+    {
+      path: '#scan',
+      title: 'Scan QR Code',
+      desc: 'Open your camera to scan another user\'s ConnectHub profile QR Code.',
+      icon: '📷',
+      isCustomAction: true,
+      onClick: () => setScannerOpen(true)
     }
   ];
 
@@ -65,19 +75,41 @@ const SettingsHome = () => {
         <p className="settings-card-desc">Select a setting category below to configure your preferences.</p>
       </div>
       <div className="settings-home-menu">
-        {settingsCategories.map((item) => (
-          <Link key={item.path} to={item.path} className="settings-home-item">
-            <div className="settings-home-item-left">
-              <div className="settings-home-icon-circle">{item.icon}</div>
-              <div className="settings-home-details">
-                <span className="settings-home-title">{item.title}</span>
-                <span className="settings-home-desc">{item.desc}</span>
+        {settingsCategories.map((item) => {
+          if (item.isCustomAction) {
+            return (
+              <div 
+                key={item.path} 
+                className="settings-home-item" 
+                onClick={item.onClick}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="settings-home-item-left">
+                  <div className="settings-home-icon-circle">{item.icon}</div>
+                  <div className="settings-home-details">
+                    <span className="settings-home-title">{item.title}</span>
+                    <span className="settings-home-desc">{item.desc}</span>
+                  </div>
+                </div>
+                <span className="settings-home-arrow">➔</span>
               </div>
-            </div>
-            <span className="settings-home-arrow">➔</span>
-          </Link>
-        ))}
+            );
+          }
+          return (
+            <Link key={item.path} to={item.path} className="settings-home-item">
+              <div className="settings-home-item-left">
+                <div className="settings-home-icon-circle">{item.icon}</div>
+                <div className="settings-home-details">
+                  <span className="settings-home-title">{item.title}</span>
+                  <span className="settings-home-desc">{item.desc}</span>
+                </div>
+              </div>
+              <span className="settings-home-arrow">➔</span>
+            </Link>
+          );
+        })}
       </div>
+      <QRScanner isOpen={scannerOpen} onClose={() => setScannerOpen(false)} />
     </div>
   );
 };
