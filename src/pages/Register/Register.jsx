@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Spinner from '../../components/Loader/Spinner';
 import authBg from '../../assets/connecthub_auth_bg.png';
 
 const Register = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { register, isAuthenticated } = useAuth();
 
   const [fullName, setFullName] = useState('');
@@ -34,9 +35,11 @@ const Register = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      const from = location.state?.from?.pathname || '/';
+      const redirectUrl = from === '/register' || from === '/login' ? '/' : from;
+      navigate(redirectUrl, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location.state]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,7 +89,9 @@ const Register = () => {
         email: trimmedEmail,
         password
       });
-      navigate('/');
+      const from = location.state?.from?.pathname || '/';
+      const redirectUrl = from === '/register' || from === '/login' ? '/' : from;
+      navigate(redirectUrl, { replace: true });
     } catch (err) {
       setError(err.message || 'Registration failed. Username or email might be taken.');
       setLoading(false);

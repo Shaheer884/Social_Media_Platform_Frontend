@@ -4,6 +4,9 @@ const userService = {
   getProfile(userIdOrUsername) {
     return api.get(`/users/${userIdOrUsername}`);
   },
+  getPublicProfile(username) {
+    return api.get(`/users/profile/username/${username}`);
+  },
   updateProfile(userId, profileData) {
     return api.put(`/users/${userId}`, profileData);
   },

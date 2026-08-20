@@ -93,6 +93,10 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
   }, [commentsOpen, post._id]);
 
   const handleLikeClick = (e) => {
+    if (!currentUser) {
+      navigate('/login', { state: { from: { pathname: window.location.pathname } } });
+      return;
+    }
     // If clicking directly on the counter text, trigger list modal (if provided)
     if (e.target.classList.contains('like-count') && onLikesCountClick) {
       e.stopPropagation();
@@ -104,6 +108,10 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
 
   const handleSaveClick = (e) => {
     e.stopPropagation();
+    if (!currentUser) {
+      navigate('/login', { state: { from: { pathname: window.location.pathname } } });
+      return;
+    }
     toggleSave(post._id, post.isSaved);
   };
 
@@ -409,11 +417,22 @@ const PostCard = ({ post, isDetailPage = false, onLikesCountClick }) => {
             <input
               ref={commentInputRef}
               type="text"
-              placeholder="Write a comment..."
+              placeholder={currentUser ? "Write a comment..." : "Log in to comment..."}
               className="comment-composer-input"
               value={commentText}
               maxLength={200}
-              onChange={(e) => setCommentText(e.target.value)}
+              onChange={(e) => {
+                if (!currentUser) {
+                  navigate('/login', { state: { from: { pathname: window.location.pathname } } });
+                  return;
+                }
+                setCommentText(e.target.value);
+              }}
+              onFocus={() => {
+                if (!currentUser) {
+                  navigate('/login', { state: { from: { pathname: window.location.pathname } } });
+                }
+              }}
               onKeyDown={handleCommentSubmit}
               style={isDetailPage ? { padding: '10px 16px' } : {}}
             />

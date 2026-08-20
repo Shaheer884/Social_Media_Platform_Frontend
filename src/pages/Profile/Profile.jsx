@@ -23,7 +23,7 @@ const Profile = () => {
   const { username } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { currentUser, updateLocalUser, logout } = useAuth();
+  const { currentUser, updateLocalUser, logout, isAuthenticated } = useAuth();
   const { toggleLike } = usePosts();
   const { showAlert, showConfirm } = useDialog();
 
@@ -68,40 +68,57 @@ const Profile = () => {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const res = await userService.getProfile(profileIdOrUsername);
+      let res;
+      if (isAuthenticated) {
+        res = await userService.getProfile(profileIdOrUsername);
+      } else {
+        res = await userService.getPublicProfile(profileIdOrUsername);
+      }
       if (res.success) {
-        setProfileUser(res.data);
+        if (isAuthenticated) {
+          setProfileUser(res.data);
+        } else {
+          setProfileUser(res.data.user);
+          setProfilePosts(res.data.posts);
+          setLoadingPosts(false);
+        }
         setIsCachedProfileData(false);
-        // Cache this profile user
-        localStorage.setItem('connecthub_cached_profile_user', JSON.stringify(res.data));
+        if (isAuthenticated) {
+          // Cache this profile user
+          localStorage.setItem('connecthub_cached_profile_user', JSON.stringify(res.data));
+        }
       }
     } catch (err) {
       console.error(err);
 
-      // Attempt to load from offline cache
-      const cachedUserStr = localStorage.getItem('connecthub_cached_profile_user');
-      if (cachedUserStr) {
-        try {
-          const cachedUser = JSON.parse(cachedUserStr);
-          // Check if the requested user is the cached user
-          const isMatch = cachedUser._id === profileIdOrUsername || 
-                          cachedUser.username === profileIdOrUsername || 
-                          (!profileIdOrUsername && cachedUser._id === currentUser?._id);
-          
-          if (isMatch) {
-            setProfileUser(cachedUser);
-            setIsCachedProfileData(true);
-            console.log('Loaded profile from offline cache');
-            return;
+      if (isAuthenticated) {
+        // Attempt to load from offline cache
+        const cachedUserStr = localStorage.getItem('connecthub_cached_profile_user');
+        if (cachedUserStr) {
+          try {
+            const cachedUser = JSON.parse(cachedUserStr);
+            // Check if the requested user is the cached user
+            const isMatch = cachedUser._id === profileIdOrUsername || 
+                            cachedUser.username === profileIdOrUsername || 
+                            (!profileIdOrUsername && cachedUser._id === currentUser?._id);
+            
+            if (isMatch) {
+              setProfileUser(cachedUser);
+              setIsCachedProfileData(true);
+              console.log('Loaded profile from offline cache');
+              return;
+            }
+          } catch (e) {
+            // Ignore
           }
-        } catch (e) {
-          // Ignore
         }
-      }
 
-      // If offline and request failed, dispatch the offline error to trigger fallback page
-      if (!navigator.onLine && err.message !== 'OFFLINE_QUEUED') {
-        window.dispatchEvent(new Event('api-offline-error'));
+        // If offline and request failed, dispatch the offline error to trigger fallback page
+        if (!navigator.onLine && err.message !== 'OFFLINE_QUEUED') {
+          window.dispatchEvent(new Event('api-offline-error'));
+        }
+      } else {
+        setProfileUser(null);
       }
     } finally {
       setLoading(false);
@@ -109,10 +126,12 @@ const Profile = () => {
   };
 
   const fetchProfilePosts = async () => {
+    if (!isAuthenticated) return; // Posts already loaded during public fetchProfile
     if (!profileUser?._id) return;
     setLoadingPosts(true);
     try {
       const res = await postService.getUserPosts(profileUser._id);
+
       if (res.success) {
         setProfilePosts(res.data);
         // Cache posts if they belong to our cached user
@@ -399,16 +418,27 @@ const Profile = () => {
   if (!profileUser) {
     return (
       <Layout>
-        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--danger)' }}>
-          <h3>Profile not found</h3>
-          <button className="btn btn-secondary" onClick={() => navigate('/')} style={{ marginTop: '16px' }}>Go Home</button>
+        <div className="card" style={{ padding: '60px 40px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+          <div style={{ fontSize: '4.5rem', filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.1))' }}>🔍</div>
+          <h2 style={{ color: 'var(--text-main)', margin: 0, fontSize: '1.8rem', fontWeight: '700' }}>User Not Found</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1rem', margin: 0, maxWidth: '360px', lineHeight: '1.5' }}>
+            This profile does not exist or has been removed. Check the spelling or try searching.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+            <button className="btn btn-secondary" onClick={() => navigate(-1)} style={{ padding: '10px 24px', fontWeight: 600 }}>
+              Back
+            </button>
+            <button className="btn btn-primary" onClick={() => navigate('/')} style={{ padding: '10px 24px', fontWeight: 600 }}>
+              Go Home
+            </button>
+          </div>
         </div>
       </Layout>
     );
   }
 
   const u = profileUser;
-  const showPrivateMedia = !u.isPrivate || isOwnProfile || u.relationshipStatus === 'friends';
+  const showPrivateMedia = !u.isPrivate || isOwnProfile || u.relationshipStatus === 'friends' || u.relationshipStatus === 'following' || !isAuthenticated;
   const cover = getUploadUrl(showPrivateMedia ? (u.coverPhoto || '/uploads/default-cover.png') : '/uploads/default-cover.png');
   const avatar = getUploadUrl(showPrivateMedia ? (u.profilePicture || '/uploads/default-avatar.png') : '/uploads/default-avatar.png');
   const joinDate = new Date(u.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
@@ -447,7 +477,24 @@ const Profile = () => {
         </div>
 
         <div className="profile-actions-wrapper" style={{ display: 'flex', gap: '8px', position: 'relative' }}>
-          {isOwnProfile ? (
+          {!isAuthenticated ? (
+            <div className="profile-guest-actions" style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => navigate('/login', { state: { from: window.location } })}
+                style={{ padding: '8px 16px', fontSize: '0.9rem', fontWeight: '600' }}
+              >
+                Login
+              </button>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => navigate('/register', { state: { from: window.location } })}
+                style={{ padding: '8px 16px', fontSize: '0.9rem', fontWeight: '600' }}
+              >
+                Create Account
+              </button>
+            </div>
+          ) : isOwnProfile ? (
             <>
               {/* Desktop/Tablet view: shown on wide screens */}
               <div className="profile-actions-desktop">
@@ -542,8 +589,25 @@ const Profile = () => {
         </div>
 
         <div className="profile-details-section">
-          <h1 className="profile-fullname" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <h1 className="profile-fullname" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {u.fullName}
+            {u.isVerified && (
+              <span className="verified-badge" style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'var(--purple)',
+                color: '#fff',
+                borderRadius: '50%',
+                width: '18px',
+                height: '18px',
+                fontSize: '0.7rem',
+                fontWeight: 'bold',
+                lineHeight: 1
+              }} title="Verified User">
+                ✓
+              </span>
+            )}
             {isBirthdayToday && (
               <span style={{
                 backgroundColor: 'rgba(236, 72, 153, 0.1)',
@@ -610,11 +674,21 @@ const Profile = () => {
               <div className="profile-stat-value">{u.postCount}</div>
               <div className="profile-stat-label">Posts</div>
             </div>
-            <div className="profile-stat-box" id="profile-following-stat" onClick={() => openFollowModal('following')}>
+            <div 
+              className="profile-stat-box" 
+              id="profile-following-stat" 
+              onClick={isAuthenticated ? () => openFollowModal('following') : undefined}
+              style={{ cursor: isAuthenticated ? 'pointer' : 'default' }}
+            >
               <div className="profile-stat-value" style={{ color: 'var(--purple)' }}>{u.followingCount}</div>
               <div className="profile-stat-label">Following</div>
             </div>
-            <div className="profile-stat-box" id="profile-followers-stat" onClick={() => openFollowModal('followers')}>
+            <div 
+              className="profile-stat-box" 
+              id="profile-followers-stat" 
+              onClick={isAuthenticated ? () => openFollowModal('followers') : undefined}
+              style={{ cursor: isAuthenticated ? 'pointer' : 'default' }}
+            >
               <div className="profile-stat-value" style={{ color: 'var(--pink)' }}>{u.followersCount}</div>
               <div className="profile-stat-label">Followers</div>
             </div>
@@ -622,8 +696,40 @@ const Profile = () => {
         </div>
       </div>
 
+      {/* Guest CTA Card */}
+      {!isAuthenticated && (
+        <div className="card guest-cta-card" style={{
+          padding: '32px 24px',
+          marginBottom: '24px',
+          textAlign: 'center',
+          background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(236, 72, 153, 0.08) 100%)',
+          border: '1px dashed rgba(139, 92, 246, 0.3)',
+          borderRadius: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '12px',
+          boxShadow: 'var(--shadow-sm)'
+        }}>
+          <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '1.25rem', fontWeight: 800 }}>
+            Want to connect with {u.fullName}?
+          </h3>
+          <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '420px', lineHeight: '1.5' }}>
+            Log in or create an account on ConnectHub to follow, view private posts, send messages, and share updates.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
+            <button className="btn btn-primary" onClick={() => navigate('/login', { state: { from: window.location } })} style={{ padding: '8px 24px', fontWeight: 600 }}>
+              Login
+            </button>
+            <button className="btn btn-secondary" onClick={() => navigate('/register', { state: { from: window.location } })} style={{ padding: '8px 24px', fontWeight: 600, backgroundColor: 'var(--card-bg)' }}>
+              Create Account
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Profile Tabs */}
-      {hasBirthdayAccess && isBirthdayToday ? (
+      {hasBirthdayAccess && isBirthdayToday && isAuthenticated ? (
         <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', marginBottom: '20px', gap: '20px' }}>
           <button
             onClick={() => setActiveTab('posts')}
@@ -666,7 +772,7 @@ const Profile = () => {
 
       {activeTab === 'posts' ? (
         <div id="user-posts-container">
-          {u.isPrivate && !isOwnProfile ? (
+          {u.isPrivate && (!isAuthenticated || (!isOwnProfile && u.relationshipStatus !== 'friends' && u.relationshipStatus !== 'following')) ? (
             <div style={{
               padding: '60px 40px',
               textAlign: 'center',
@@ -681,7 +787,9 @@ const Profile = () => {
               <div style={{ fontSize: '3rem' }}>🔒</div>
               <h3 style={{ color: 'var(--text-main)', margin: 0 }}>This Account is Private</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0, maxWidth: '280px' }}>
-                Follow this user to see their posts and stories.
+                {!isAuthenticated
+                  ? 'Sign in or register to follow this user and see their posts.'
+                  : 'Follow this user to see their posts and stories.'}
               </p>
             </div>
           ) : loadingPosts ? (

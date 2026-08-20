@@ -193,50 +193,70 @@ const Navbar = () => {
             )}
           </button>
 
-          <div className="notification-dropdown-container" onClick={(e) => e.stopPropagation()}>
-            <button className="nav-btn" onClick={() => { setNotiOpen(!notiOpen); setProfileOpen(false); }} title="Notifications">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              </svg>
-              {unreadCount > 0 && <span className="notification-badge" id="noti-badge">{unreadCount}</span>}
-            </button>
-            <NotificationDropdown isOpen={notiOpen} onClose={() => setNotiOpen(false)} />
-          </div>
-
-
-          <div className="profile-dropdown-container" onClick={(e) => e.stopPropagation()}>
-            <button className="profile-avatar-btn" onClick={() => { setProfileOpen(!profileOpen); setNotiOpen(false); }}>
-              <img src={getUploadUrl(currentUser.profilePicture || defaultAvatar)} className="nav-avatar" alt="Avatar" />
-            </button>
-            <div className={`dropdown-menu ${profileOpen ? 'active' : ''}`} id="nav-dropdown-menu">
-              <div className="dropdown-item" onClick={() => navigate(`/profile/${currentUser.username}`)} style={{ fontWeight: 600 }}>
-                <img src={getUploadUrl(currentUser.profilePicture || defaultAvatar)} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} alt="" />
-                <span>My Profile</span>
+          {currentUser ? (
+            <>
+              <div className="notification-dropdown-container" onClick={(e) => e.stopPropagation()}>
+                <button className="nav-btn" onClick={() => { setNotiOpen(!notiOpen); setProfileOpen(false); }} title="Notifications">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                  </svg>
+                  {unreadCount > 0 && <span className="notification-badge" id="noti-badge">{unreadCount}</span>}
+                </button>
+                <NotificationDropdown isOpen={notiOpen} onClose={() => setNotiOpen(false)} />
               </div>
-              <div className="dropdown-divider"></div>
-              {currentUser?.role === 'admin' && (
-                <>
-                  <div className="dropdown-item" onClick={() => navigate('/admin/dashboard')} style={{ color: 'var(--purple)', fontWeight: 600 }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" />
-                    </svg>
-                    <span>Admin Panel</span>
+
+              <div className="profile-dropdown-container" onClick={(e) => e.stopPropagation()}>
+                <button className="profile-avatar-btn" onClick={() => { setProfileOpen(!profileOpen); setNotiOpen(false); }}>
+                  <img src={getUploadUrl(currentUser.profilePicture || defaultAvatar)} className="nav-avatar" alt="Avatar" />
+                </button>
+                <div className={`dropdown-menu ${profileOpen ? 'active' : ''}`} id="nav-dropdown-menu">
+                  <div className="dropdown-item" onClick={() => navigate(`/profile/${currentUser.username}`)} style={{ fontWeight: 600 }}>
+                    <img src={getUploadUrl(currentUser.profilePicture || defaultAvatar)} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', marginRight: '8px' }} alt="" />
+                    <span>My Profile</span>
                   </div>
                   <div className="dropdown-divider"></div>
-                </>
-              )}
-              <div className="dropdown-item" onClick={() => navigate('/settings')}>
-                <span style={{ marginRight: '8px' }}>⚙️</span>
-                <span>Settings</span>
+                  {currentUser?.role === 'admin' && (
+                    <>
+                      <div className="dropdown-item" onClick={() => navigate('/admin/dashboard')} style={{ color: 'var(--purple)', fontWeight: 600 }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginRight: '8px' }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" />
+                        </svg>
+                        <span>Admin Panel</span>
+                      </div>
+                      <div className="dropdown-divider"></div>
+                    </>
+                  )}
+                  <div className="dropdown-item" onClick={() => navigate('/settings')}>
+                    <span style={{ marginRight: '8px' }}>⚙️</span>
+                    <span>Settings</span>
+                  </div>
+                  <div className="dropdown-divider"></div>
+                  <div className="dropdown-item" onClick={() => navigate('/settings/logout')} style={{ color: 'var(--danger)' }}>
+                    <span style={{ marginRight: '8px' }}>🚪</span>
+                    <span>Logout</span>
+                  </div>
+                </div>
               </div>
-              <div className="dropdown-divider"></div>
-              <div className="dropdown-item" onClick={() => navigate('/settings/logout')} style={{ color: 'var(--danger)' }}>
-                <span style={{ marginRight: '8px' }}>🚪</span>
-                <span>Logout</span>
-              </div>
+            </>
+          ) : (
+            <div className="navbar-guest-actions" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => navigate('/login', { state: { from: { pathname: window.location.pathname } } })}
+                style={{ padding: '6px 14px', fontSize: '0.85rem', fontWeight: 600 }}
+              >
+                Login
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => navigate('/register', { state: { from: { pathname: window.location.pathname } } })}
+                style={{ padding: '6px 14px', fontSize: '0.85rem', fontWeight: 600 }}
+              >
+                Register
+              </button>
             </div>
-          </div>
+          )}
         </div>
       </nav>
     </header>

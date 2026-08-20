@@ -34,7 +34,34 @@
   align-items: center;
   transition: background-color 0.3s ease, border-color 0.3s ease;
   animation: qrScaleUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  
+  /* Firefox Scrollbar support */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.45) transparent;
 }
+
+/* Custom Scrollbar to keep card corners rounded */
+.qr-modal-card::-webkit-scrollbar {
+  width: 10px;
+}
+
+.qr-modal-card::-webkit-scrollbar-track {
+  background: transparent;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.qr-modal-card::-webkit-scrollbar-thumb {
+  background-color: var(--purple);
+  border-radius: 10px;
+  border: 3px solid var(--card-bg); /* Match background to push thumb inset */
+  background-clip: padding-box;
+}
+
+.qr-modal-card::-webkit-scrollbar-thumb:hover {
+  background-color: var(--pink);
+}
+
 
 /* Premium Gradient Header Accent */
 .qr-card-gradient-header {
