@@ -4244,3 +4244,61 @@ textarea {
   opacity: 0.9;
   text-decoration: underline;
 }
+
+/* Profile Page Responsive Actions Layouts */
+.profile-actions-desktop {
+  display: flex;
+  gap: 8px;
+}
+
+.profile-actions-mobile {
+  display: none;
+  position: relative;
+}
+
+.profile-actions-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg), 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  z-index: 100;
+  animation: qrFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.profile-dropdown-action-item {
+  width: 100%;
+  padding: 12px 18px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.profile-dropdown-action-item:hover {
+  background-color: var(--input-bg);
+}
+
+@media (max-width: 768px) {
+  .profile-actions-desktop {
+    display: none;
+  }
+  
+  .profile-actions-mobile {
+    display: block;
+  }
+}

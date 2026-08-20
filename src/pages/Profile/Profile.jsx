@@ -35,6 +35,7 @@ const Profile = () => {
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [followListModalOpen, setFollowListModalOpen] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [followListType, setFollowListType] = useState('followers'); // 'followers' or 'following'
   const [followListUsers, setFollowListUsers] = useState([]);
   const [loadingFollowList, setLoadingFollowList] = useState(false);
@@ -155,6 +156,16 @@ const Profile = () => {
   useEffect(() => {
     fetchProfilePosts();
   }, [profileUser?._id]);
+
+  useEffect(() => {
+    const handleOutsideClick = () => {
+      setMobileMenuOpen(false);
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => {
+      document.removeEventListener('click', handleOutsideClick);
+    };
+  }, []);
 
   const hasBirthdayAccess = profileUser?.birthday && (
     profileUser.birthdayPrivacy === 'Public' ||
@@ -435,27 +446,85 @@ const Profile = () => {
           </div>
         </div>
 
-        <div className="profile-actions-wrapper" style={{ display: 'flex', gap: '8px' }}>
+        <div className="profile-actions-wrapper" style={{ display: 'flex', gap: '8px', position: 'relative' }}>
           {isOwnProfile ? (
             <>
-              <button
-                className="btn btn-secondary"
-                onClick={() => navigate(`/profile/${u.username}/memories`)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-              >
-                <span>📸</span> Memories
-              </button>
-              <button className="btn btn-secondary" onClick={() => navigate('/settings')}>Settings</button>
-              <button
-                className="btn btn-secondary"
-                onClick={() => setQrModalOpen(true)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
-                  <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
-                  <line x1="7" y1="7" x2="7.01" y2="7" /><line x1="17" y1="7" x2="17.01" y2="7" /><line x1="17" y1="17" x2="17.01" y2="17" /><line x1="7" y1="17" x2="7.01" y2="17" />
-                </svg> My QR Code
-              </button>
+              {/* Desktop/Tablet view: shown on wide screens */}
+              <div className="profile-actions-desktop">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => navigate(`/profile/${u.username}/memories`)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <span>📸</span> Memories
+                </button>
+                <button className="btn btn-secondary" onClick={() => navigate('/settings')}>Settings</button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => setQrModalOpen(true)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
+                    <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+                    <line x1="7" y1="7" x2="7.01" y2="7" /><line x1="17" y1="7" x2="17.01" y2="7" /><line x1="17" y1="17" x2="17.01" y2="17" /><line x1="7" y1="17" x2="7.01" y2="17" />
+                  </svg> My QR Code
+                </button>
+              </div>
+
+              {/* Mobile view dropdown menu */}
+              <div className="profile-actions-mobile">
+                <button 
+                  className="btn btn-secondary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMobileMenuOpen(!mobileMenuOpen);
+                  }}
+                  aria-label="Actions Menu"
+                  title="Actions Menu"
+                  style={{ padding: '8px 12px' }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle' }}>
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                  </svg>
+                </button>
+
+                {mobileMenuOpen && (
+                  <div className="profile-actions-dropdown">
+                    <button
+                      className="profile-dropdown-action-item"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate(`/profile/${u.username}/memories`);
+                      }}
+                    >
+                      <span>📸</span> Memories
+                    </button>
+                    <button
+                      className="profile-dropdown-action-item"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        navigate('/settings');
+                      }}
+                    >
+                      <span>⚙️</span> Settings
+                    </button>
+                    <button
+                      className="profile-dropdown-action-item"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        setQrModalOpen(true);
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: 'middle', marginRight: '6px' }}>
+                        <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+                        <line x1="7" y1="7" x2="7.01" y2="7" /><line x1="17" y1="7" x2="17.01" y2="7" /><line x1="17" y1="17" x2="17.01" y2="17" /><line x1="7" y1="17" x2="7.01" y2="17" />
+                      </svg> My QR Code
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
             <button className={followBtnClass} onClick={handleFollowToggle} disabled={followLoading}>
