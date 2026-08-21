@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ProfileQRCode from './ProfileQRCode';
 import { getUploadUrl } from '../../utils/mediaHelper';
+import { getProfilePath } from '../../utils/routes';
 import './ProfileQR.css';
 
 /**
@@ -34,7 +35,7 @@ const QRModal = ({ isOpen, onClose, user }) => {
   if (!isOpen || !user) return null;
 
   const defaultAvatar = '/uploads/default-avatar.png';
-  const profileUrl = `${window.location.origin}/@${user.username}`;
+  const profileUrl = `${window.location.origin}${getProfilePath(user.username)}`;
 
   // Temporarily show custom toast alerts inside the modal card
   const showToast = (msg) => {

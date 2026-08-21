@@ -1,6 +1,13 @@
 import React, { lazy, Suspense, useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ROUTES } from './utils/routes';
+
+// Redirect legacy /@username to canonical /profile/username
+const ProfileRedirect = () => {
+  const { username } = useParams();
+  return <Navigate to={`/profile/${username}`} replace />;
+};
 import { CustomDialogProvider } from './context/CustomDialogContext';
 import { PostsProvider } from './context/PostsContext';
 import { NotificationsProvider, useNotifications } from './context/NotificationsContext';
@@ -369,9 +376,9 @@ const AppContent = () => {
 
           {/* Protected Routes */}
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-          <Route path="/profile/:username" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/@:username" element={<Profile />} />
-          <Route path="/profile/:username/memories" element={<ProtectedRoute><BirthdayMemoriesPage /></ProtectedRoute>} />
+          <Route path={ROUTES.PROFILE} element={<Profile />} />
+          <Route path="/@:username" element={<ProfileRedirect />} />
+          <Route path={ROUTES.PROFILE_MEMORIES} element={<ProtectedRoute><BirthdayMemoriesPage /></ProtectedRoute>} />
           <Route path="/post/:id" element={<ProtectedRoute><PostDetail /></ProtectedRoute>} />
           <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
           <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Html5Qrcode } from 'html5-qrcode';
+import { getProfilePath } from '../../utils/routes';
 import './ProfileQR.css';
 
 /**
@@ -43,15 +44,15 @@ const QRScanner = ({ isOpen, onClose }) => {
               // Stop camera immediately
               if (html5QrCodeScanner && html5QrCodeScanner.isScanning) {
                 html5QrCodeScanner.stop().then(() => {
-                  navigate(`/@${username}`);
+                  navigate(getProfilePath(username));
                   onClose();
                 }).catch(err => {
                   console.error('Failed to stop camera on success:', err);
-                  navigate(`/@${username}`);
+                  navigate(getProfilePath(username));
                   onClose();
                 });
               } else {
-                navigate(`/@${username}`);
+                navigate(getProfilePath(username));
                 onClose();
               }
             } else {

@@ -1,6 +1,6 @@
 /* global __APP_VERSION__, __BUILD_TIMESTAMP__, __COMMIT_HASH__ */
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '../../components/layout/Layout';
 import { useAuth } from '../../context/AuthContext';
 import { usePosts } from '../../context/PostsContext';
@@ -23,6 +23,7 @@ const Profile = () => {
   const { username } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser, updateLocalUser, logout, isAuthenticated } = useAuth();
   const { toggleLike } = usePosts();
   const { showAlert, showConfirm } = useDialog();
@@ -90,7 +91,7 @@ const Profile = () => {
       }
     } catch (err) {
       console.error(err);
-
+      let loadedFromCache = false;
       if (isAuthenticated) {
         // Attempt to load from offline cache
         const cachedUserStr = localStorage.getItem('connecthub_cached_profile_user');
@@ -106,7 +107,7 @@ const Profile = () => {
               setProfileUser(cachedUser);
               setIsCachedProfileData(true);
               console.log('Loaded profile from offline cache');
-              return;
+              loadedFromCache = true;
             }
           } catch (e) {
             // Ignore
@@ -114,10 +115,11 @@ const Profile = () => {
         }
 
         // If offline and request failed, dispatch the offline error to trigger fallback page
-        if (!navigator.onLine && err.message !== 'OFFLINE_QUEUED') {
+        if (!loadedFromCache && !navigator.onLine && err.message !== 'OFFLINE_QUEUED') {
           window.dispatchEvent(new Event('api-offline-error'));
         }
-      } else {
+      }
+      if (!loadedFromCache) {
         setProfileUser(null);
       }
     } finally {
@@ -422,14 +424,14 @@ const Profile = () => {
           <div style={{ fontSize: '4.5rem', filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.1))' }}>🔍</div>
           <h2 style={{ color: 'var(--text-main)', margin: 0, fontSize: '1.8rem', fontWeight: '700' }}>User Not Found</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '1rem', margin: 0, maxWidth: '360px', lineHeight: '1.5' }}>
-            This profile does not exist or has been removed. Check the spelling or try searching.
+            This profile doesn't exist or has been removed.
           </p>
           <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-            <button className="btn btn-secondary" onClick={() => navigate(-1)} style={{ padding: '10px 24px', fontWeight: 600 }}>
-              Back
-            </button>
             <button className="btn btn-primary" onClick={() => navigate('/')} style={{ padding: '10px 24px', fontWeight: 600 }}>
               Go Home
+            </button>
+            <button className="btn btn-secondary" onClick={() => navigate('/search')} style={{ padding: '10px 24px', fontWeight: 600 }}>
+              Search Users
             </button>
           </div>
         </div>
@@ -481,14 +483,14 @@ const Profile = () => {
             <div className="profile-guest-actions" style={{ display: 'flex', gap: '8px' }}>
               <button 
                 className="btn btn-primary" 
-                onClick={() => navigate('/login', { state: { from: window.location } })}
+                onClick={() => navigate('/login', { state: { from: location } })}
                 style={{ padding: '8px 16px', fontSize: '0.9rem', fontWeight: '600' }}
               >
                 Login
               </button>
               <button 
                 className="btn btn-secondary" 
-                onClick={() => navigate('/register', { state: { from: window.location } })}
+                onClick={() => navigate('/register', { state: { from: location } })}
                 style={{ padding: '8px 16px', fontSize: '0.9rem', fontWeight: '600' }}
               >
                 Create Account
@@ -718,10 +720,10 @@ const Profile = () => {
             Log in or create an account on ConnectHub to follow, view private posts, send messages, and share updates.
           </p>
           <div style={{ display: 'flex', gap: '12px', marginTop: '6px' }}>
-            <button className="btn btn-primary" onClick={() => navigate('/login', { state: { from: window.location } })} style={{ padding: '8px 24px', fontWeight: 600 }}>
+            <button className="btn btn-primary" onClick={() => navigate('/login', { state: { from: location } })} style={{ padding: '8px 24px', fontWeight: 600 }}>
               Login
             </button>
-            <button className="btn btn-secondary" onClick={() => navigate('/register', { state: { from: window.location } })} style={{ padding: '8px 24px', fontWeight: 600, backgroundColor: 'var(--card-bg)' }}>
+            <button className="btn btn-secondary" onClick={() => navigate('/register', { state: { from: location } })} style={{ padding: '8px 24px', fontWeight: 600, backgroundColor: 'var(--card-bg)' }}>
               Create Account
             </button>
           </div>
@@ -785,11 +787,9 @@ const Profile = () => {
               gap: '12px'
             }}>
               <div style={{ fontSize: '3rem' }}>🔒</div>
-              <h3 style={{ color: 'var(--text-main)', margin: 0 }}>This Account is Private</h3>
+              <h3 style={{ color: 'var(--text-main)', margin: 0 }}>This account is private.</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0, maxWidth: '280px' }}>
-                {!isAuthenticated
-                  ? 'Sign in or register to follow this user and see their posts.'
-                  : 'Follow this user to see their posts and stories.'}
+                Follow this user to see their posts.
               </p>
             </div>
           ) : loadingPosts ? (
